@@ -9,7 +9,8 @@ export class MaterialTable {
   images: GlbImage[] = [];
   private byHash = new Map<string, number>();
   missing = new Set<number>();
-  constructor(private textures: Map<number, Texture>) {}
+  /** external: carpeta donde escribir PNG compartidos y prefijo de URI relativo al GLB. */
+  constructor(private textures: Map<number, Texture>, private opts: { unlit?: boolean; external?: { dir: string; uriPrefix: string; written: Set<number> } } = {}) {}
 
   get(hash: number | undefined): number {
     const key = hash === undefined ? "none" : hex8(hash);
@@ -18,13 +19,17 @@ export class MaterialTable {
     const t = hash !== undefined ? this.textures.get(hash) : undefined;
     let m: GlbMaterial;
     if (t) {
-      this.images.push({ name: t.name, png: encodePng(t.rgba, t.width, t.height) });
+      const ext = this.opts.external;
+      if (ext) {
+        if (!ext.written.has(t.nameHash)) { Bun.write(`${ext.dir}/${hex8(t.nameHash)}.png`, encodePng(t.rgba, t.width, t.height)); ext.written.add(t.nameHash); }
+        this.images.push({ name: t.name, uri: `${ext.uriPrefix}${hex8(t.nameHash)}.png` });
+      } else this.images.push({ name: t.name, png: encodePng(t.rgba, t.width, t.height) });
       let minA = 255; for (let i = 3; i < t.rgba.length; i += 4) minA = Math.min(minA, t.rgba[i]);
-      m = { name: t.name, color: [1, 1, 1, 1], texture: this.images.length - 1, alphaMode: minA < 250 ? "MASK" : "OPAQUE" };
+      m = { name: t.name, color: [1, 1, 1, 1], texture: this.images.length - 1, alphaMode: minA < 250 ? "MASK" : "OPAQUE", unlit: this.opts.unlit };
     } else {
       if (hash !== undefined) this.missing.add(hash);
       const h = hash ?? 0x9e3779b9, r = 0.35 + ((h & 0xff) / 255) * 0.4, g = 0.35 + (((h >> 8) & 0xff) / 255) * 0.4, b = 0.35 + (((h >> 16) & 0xff) / 255) * 0.4;
-      m = { name: `sin_textura_${key}`, color: [r, g, b, 1] };
+      m = { name: `sin_textura_${key}`, color: [r, g, b, 1], unlit: this.opts.unlit };
     }
     this.materials.push(m);
     this.byHash.set(key, this.materials.length - 1);

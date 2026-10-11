@@ -1,0 +1,7 @@
+{
+ "px": 4096,
+ "minX": -928.8678588867188,
+ "minY": -1168.0271606445312,
+ "metrosPorPixel": 1.491419956088066,
+ "nota": "x_mundo = minX + px*m; y_mundo = minY + (PX-1-py)*m"
+}

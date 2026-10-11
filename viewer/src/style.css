@@ -54,3 +54,16 @@ button.ghost:focus-visible { outline: 1px solid var(--amber); }
   .hint { display: none; }
 }
 @media (prefers-reduced-motion: no-preference) { .tree li button { transition: background .12s, border-color .12s; } }
+
+.city { padding: 10px 12px 12px; display: grid; gap: 8px; border-bottom: 1px solid var(--line); }
+.cta { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; padding: 9px 10px; background: var(--amber); color: var(--ink); font: 800 15px/1 var(--display); text-transform: uppercase; letter-spacing: .06em; }
+.cta .ph { color: var(--ink); }
+.cta:hover { background: #ffc54d; }
+.cta:focus-visible { outline: 2px solid var(--radar); outline-offset: 2px; }
+.cta[disabled] { background: var(--ink-3); color: var(--fog); cursor: progress; }
+.cta[disabled] .ph { color: var(--fog); }
+.meter { height: 4px; background: var(--ink-3); }
+.meter span { display: block; height: 100%; width: 0; background: var(--radar); }
+.city .muted { margin: 0; color: var(--fog); font-size: 11px; }
+.toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--paper); }
+.toggle input { accent-color: var(--amber); }

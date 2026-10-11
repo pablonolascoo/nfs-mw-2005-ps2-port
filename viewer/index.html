@@ -18,6 +18,13 @@
       </div>
     </header>
     <aside class="panel left">
+      <div class="panel-head"><i class="ph ph-buildings"></i>Rockport</div>
+      <div class="city">
+        <button id="load-city" class="cta"><i class="ph ph-play"></i>Cargar ciudad completa</button>
+        <div class="meter" aria-hidden="true"><span id="city-bar"></span></div>
+        <p id="city-status" class="muted" aria-live="polite">—</p>
+        <label class="toggle"><input type="checkbox" id="show-bounds" /> Límites de sección</label>
+      </div>
       <div class="panel-head"><i class="ph ph-stack"></i>Recursos</div>
       <label class="search"><i class="ph ph-magnifying-glass"></i><input id="filter" placeholder="Filtrar por nombre o hash" autocomplete="off" /></label>
       <ul id="tree" class="tree" aria-label="Recursos recuperados"></ul>

@@ -13,6 +13,13 @@ const columnTable8 = [
   [224, 228, 240, 244, 192, 196, 208, 212, 226, 230, 242, 246, 194, 198, 210, 214], [232, 236, 248, 252, 200, 204, 216, 220, 234, 238, 250, 254, 202, 206, 218, 222],
   [193, 197, 209, 213, 225, 229, 241, 245, 195, 199, 211, 215, 227, 231, 243, 247], [201, 205, 217, 221, 233, 237, 249, 253, 203, 207, 219, 223, 235, 239, 251, 255],
 ];
+const blockTable16 = [[0, 2, 8, 10], [1, 3, 9, 11], [4, 6, 12, 14], [5, 7, 13, 15], [16, 18, 24, 26], [17, 19, 25, 27], [20, 22, 28, 30], [21, 23, 29, 31]];
+const columnTable16 = [
+  [0, 2, 8, 10, 16, 18, 24, 26, 1, 3, 9, 11, 17, 19, 25, 27], [4, 6, 12, 14, 20, 22, 28, 30, 5, 7, 13, 15, 21, 23, 29, 31],
+  [32, 34, 40, 42, 48, 50, 56, 58, 33, 35, 41, 43, 49, 51, 57, 59], [36, 38, 44, 46, 52, 54, 60, 62, 37, 39, 45, 47, 53, 55, 61, 63],
+  [64, 66, 72, 74, 80, 82, 88, 90, 65, 67, 73, 75, 81, 83, 89, 91], [68, 70, 76, 78, 84, 86, 92, 94, 69, 71, 77, 79, 85, 87, 93, 95],
+  [96, 98, 104, 106, 112, 114, 120, 122, 97, 99, 105, 107, 113, 115, 121, 123], [100, 102, 108, 110, 116, 118, 124, 126, 101, 103, 109, 111, 117, 119, 125, 127],
+];
 const blockTable4 = [[0, 2, 8, 10], [1, 3, 9, 11], [4, 6, 12, 14], [5, 7, 13, 15], [16, 18, 24, 26], [17, 19, 25, 27], [20, 22, 28, 30], [21, 23, 29, 31]];
 const columnTable4 = [
   [0, 8, 32, 40, 64, 72, 96, 104, 2, 10, 34, 42, 66, 74, 98, 106, 4, 12, 36, 44, 68, 76, 100, 108, 6, 14, 38, 46, 70, 78, 102, 110],
@@ -41,6 +48,12 @@ export class GsMem {
     const block = bp + page * 32 + blockTable32[(y >> 3) & 3][(x >> 3) & 7];
     return block * 256 + columnTable32[y & 7][x & 7] * 4;
   }
+  /** PSMCT16: página 64×64, bloque 16×8. Devuelve dirección en bytes. */
+  addr16(x: number, y: number, bp: number, bw: number) {
+    const page = (y >> 6) * bw + (x >> 6);
+    const block = bp + page * 32 + blockTable16[(y >> 3) & 7][(x >> 4) & 3];
+    return block * 256 + columnTable16[y & 7][x & 15] * 2;
+  }
   addr8(x: number, y: number, bp: number, bw: number) {
     const page = (y >> 6) * (bw >> 1) + (x >> 7);
     const block = bp + page * 32 + blockTable8[(y >> 4) & 3][(x >> 4) & 7];
@@ -54,6 +67,9 @@ export class GsMem {
   }
   writeCT32(src: Uint8Array, w: number, h: number, bp: number, bw: number) {
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = this.addr32(x, y, bp, bw), s = (y * w + x) * 4; this.mem.set(src.subarray(s, s + 4), a); }
+  }
+  writeCT16(src: Uint8Array, w: number, h: number, bp: number, bw: number) {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const a = this.addr16(x, y, bp, bw), s = (y * w + x) * 2; this.mem[a] = src[s]; this.mem[a + 1] = src[s + 1]; }
   }
   readT8(w: number, h: number, bp: number, bw: number) {
     const out = new Uint8Array(w * h);

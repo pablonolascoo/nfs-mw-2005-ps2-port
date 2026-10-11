@@ -1,11 +1,12 @@
 // Escritor GLB (glTF 2.0 binario) mínimo: mallas indexadas, materiales PBR simples y texturas PNG.
 // Convención: los datos del juego son Z-arriba; el nodo raíz rota -90° en X para cumplir glTF (Y-arriba).
-export interface GlbPrimitive { positions: Float32Array; normals?: Float32Array; uvs?: Float32Array; colors?: Float32Array; indices: Uint32Array; material: number }
+export interface GlbPrimitive { positions: Float32Array; normals?: Float32Array; uvs?: Float32Array; colors?: Float32Array; ids?: Float32Array; indices: Uint32Array; material: number }
 export interface GlbMesh { name: string; primitives: GlbPrimitive[]; extras?: Record<string, unknown>; matrix?: number[] }
-export interface GlbMaterial { name: string; color: [number, number, number, number]; texture?: number; alphaMode?: "OPAQUE" | "MASK" | "BLEND"; doubleSided?: boolean }
-export interface GlbImage { name: string; png: Uint8Array }
+export interface GlbMaterial { name: string; color: [number, number, number, number]; texture?: number; alphaMode?: "OPAQUE" | "MASK" | "BLEND"; doubleSided?: boolean; unlit?: boolean }
+export interface GlbImage { name: string; png?: Uint8Array; uri?: string }
+export interface GlbNode { name: string; mesh: number; matrix?: number[]; extras?: Record<string, unknown> }
 
-export function writeGlb(meshes: GlbMesh[], materials: GlbMaterial[], images: GlbImage[] = [], rootName = "root"): Uint8Array {
+export function writeGlb(meshes: GlbMesh[], materials: GlbMaterial[], images: GlbImage[] = [], rootName = "root", nodes?: GlbNode[]): Uint8Array {
   const chunks: Uint8Array[] = [];
   let byteLength = 0;
   const bufferViews: object[] = [], accessors: object[] = [];
@@ -32,18 +33,20 @@ export function writeGlb(meshes: GlbMesh[], materials: GlbMaterial[], images: Gl
   const gltfMeshes = meshes.map(m => ({
     name: m.name,
     primitives: m.primitives.map(p => ({
-      attributes: { POSITION: acc(p.positions, "VEC3", 34962, true), ...(p.normals ? { NORMAL: acc(p.normals, "VEC3", 34962) } : {}), ...(p.uvs ? { TEXCOORD_0: acc(p.uvs, "VEC2", 34962) } : {}), ...(p.colors ? { COLOR_0: acc(p.colors, "VEC4", 34962) } : {}) },
+      attributes: { POSITION: acc(p.positions, "VEC3", 34962, true), ...(p.normals ? { NORMAL: acc(p.normals, "VEC3", 34962) } : {}), ...(p.uvs ? { TEXCOORD_0: acc(p.uvs, "VEC2", 34962) } : {}), ...(p.colors ? { COLOR_0: acc(p.colors, "VEC4", 34962) } : {}), ...(p.ids ? { _ID: acc(p.ids, "SCALAR", 34962) } : {}) },
       indices: acc(p.indices, "SCALAR", 34963), material: p.material, mode: 4,
     })),
   }));
-  const imageDefs = images.map(img => ({ name: img.name, mimeType: "image/png", bufferView: push(img.png) }));
+  const imageDefs = images.map(img => img.uri ? { name: img.name, uri: img.uri } : { name: img.name, mimeType: "image/png", bufferView: push(img.png!) });
+  const nodeList = nodes ?? meshes.map((m, i) => ({ name: m.name, mesh: i, matrix: m.matrix, extras: m.extras }));
   const gltf = {
     asset: { version: "2.0", generator: "nfsmw-tools (Rockport Dispatch)" },
     scene: 0,
     scenes: [{ nodes: [0] }],
-    nodes: [{ name: rootName, rotation: [-Math.SQRT1_2, 0, 0, Math.SQRT1_2], children: meshes.map((_, i) => i + 1) }, ...meshes.map((m, i) => ({ name: m.name, mesh: i, ...(m.extras ? { extras: m.extras } : {}), ...(m.matrix ? { matrix: m.matrix } : {}) }))],
+    nodes: [{ name: rootName, rotation: [-Math.SQRT1_2, 0, 0, Math.SQRT1_2], children: nodeList.map((_, i) => i + 1) }, ...nodeList.map(n => ({ name: n.name, mesh: n.mesh, ...(n.extras ? { extras: n.extras } : {}), ...(n.matrix ? { matrix: n.matrix } : {}) }))],
     meshes: gltfMeshes,
-    materials: materials.map(m => ({ name: m.name, doubleSided: m.doubleSided ?? true, alphaMode: m.alphaMode ?? "OPAQUE", ...(m.alphaMode === "MASK" ? { alphaCutoff: 0.5 } : {}), pbrMetallicRoughness: { baseColorFactor: m.color, metallicFactor: 0, roughnessFactor: 0.85, ...(m.texture !== undefined ? { baseColorTexture: { index: m.texture } } : {}) } })),
+    ...(materials.some(m => m.unlit) ? { extensionsUsed: ["KHR_materials_unlit"] } : {}),
+    materials: materials.map(m => ({ name: m.name, ...(m.unlit ? { extensions: { KHR_materials_unlit: {} } } : {}), doubleSided: m.doubleSided ?? true, alphaMode: m.alphaMode ?? "OPAQUE", ...(m.alphaMode === "MASK" ? { alphaCutoff: 0.5 } : {}), pbrMetallicRoughness: { baseColorFactor: m.color, metallicFactor: 0, roughnessFactor: 0.85, ...(m.texture !== undefined ? { baseColorTexture: { index: m.texture } } : {}) } })),
     ...(images.length ? { images: imageDefs, textures: images.map((_, i) => ({ source: i, sampler: 0 })), samplers: [{ magFilter: 9729, minFilter: 9987, wrapS: 10497, wrapT: 10497 }] } : {}),
     accessors, bufferViews, buffers: [{ byteLength }],
   };

@@ -79,6 +79,7 @@ function readSolid(buf: Uint8Array, c: Chunk): Solid {
  *  2  V3-32  AABB min/max                    · 4 V4-32 cono de normales
  *  5  V4-16  XYZ en SoA: por grupo de 4 vértices, filas x[4], y[4], z[4]; luego vértices sueltos V{m}-16 ×3
  *  29 V4-16  ST: por fila (s0, t0, t1, s1) → 2 vértices/fila
+ *  45 V4-8u  RGBA por vértice (solo escenario; 128 = 1.0)
  *  77 V4-8   normales SoA igual que XYZ (int8 / 127)
  * Posición = entero × escala + desplazamiento entero por eje (se deduce de la AABB: ver docs).
  */
@@ -115,6 +116,8 @@ function decodeStrip(buf: Uint8Array, start: number, end: number, e: { nv: numbe
     const rows = [...unpackValues(cur[29]), ...(cur[29 + packs * 2] && cur[29 + packs * 2] !== cur[29] ? unpackValues(cur[29 + packs * 2]) : [])];
     for (const r of rows) { uvs.push([r[0] / 4096, r[1] / 4096]); uvs.push([r[3] / 4096, r[2] / 4096]); }
   }
+  // 45 V4-8 sin signo: RGBA por vértice (iluminación horneada del escenario). 128 = 1.0 como en el GS.
+  const colors = cur[45] ? unpackValues(cur[45]).slice(0, nv).map(c => c.map(x => x / 128)) : undefined;
   const normals = soa(cur[77], 3, undefined).slice(0, nv).map(n => { const l = Math.hypot(n[0], n[1], n[2]) || 1; return [n[0] / l, n[1] / l, n[2] / l]; });
 
   const bit = (k: number): number => {
@@ -131,7 +134,7 @@ function decodeStrip(buf: Uint8Array, start: number, end: number, e: { nv: numbe
   const adc = Array.from({ length: nv }, (_, k) => bit(k) === 1);
   const kills = adc.slice(2).filter(Boolean).length;
   if (nv - 2 - kills !== e.np) throw new Error(`triángulos ${nv - 2 - kills} ≠ tabla ${e.np}`);
-  return { nv, np: e.np, texture: e.texture, lightMaterial: e.lightMaterial, flags: e.flags, positions, uvs: uvs.slice(0, nv), normals, adc };
+  return { nv, np: e.np, texture: e.texture, lightMaterial: e.lightMaterial, flags: e.flags, positions, uvs: uvs.slice(0, nv), normals, colors, adc };
 }
 
 /** Triángulos de una tira con ADC (orden alterno para mantener el sentido). */

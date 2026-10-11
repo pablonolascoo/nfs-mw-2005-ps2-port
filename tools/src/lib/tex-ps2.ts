@@ -19,11 +19,13 @@ export function decodeTexture(info: Uint8Array, plat: Uint8Array, pixels: Uint8A
   if (psm === PSM.T8 || psm === PSM.T4) {
     const is4 = psm === PSM.T4;
     if (swizzled) {
+      // Subida "swizzled" [verificado a ojo con texturas reales de SLES-53559]:
+      //   PSMT8 → se escribió como PSMCT32 de (W/2)×(H/2);  PSMT4 → como PSMCT16 de (W/2)×(H/2).
       const gs = new GsMem();
-      const w32 = Math.max(width >> 1, 1), h32 = Math.max(is4 ? height >> 2 : height >> 1, 1);
-      const bw = Math.max(tbw, 2);
-      if (pixels.length < w32 * h32 * 4) t.warnings.push(`datos cortos para swizzle (${pixels.length} B)`);
-      gs.writeCT32(pixels, w32, h32, 0, Math.max(bw >> 1, 1));
+      const bw = Math.max(tbw, 2), w2 = Math.max(width >> 1, 1), h2 = Math.max(height >> 1, 1);
+      if (pixels.length < (is4 ? w2 * h2 * 2 : w2 * h2 * 4)) t.warnings.push(`datos cortos para swizzle (${pixels.length} B)`);
+      if (is4) gs.writeCT16(pixels, w2, h2, 0, Math.max(w2 >> 6, 1));
+      else gs.writeCT32(pixels, w2, h2, 0, Math.max(bw >> 1, 1));
       idx = is4 ? gs.readT4(width, height, 0, bw) : gs.readT8(width, height, 0, bw);
     } else if (is4) {
       idx = new Uint8Array(width * height);
