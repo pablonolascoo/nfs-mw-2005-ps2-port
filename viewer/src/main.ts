@@ -5,6 +5,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
 import { Driver, makeCollider } from "./drive";
+import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, type GarageInfo } from "./garage";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
 //   map-data/<disco>/index.json  → recursos sueltos (coches, secciones)
@@ -76,6 +77,7 @@ let world: WorldSection[] = [];
 let tiles: Tile[] = [];
 let groups: Group[] = [];
 let zones: Zone[] = [];
+let garageInfo: GarageInfo[] = [];
 // Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
 // (No usamos THREE.Cache: al liberar una casilla cerraría imágenes que otras siguen usando.)
 const sharedTex = new Map<string, THREE.Texture>();
@@ -437,6 +439,153 @@ function stopDriving() {
 }
 $("drive").onclick = () => (driving ? stopDriving() : startDriving());
 
+// ---------- Garajes sin pantallas de carga ----------
+// Fases: cerrada → abriendo (E) → dentro (la puerta se cierra) → aparcado → saliendo (E) → cerrada.
+interface Placed { zone: Zone; obj: THREE.Object3D; door: RollerDoor; spot: THREE.Mesh; meshes: THREE.Mesh[]; box: THREE.Matrix4; phase: "cerrada" | "abierta" | "dentro" | "aparcado" | "saliendo"; t: number }
+const interiorCache = new Map<string, Promise<{ obj: THREE.Object3D; layout: ReturnType<typeof analyzeInterior> }>>();
+let garage: Placed | null = null;
+const ZONE_NAME = { safehouse: "refugio", carlot: "concesionario", customshop: "taller" } as const;
+function interiorFor(type: Zone["zoneType"]) {
+  const name = INTERIOR_FOR[type];
+  let p = interiorCache.get(name);
+  if (!p) { const it = index!.items.find(i => i.id === `int:${name}`)!; p = loadGlb(it.glb).then(obj => { const holder = new THREE.Group(); holder.add(obj); return { obj: holder, layout: analyzeInterior(holder) }; }); interiorCache.set(name, p); }
+  return p;
+}
+let placing: Zone | null = null; // candado: una sola colocación a la vez (la función es asíncrona)
+async function placeGarage(z: Zone) {
+  if (placing || garage?.zone === z) return;
+  placing = z;
+  try { await placeGarageNow(z); } finally { placing = null; }
+}
+async function placeGarageNow(z: Zone) {
+  const { obj, layout } = await interiorFor(z.zoneType);
+  if (garage?.zone === z) return;
+  if (garage) { scene.remove(garage.obj, garage.door.group, garage.spot); }
+  const info = garageInfo.find(g => g.collection === z.collection);
+  const out = new THREE.Vector2(...((info?.out ?? [1, 0]) as [number, number])).normalize();
+  const yawOut = Math.atan2(out.y, out.x), qOut = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), yawOut);
+  const ground = info?.door?.[2] ?? z.position[2];
+  const doorP = new THREE.Vector3(...((info?.door ?? z.position) as [number, number, number])).setZ(ground);
+  const [doorW, doorH] = info?.doorSize ?? [6, 4];
+  // Volumen interior del edificio (caja orientada con la puerta); sin edificio identificado, 16×10×5 m detrás de la puerta.
+  const b = info?.building;
+  // El volumen va de la puerta hacia dentro hasta la cara trasera del edificio (la caja del modelo puede incluir más cosas
+  // y la puerta no siempre está en su cara), centrado lateralmente en la puerta.
+  const outV3 = new THREE.Vector3(out.x, out.y, 0);
+  const behind = b ? new THREE.Vector3(b.center[0] - doorP.x, b.center[1] - doorP.y, 0).dot(outV3.clone().negate()) + b.along / 2 : 16;
+  const depth = Math.max(8, Math.min(behind, 40)), width = b ? Math.min(b.across, 30) : 10, height = b ? Math.max(4, Math.min(b.height, 9)) : 5;
+  const innerCenter = doorP.clone().addScaledVector(outV3, -depth / 2);
+  // Desde 15 cm sobre el suelo (el suelo del edificio se conserva) hasta 0,8 m bajo el tejado; 0,8 m de margen en paredes.
+  const inner = new THREE.Matrix4().compose(innerCenter.clone().setZ(ground + 0.15 + (height - 0.95) / 2), qOut, new THREE.Vector3(depth / 2 - 0.6, width / 2 - 0.8, (height - 0.95) / 2));
+  // Pasillo = exactamente el hueco de la puerta original (se descarta para que se vea la persiana nueva y lo de dentro)
+  const corridor = new THREE.Matrix4().compose(doorP.clone().setZ(ground + doorH / 2), qOut, new THREE.Vector3(2.5, doorW / 2 + 0.15, doorH / 2 + 0.1));
+  // Interior: lado abierto hacia la puerta, plaza (su origen) dentro del edificio, suelo a la altura de la calle; recortado al edificio
+  const rot = yawOut - Math.atan2(layout.openDir.y, layout.openDir.x);
+  const spotDist = Math.min(Math.max(depth * 0.5, 7), layout.depth, depth - 3);
+  const origin = doorP.clone().sub(new THREE.Vector3(out.x, out.y, 0).multiplyScalar(spotDist)).setZ(ground - layout.floorZ);
+  obj.position.copy(origin); obj.rotation.set(0, 0, rot); obj.visible = false; obj.updateMatrixWorld(true);
+  // El interior se recorta con una caja que baja hasta 0,6 m bajo el suelo (para conservar su propio suelo).
+  const interiorBox = new THREE.Matrix4().compose(innerCenter.clone().setZ(ground - 0.6 + (height + 0.6) / 2), qOut, new THREE.Vector3(depth / 2 - 0.4, width / 2 - 0.5, (height + 0.6) / 2));
+  clipToBox(obj, interiorBox.clone().invert());
+  const meshes: THREE.Mesh[] = []; obj.traverse(o => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
+  const map = info?.doorTexture ? await new THREE.TextureLoader().loadAsync(`/${index!.disc}/textures/${info.doorTexture}.png`).then(t => { t.colorSpace = THREE.SRGBColorSpace; return t; }).catch(() => undefined) : undefined;
+  const door = new RollerDoor(doorW, doorH, map);
+  door.group.position.copy(doorP).addScaledVector(new THREE.Vector3(out.x, out.y, 0), 0.05); door.group.rotation.z = yawOut;
+  const spot = new THREE.Mesh(new THREE.RingGeometry(2.0, 2.3, 4, 1), new THREE.MeshBasicMaterial({ color: 0x4dff9a, transparent: true, opacity: 0.8, depthWrite: false }));
+  spot.position.copy(doorP).sub(new THREE.Vector3(out.x, out.y, 0).multiplyScalar(spotDist)).setZ(ground + 0.06); spot.rotation.z = yawOut + Math.PI / 4; spot.visible = false;
+  scene.add(obj, door.group, spot);
+  // Plaza alcanzable: se mide hasta la pared del fondo del interior (dentro del edificio) y se deja margen
+  {
+    const r = new THREE.Raycaster(doorP.clone().setZ(ground + 1).addScaledVector(new THREE.Vector3(out.x, out.y, 0), -1.5), new THREE.Vector3(-out.x, -out.y, 0), 0, 60);
+    const innerInv = inner.clone().invert();
+    const hit = r.intersectObjects(meshes, false).find(h => { const l = h.point.clone().applyMatrix4(innerInv); return Math.abs(l.x) <= 1 && Math.abs(l.y) <= 1; });
+    const reach = hit ? hit.distance + 1.5 : spotDist + 3;
+    const d = Math.max(5.5, Math.min(spotDist, reach - 3.2));
+    spot.position.copy(doorP).sub(new THREE.Vector3(out.x, out.y, 0).multiplyScalar(d)).setZ(ground + 0.06);
+  }
+  garage = { zone: z, obj, door, spot, meshes, box: corridor, phase: "cerrada", t: 0 };
+  (garage as unknown as { inner: THREE.Matrix4; innerInv: THREE.Matrix4 }).inner = inner;
+  (garage as unknown as { innerInv: THREE.Matrix4 }).innerInv = interiorBox.clone().invert();
+  (garage as unknown as { info: unknown }).info = { depth, width, height, spotDist, doorW, doorH, source: info?.source };
+}
+function setCutout(on: boolean) {
+  if (!garage) return;
+  cutout.enabled.value = on ? 1 : 0;
+  // Se recorta el hueco de la puerta y el volumen interior del edificio (con margen: paredes exteriores y tejado se quedan).
+  cutoutState.on = on; cutoutState.inv.copy(garage.box).invert(); cutoutState.inv2.copy((garage as unknown as { inner: THREE.Matrix4 }).inner).invert();
+  cutout.worldToBox.value.copy(cutoutState.inv); cutout.worldToBox2.value.copy(cutoutState.inv2);
+  garage.obj.visible = on; garage.spot.visible = on;
+}
+// Colisiones: se atraviesa el hueco de la puerta; del interior solo cuenta lo que queda dentro del edificio.
+driver.ignore = (pt, obj) => {
+  if (insideCutout(pt) && !garage?.meshes.includes(obj as THREE.Mesh)) return true; // (el suelo queda fuera del recorte: 15 cm)
+  if (garage?.meshes.includes(obj as THREE.Mesh)) { const l = pt.clone().applyMatrix4((garage as unknown as { innerInv: THREE.Matrix4 }).innerInv); return Math.abs(l.x) > 1 || Math.abs(l.y) > 1 || Math.abs(l.z) > 1; }
+  return false;
+};
+function updateGarage(dt: number) {
+  const prompt = $("prompt");
+  if (!driving) { prompt.hidden = true; return; }
+  const p = driver.root.position;
+  // Precarga y colocación del garaje más cercano (a menos de 150 m)
+  const near = zones.map(z => ({ z, d: Math.hypot(z.position[0] - p.x, z.position[1] - p.y) })).sort((a, b) => a.d - b.d)[0];
+  if (near && near.d < 150 && (!garage || (garage.zone !== near.z && garage.phase === "cerrada"))) placeGarage(near.z);
+  if (!garage) { prompt.hidden = true; return; }
+  garage.door.update(dt);
+  const zp = new THREE.Vector3(...garage.zone.position);
+  const gi = garageInfo.find(g => g.collection === garage!.zone.collection);
+  const doorXY = gi ? new THREE.Vector3(gi.door[0], gi.door[1], 0) : zp;
+  const atGate = Math.hypot(zp.x - p.x, zp.y - p.y) < garage.zone.radius + 6 || Math.hypot(doorXY.x - p.x, doorXY.y - p.y) < 12;
+  // "Dentro" = ha cruzado el plano de la puerta hacia el edificio
+  const info = garageInfo.find(g => g.collection === garage!.zone.collection);
+  const outV = new THREE.Vector3(...((info?.out ?? [1, 0]) as [number, number]), 0);
+  const doorV = new THREE.Vector3(...((info?.door ?? garage.zone.position) as [number, number, number]));
+  const pastDoor = p.clone().sub(doorV).dot(outV);
+  const inside = pastDoor < -2.5;
+  // La puerta bloquea mientras no esté abierta del todo (y el edificio también fuera del pasillo)
+  if (garage.door.open < 0.95 && pastDoor < 1.2 && pastDoor > -1.5 && driver.speed > 0) {
+    const fwd = new THREE.Vector3(Math.cos(driver.yaw), Math.sin(driver.yaw), 0);
+    if (fwd.dot(outV) < 0) { p.addScaledVector(outV, 1.2 - pastDoor); driver.speed = 0; }
+  }
+  const label = ZONE_NAME[garage.zone.zoneType];
+  if (garage.phase === "cerrada") {
+    prompt.hidden = !(atGate && driver.kmh < 25);
+    prompt.innerHTML = `<kbd>E</kbd>Entrar al ${label}`;
+  } else if (garage.phase === "abierta") {
+    prompt.hidden = false; prompt.innerHTML = `Entra con el coche`;
+    if (pastDoor < -4) { garage.phase = "dentro"; garage.t = 0; }
+    else if (!atGate && garage.door.open >= 1) { garage.door.target = 0; garage.phase = "saliendo"; }
+  } else if (garage.phase === "dentro") {
+    const parked = Math.hypot(garage.spot.position.x - p.x, garage.spot.position.y - p.y) < 4 && driver.kmh < 3;
+    prompt.hidden = false; prompt.innerHTML = `Aparca en la plaza`;
+    if (parked) { garage.phase = "aparcado"; garage.t = 0; garage.door.target = 0; (garage.spot.material as THREE.MeshBasicMaterial).color.set(0xffb21a); }
+  } else if (garage.phase === "aparcado") {
+    // Vista de exposición: la cámara pasa sin cortes a girar alrededor del coche (como el garaje del juego)
+    garage.t += dt;
+    prompt.hidden = false; prompt.innerHTML = `En el ${label} · <kbd>E</kbd>Salir`;
+  } else if (garage.phase === "saliendo") {
+    prompt.hidden = true;
+    if (pastDoor > 3 && garage.door.open <= 0.001) { setCutout(false); garage.phase = "cerrada"; }
+    else if (pastDoor > 3 && garage.door.open >= 1) garage.door.target = 0; // ya fuera: se cierra detrás
+  }
+  // colisiones del interior mientras está abierto
+  if (garage.obj.visible) for (const m of garage.meshes) if (!driver.colliders.includes(m)) driver.colliders.push(m);
+}
+/** Cámara de exposición alrededor del coche aparcado (transición suave desde la de persecución). */
+function showcase(dt: number) {
+  const c = driver.root.position, a = (garage!.t * 0.25) + driver.yaw + Math.PI * 0.75;
+  const want = new THREE.Vector3(c.x + Math.cos(a) * 6.2, c.y + Math.sin(a) * 6.2, c.z + 2.1);
+  const k = Math.min(1, dt * (garage!.t < 1.5 ? 2.5 : 4));
+  camera.position.lerp(want, k);
+  controls.target.lerp(c.clone().setZ(c.z + 0.8), k);
+  camera.lookAt(controls.target);
+}
+function garageAction() {
+  if (!garage) return;
+  if (garage.phase === "cerrada" && !$("prompt").hidden) { setCutout(true); garage.door.target = 1; garage.phase = "abierta"; }
+  else if (garage.phase === "dentro" || garage.phase === "aparcado") { garage.door.target = 1; garage.phase = "saliendo"; }
+  else if (garage.phase === "saliendo") garage.door.target = 1;
+}
+
 // ---------- Vuelo libre ----------
 const keys = new Set<string>();
 addEventListener("keydown", e => {
@@ -444,6 +593,7 @@ addEventListener("keydown", e => {
   keys.add(e.code);
   if (driving) {
     if (e.code === "Escape") stopDriving();
+    if (e.code === "KeyE") garageAction();
     if (e.code === "KeyR") { const p = driver.root.position, z = groundFromSky(p.x, p.y); if (z !== null) driver.place(new THREE.Vector3(p.x, p.y, z), driver.yaw); }
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
     return;
@@ -485,8 +635,11 @@ renderer.setAnimationLoop(() => {
   if (driving) {
     refreshColliders(performance.now());
     const k = (a: string, b: string) => (keys.has(a) || keys.has(b) ? 1 : 0);
-    driver.update(dt, { throttle: k("KeyW", "ArrowUp"), brake: k("KeyS", "ArrowDown"), steer: k("KeyA", "ArrowLeft") - k("KeyD", "ArrowRight"), handbrake: keys.has("Space") });
-    driver.chase(camera, controls.target, dt);
+    const parkedNow = garage?.phase === "aparcado";
+    if (!parkedNow) driver.update(dt, { throttle: k("KeyW", "ArrowUp"), brake: k("KeyS", "ArrowDown"), steer: k("KeyA", "ArrowLeft") - k("KeyD", "ArrowRight"), handbrake: keys.has("Space") });
+    else driver.speed = 0; // aparcado: inmóvil (el freno con el coche parado sería marcha atrás)
+    if (garage?.phase === "aparcado") showcase(dt); else driver.chase(camera, controls.target, dt);
+    updateGarage(dt);
     $("kmh").textContent = String(Math.round(driver.kmh));
   } else {
     const mv = new THREE.Vector3();
@@ -522,7 +675,8 @@ try {
   const w = await fetch(`/${disc}/world.json`);
   if (w.ok) { const wj = (await w.json()) as { sections: WorldSection[]; tiles?: Tile[]; groups?: Group[] }; world = wj.sections; tiles = wj.tiles ?? []; groups = wj.groups ?? [];
     for (const k of ["carrera", "candado", "puerta"] as const) $(`n-${k}`).textContent = String(groups.filter(g => g.kind === k).length);
-    const zr = await fetch(`/${disc}/zones.json`); if (zr.ok) { zones = ((await zr.json()) as { zones: Zone[] }).zones; buildZones(); } buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
+    const zr = await fetch(`/${disc}/zones.json`); if (zr.ok) { zones = ((await zr.json()) as { zones: Zone[] }).zones; buildZones(); }
+    const gr = await fetch(`/${disc}/garages.json`); if (gr.ok) garageInfo = ((await gr.json()) as { garages: GarageInfo[] }).garages; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
   for (const it of index.items.filter(i => i.group === "Coches")) pick.append(new Option(it.label, it.label, it.label === "BMWM3GTRE46", it.label === "BMWM3GTRE46"));
   renderTree();
@@ -553,4 +707,4 @@ async function bench(n = 30, w = 1920, h = 1080, dpr = 1) {
   times.sort((a, b) => a - b);
   return { medianaMs: +times[n >> 1].toFixed(2), p95Ms: +times[Math.floor(n * 0.95)].toFixed(2), fpsEstimado: +(1000 / times[n >> 1]).toFixed(1), ...info };
 }
-(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city, bench, frameCity, idle: () => nearLoading === 0 && pendingAdd.length === 0, slow, driver, startDriving, keys };
+(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city, bench, frameCity, idle: () => nearLoading === 0 && pendingAdd.length === 0, slow, cutout, driver, startDriving, keys, garage: () => garage, garageAction, zones: () => zones };

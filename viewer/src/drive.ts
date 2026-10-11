@@ -19,9 +19,12 @@ export class Driver {
   private grounded = false;
   private ray = new THREE.Raycaster();
   colliders: THREE.Mesh[] = [];
+  /** Puntos a ignorar (p. ej. el edificio vaciado por el garaje). */
+  ignore: (p: THREE.Vector3, obj: THREE.Object3D) => boolean = () => false;
+  private firstValid(hits: THREE.Intersection[]) { return hits.find(h => !this.ignore(h.point, h.object)); }
   halfLength = 2.2; halfWidth = 0.9;
 
-  constructor() { this.root.add(this.body); this.ray.firstHitOnly = true; }
+  constructor() { this.root.add(this.body); }
 
   /** Coloca el modelo: lo centra, lo apoya en z = 0 y lo gira para que su morro mire a +X. */
   setModel(model: THREE.Object3D) {
@@ -45,7 +48,7 @@ export class Driver {
   groundAt(x: number, y: number, fromZ: number): { z: number; n: THREE.Vector3 } | null {
     this.ray.set(new THREE.Vector3(x, y, fromZ + 3), new THREE.Vector3(0, 0, -1));
     this.ray.far = 30;
-    const hit = this.ray.intersectObjects(this.colliders, false)[0];
+    const hit = this.firstValid(this.ray.intersectObjects(this.colliders, false));
     if (!hit) return null;
     const n = hit.face ? hit.face.normal.clone().transformDirection(hit.object.matrixWorld) : UP.clone();
     if (n.z < 0) n.negate();
@@ -77,7 +80,7 @@ export class Driver {
     if (Math.abs(step) > 0) {
       const dir = fwd.clone().multiplyScalar(Math.sign(step));
       this.ray.set(new THREE.Vector3(p.x, p.y, p.z + 0.7), dir); this.ray.far = this.halfLength + Math.abs(step) + 0.2;
-      const hit = this.ray.intersectObjects(this.colliders, false)[0];
+      const hit = this.firstValid(this.ray.intersectObjects(this.colliders, false));
       const wallish = hit?.face && Math.abs(hit.face.normal.clone().transformDirection(hit.object.matrixWorld).z) < 0.6;
       if (hit && wallish) { this.speed *= -0.25; } else p.addScaledVector(fwd, step);
     }

@@ -1,7 +1,8 @@
 // Construye en el hilo principal las casillas que descodifica tile-worker.ts. Coste aquí: crear objetos, no parsear.
 import * as THREE from "three/webgpu";
 import { MeshBVH } from "three-mesh-bvh";
-import { texture as texNode, uv, attribute, vertexColor, time, vec2, float } from "three/tsl";
+import { applyCutout } from "./garage";
+import { texture as texNode, uv, attribute, vertexColor, time, vec2, vec3, float } from "three/tsl";
 
 type Msg = { id: number; ok: boolean; result?: any; error?: string };
 const workers = Array.from({ length: Math.max(2, Math.min(4, (navigator.hardwareConcurrency || 4) - 2)) }, () => new Worker(new URL("./tile-worker.ts", import.meta.url), { type: "module" }));
@@ -34,7 +35,9 @@ export async function loadTile(url: string, materialCache: Map<string, THREE.Mat
     const key = `${m.name}|${m.image ?? ""}|${m.alphaMode}`;
     let mat = materialCache.get(key);
     if (!mat) {
-      const mb = new THREE.MeshBasicMaterial({ name: m.name, color: new THREE.Color(m.color[0], m.color[1], m.color[2]), side: THREE.DoubleSide, vertexColors: true });
+      // Sin textura (nivel lejano): material de nodos con color de vértice, para poder aplicar el recorte del garaje.
+      const mb: THREE.MeshBasicMaterial = m.image ? new THREE.MeshBasicMaterial({ name: m.name, color: new THREE.Color(m.color[0], m.color[1], m.color[2]), side: THREE.DoubleSide, vertexColors: true })
+        : (() => { const nm = new THREE.MeshBasicNodeMaterial({ name: m.name, side: THREE.DoubleSide }); nm.colorNode = vertexColor().rgb.mul(vec3(m.color[0], m.color[1], m.color[2])); applyCutout(nm); return nm as unknown as THREE.MeshBasicMaterial; })();
       if (m.image) mb.map = await texture(m.image);
       if (m.alphaMode === "MASK") mb.alphaTest = m.cutoff;
       if (m.water) { mb.transparent = true; mb.depthWrite = false; mb.opacity = 0.7; }
@@ -109,6 +112,7 @@ export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer
     if (kind === "water") { mat.opacityNode = vertexColor().a.mul(float(1.4)).min(1); mat.transparent = true; mat.depthWrite = false; mesh_renderOrder = 2; }
     if (kind === "shadow") { mat.opacityNode = tex.a; mat.transparent = true; mat.depthWrite = false; mat.polygonOffset = true; mat.polygonOffsetFactor = -1; mat.polygonOffsetUnits = -4; mesh_renderOrder = 1; }
     if (kind === "additive") { mat.opacityNode = tex.a; mat.transparent = true; mat.depthWrite = false; mat.blending = THREE.AdditiveBlending; }
+    if (mat.colorNode) applyCutout(mat);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.matrixAutoUpdate = false; mesh.renderOrder = mesh_renderOrder;
     root.add(mesh);
