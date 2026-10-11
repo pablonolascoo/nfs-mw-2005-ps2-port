@@ -21,6 +21,12 @@ Leyenda: **[V]** verificado · **[I]** inferido · **[H]** hipótesis · **[D]**
 - Solución (la ejecuta el usuario; acepta licencia de Apple): `softwareupdate --install-rosetta --agree-to-license`.
 - Estado de la decomp: matching (recompila el ELF original), sin target nativo. PS2: SLUS 22,7 %, A124 18,6 %.
 
+### Actualización tras instalar Rosetta 2 [V]
+- `ninja` completa la compilación en 1 min 34 s (M4, 10 hilos).
+- Progreso medido en local (SLUS-21351): 22,72 % de código idéntico al original, 47,17 % aproximado.
+- Funciones: 6 995 de 21 549. Código del juego: 26,30 % idéntico.
+- Enlazado: 0 de 306 archivos. Todavía no se puede generar un ELF completo, como era de esperar en esta fase del proyecto.
+
 ## Implicaciones para el port [D]
 - **Datos:** se extraen de SLES-53559 (español). Los formatos son iguales en SLUS (mismo pipeline).
 - **Lógica:** la decomp (SLUS) es la referencia de comportamiento; código nuevo nativo (C++/Metal) reutiliza sus estructuras.

@@ -9,7 +9,7 @@ Investigación, extracción y port nativo a partir de **SLES-53559** (PAL Españ
 | 2 · Primeros formatos | Hecho: contenedor, bChunk, HUFF/JDLZ, sólidos VIF, texturas PSMT4/8 (`docs/02`) |
 | 3 · Visor de recursos | Hecho: coches con texturas en Three.js/WebGPU |
 | 4 · Rockport navegable | Hecho: 718 secciones, 5,8 M triángulos, plano cenital (`docs/03`) |
-| Compilar la decomp en el M4 | Bloqueado: falta Rosetta 2 (`docs/01`) |
+| Compilar la decomp en el M4 | Hecho: compila en 1 min 34 s; 22,7 % del código PS2 idéntico (`docs/01`) |
 
 ## Uso
 ```bash
