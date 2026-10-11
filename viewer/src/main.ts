@@ -27,9 +27,19 @@ $("backend").textContent = (renderer.backend as { isWebGPUBackend?: boolean }).i
 // Coordenadas del juego: Z arriba [verificado en el código del escenario: la sombra suma en v3.z].
 THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
 const scene = new THREE.Scene();
-const SKY = 0x1c2a33;
-scene.background = new THREE.Color(SKY);
+// Cielo: el juego lo genera al vuelo (sus texturas no están en el disco). Degradado de tarde de Rockport.
+const SKY = 0x8fa3ad;
 scene.fog = new THREE.Fog(SKY, 1500, 9000);
+const sky = await (async () => {
+  const { positionWorld, cameraPosition, mix, color, smoothstep } = await import("three/tsl");
+  const skyMat = new THREE.MeshBasicNodeMaterial({ side: THREE.BackSide, depthWrite: false, fog: false });
+  const h = positionWorld.sub(cameraPosition).normalize().z;
+  skyMat.colorNode = mix(mix(color(0x8fa3ad), color(0xd9c7a2), smoothstep(0.25, -0.02, h)), color(0x3d5a73), smoothstep(0.05, 0.7, h));
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), skyMat);
+  sky.frustumCulled = false; sky.renderOrder = -10;
+  scene.add(sky);
+  return sky;
+})();
 const camera = new THREE.PerspectiveCamera(55, 1, 0.5, 80000);
 camera.up.set(0, 0, 1);
 camera.position.set(6, -6, 4);
@@ -42,6 +52,18 @@ const sun = new THREE.DirectionalLight(0xffe2b0, 2.2);
 sun.position.set(30, -20, 50);
 scene.add(sun);
 
+// Agua: los modelos TRN_Ocean_* solo cubren franjas de costa a z = 0; el cuerpo de agua no es geometría del mapa.
+// Hipótesis [H]: el juego dibuja un plano al nivel del mar. Aquí, plano de 40 km con ondulación procedural.
+{
+  const { positionWorld, sin, time, color, mix } = await import("three/tsl");
+  const waterMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
+  const w = sin(positionWorld.x.mul(0.05).add(time.mul(0.8))).mul(sin(positionWorld.y.mul(0.043).sub(time.mul(0.6))));
+  waterMat.colorNode = mix(color(0x22383f), color(0x3b5a62), w.mul(0.5).add(0.5));
+  waterMat.opacity = 0.92;
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(40000, 40000), waterMat);
+  water.position.set(2200, 1800, -0.2); water.renderOrder = 1; water.name = "agua (plano del mar)";
+  scene.add(water);
+}
 const content = new THREE.Group();   // recurso suelto (coche o sección)
 const city = new THREE.Group();      // Rockport completo
 const bounds = new THREE.Group();    // círculos de sección
@@ -406,6 +428,7 @@ renderer.setAnimationLoop(() => {
   if (keys.has("KeyE")) mv.z += 1; if (keys.has("KeyQ")) mv.z -= 1;
   if (mv.lengthSq()) { mv.normalize().multiplyScalar(speed); camera.position.add(mv); controls.target.add(mv); }
   controls.update();
+  sky.position.copy(camera.position); sky.scale.setScalar(camera.far * 0.9);
   const tS = performance.now(); streamTiles(tS); const tStream = performance.now() - tS;
   // Niebla proporcional a la distancia: de lejos se ve la ciudad entera, de cerca hay profundidad.
   const dist = camera.position.distanceTo(controls.target);

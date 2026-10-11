@@ -42,6 +42,10 @@ export class MaterialTable {
  */
 export function alphaFor(t: Texture): Pick<GlbMaterial, "alphaMode" | "alphaCutoff" | "extras"> {
   const usage = t.alphaUsage, blend = t.alphaBlend;
+  // Sombras horneadas (SHD_*): RGB negro y alfa = densidad de sombra; se mezclan encima del suelo [verificado: 1 026 texturas].
+  if (t.name.startsWith("SHD_")) return { alphaMode: "BLEND", extras: { blend: "sombra" } };
+  // Agua animada (ANM_WATERA_000…013): semitransparente por el alfa de vértice (0,5 en el océano) [verificado].
+  if (t.name.startsWith("ANM_WATER")) return { alphaMode: "BLEND", extras: { blend: "agua" } };
   if (usage === 0 || (usage === 2 && blend === 0)) return { alphaMode: "OPAQUE" };
   if (blend === 2 || blend === 6) return { alphaMode: "BLEND", extras: { blend: "aditiva" } };
   if (usage === 1) return { alphaMode: "MASK", alphaCutoff: 0.5 };

@@ -8629,7 +8629,7 @@
    "near": "tiles/-1_-1.glb",
    "far": "tiles/-1_-1_far.glb",
    "tris": 14142,
-   "farTris": 1696,
+   "farTris": 1690,
    "objects": 298,
    "zMin": 50.57332992553711,
    "zMax": 219.1339111328125
@@ -8642,7 +8642,7 @@
    "near": "tiles/-1_-2.glb",
    "far": "tiles/-1_-2_far.glb",
    "tris": 13791,
-   "farTris": 1335,
+   "farTris": 1279,
    "objects": 288,
    "zMin": 60.631736755371094,
    "zMax": 338.9969482421875
@@ -8681,7 +8681,7 @@
    "near": "tiles/-1_10.glb",
    "far": "tiles/-1_10_far.glb",
    "tris": 32096,
-   "farTris": 5410,
+   "farTris": 5181,
    "objects": 515,
    "zMin": 19.865264892578125,
    "zMax": 646.5848388671875
@@ -8720,7 +8720,7 @@
    "near": "tiles/-1_5.glb",
    "far": "tiles/-1_5_far.glb",
    "tris": 27989,
-   "farTris": 5284,
+   "farTris": 5043,
    "objects": 560,
    "zMin": 208.37774658203125,
    "zMax": 398.5625
@@ -8733,7 +8733,7 @@
    "near": "tiles/-1_6.glb",
    "far": "tiles/-1_6_far.glb",
    "tris": 4773,
-   "farTris": 808,
+   "farTris": 789,
    "objects": 36,
    "zMin": 186.82421875,
    "zMax": 303.5284118652344
@@ -8746,7 +8746,7 @@
    "near": "tiles/-1_7.glb",
    "far": "tiles/-1_7_far.glb",
    "tris": 46408,
-   "farTris": 7038,
+   "farTris": 6867,
    "objects": 678,
    "zMin": 172.9418182373047,
    "zMax": 270.2265625
@@ -8759,7 +8759,7 @@
    "near": "tiles/-1_8.glb",
    "far": "tiles/-1_8_far.glb",
    "tris": 29268,
-   "farTris": 5774,
+   "farTris": 5599,
    "objects": 366,
    "zMin": 181.71070861816406,
    "zMax": 280.07598876953125
@@ -8772,7 +8772,7 @@
    "near": "tiles/-1_9.glb",
    "far": "tiles/-1_9_far.glb",
    "tris": 54138,
-   "farTris": 7110,
+   "farTris": 6873,
    "objects": 766,
    "zMin": -228.10562133789062,
    "zMax": 438.47479248046875
@@ -8837,7 +8837,7 @@
    "near": "tiles/-2_5.glb",
    "far": "tiles/-2_5_far.glb",
    "tris": 2118,
-   "farTris": 386,
+   "farTris": 306,
    "objects": 51,
    "zMin": 52.20220947265625,
    "zMax": 397.5
@@ -8850,7 +8850,7 @@
    "near": "tiles/-2_6.glb",
    "far": "tiles/-2_6_far.glb",
    "tris": 25611,
-   "farTris": 3617,
+   "farTris": 3260,
    "objects": 421,
    "zMin": -239.768310546875,
    "zMax": 298.3851318359375
@@ -8863,7 +8863,7 @@
    "near": "tiles/-2_7.glb",
    "far": "tiles/-2_7_far.glb",
    "tris": 25110,
-   "farTris": 4372,
+   "farTris": 4052,
    "objects": 421,
    "zMin": 185.8376007080078,
    "zMax": 294.96875
@@ -8915,7 +8915,7 @@
    "near": "tiles/-3_6.glb",
    "far": "tiles/-3_6_far.glb",
    "tris": 25214,
-   "farTris": 3873,
+   "farTris": 3649,
    "objects": 414,
    "zMin": 96.37500762939453,
    "zMax": 333.16015625
@@ -8928,7 +8928,7 @@
    "near": "tiles/-3_7.glb",
    "far": "tiles/-3_7_far.glb",
    "tris": 1325,
-   "farTris": 608,
+   "farTris": 572,
    "objects": 30,
    "zMin": 126.6614990234375,
    "zMax": 504.7004089355469
@@ -8954,7 +8954,7 @@
    "near": "tiles/-4_6.glb",
    "far": "tiles/-4_6_far.glb",
    "tris": 4745,
-   "farTris": 1547,
+   "farTris": 1463,
    "objects": 102,
    "zMin": 195.20889282226562,
    "zMax": 330.15625
@@ -8980,7 +8980,7 @@
    "near": "tiles/0_-1.glb",
    "far": "tiles/0_-1_far.glb",
    "tris": 40041,
-   "farTris": 5589,
+   "farTris": 5414,
    "objects": 838,
    "zMin": 58.10438919067383,
    "zMax": 283.333984375
@@ -8993,7 +8993,7 @@
    "near": "tiles/0_-2.glb",
    "far": "tiles/0_-2_far.glb",
    "tris": 23417,
-   "farTris": 2763,
+   "farTris": 2716,
    "objects": 472,
    "zMin": 61.46063232421875,
    "zMax": 249.8623809814453
@@ -9006,7 +9006,7 @@
    "near": "tiles/0_0.glb",
    "far": "tiles/0_0_far.glb",
    "tris": 3090,
-   "farTris": 580,
+   "farTris": 534,
    "objects": 47,
    "zMin": 90.4274673461914,
    "zMax": 272.808837890625
@@ -9032,7 +9032,7 @@
    "near": "tiles/0_10.glb",
    "far": "tiles/0_10_far.glb",
    "tris": 40162,
-   "farTris": 6593,
+   "farTris": 6462,
    "objects": 853,
    "zMin": 180.6269989013672,
    "zMax": 331.10919189453125
@@ -9045,7 +9045,7 @@
    "near": "tiles/0_11.glb",
    "far": "tiles/0_11_far.glb",
    "tris": 17989,
-   "farTris": 5221,
+   "farTris": 5070,
    "objects": 315,
    "zMin": 216.52427673339844,
    "zMax": 348.5907897949219
@@ -9097,7 +9097,7 @@
    "near": "tiles/0_6.glb",
    "far": "tiles/0_6_far.glb",
    "tris": 29294,
-   "farTris": 5946,
+   "farTris": 5790,
    "objects": 323,
    "zMin": 161.4150390625,
    "zMax": 245.29222106933594
@@ -9110,7 +9110,7 @@
    "near": "tiles/0_7.glb",
    "far": "tiles/0_7_far.glb",
    "tris": 54917,
-   "farTris": 7225,
+   "farTris": 6598,
    "objects": 667,
    "zMin": 176.99395751953125,
    "zMax": 253.14047241210938
@@ -9123,7 +9123,7 @@
    "near": "tiles/0_8.glb",
    "far": "tiles/0_8_far.glb",
    "tris": 41862,
-   "farTris": 5016,
+   "farTris": 4785,
    "objects": 514,
    "zMin": 184.59451293945312,
    "zMax": 253.22195434570312
@@ -9136,7 +9136,7 @@
    "near": "tiles/0_9.glb",
    "far": "tiles/0_9_far.glb",
    "tris": 53909,
-   "farTris": 8461,
+   "farTris": 8287,
    "objects": 1056,
    "zMin": 184.21875,
    "zMax": 270.1315002441406
@@ -9149,7 +9149,7 @@
    "near": "tiles/1_-1.glb",
    "far": "tiles/1_-1_far.glb",
    "tris": 16503,
-   "farTris": 6397,
+   "farTris": 6381,
    "objects": 156,
    "zMin": 39.47694778442383,
    "zMax": 356.4668884277344
@@ -9162,7 +9162,7 @@
    "near": "tiles/1_-2.glb",
    "far": "tiles/1_-2_far.glb",
    "tris": 49358,
-   "farTris": 4175,
+   "farTris": 3997,
    "objects": 956,
    "zMin": 50.31991195678711,
    "zMax": 400.41552734375
@@ -9175,7 +9175,7 @@
    "near": "tiles/1_-3.glb",
    "far": "tiles/1_-3_far.glb",
    "tris": 17089,
-   "farTris": 1849,
+   "farTris": 1816,
    "objects": 297,
    "zMin": 88.77436065673828,
    "zMax": 376.3291320800781
@@ -9201,7 +9201,7 @@
    "near": "tiles/1_0.glb",
    "far": "tiles/1_0_far.glb",
    "tris": 67457,
-   "farTris": 7566,
+   "farTris": 7254,
    "objects": 1007,
    "zMin": 76.6583251953125,
    "zMax": 242.1244659423828
@@ -9214,7 +9214,7 @@
    "near": "tiles/1_1.glb",
    "far": "tiles/1_1_far.glb",
    "tris": 43489,
-   "farTris": 4311,
+   "farTris": 4080,
    "objects": 875,
    "zMin": 91.03392028808594,
    "zMax": 295.2260437011719
@@ -9227,7 +9227,7 @@
    "near": "tiles/1_10.glb",
    "far": "tiles/1_10_far.glb",
    "tris": 51099,
-   "farTris": 8792,
+   "farTris": 8390,
    "objects": 718,
    "zMin": 182.88348388671875,
    "zMax": 285.778564453125
@@ -9240,7 +9240,7 @@
    "near": "tiles/1_11.glb",
    "far": "tiles/1_11_far.glb",
    "tris": 24358,
-   "farTris": 5881,
+   "farTris": 5646,
    "objects": 348,
    "zMin": 117.45805358886719,
    "zMax": 351.15081787109375
@@ -9266,7 +9266,7 @@
    "near": "tiles/1_2.glb",
    "far": "tiles/1_2_far.glb",
    "tris": 6868,
-   "farTris": 1080,
+   "farTris": 986,
    "objects": 86,
    "zMin": 102.89289093017578,
    "zMax": 187.39645385742188
@@ -9292,7 +9292,7 @@
    "near": "tiles/1_4.glb",
    "far": "tiles/1_4_far.glb",
    "tris": 21353,
-   "farTris": 4446,
+   "farTris": 4102,
    "objects": 385,
    "zMin": 105.09765625,
    "zMax": 332.78125
@@ -9305,7 +9305,7 @@
    "near": "tiles/1_5.glb",
    "far": "tiles/1_5_far.glb",
    "tris": 22881,
-   "farTris": 5398,
+   "farTris": 5283,
    "objects": 337,
    "zMin": 120.4716796875,
    "zMax": 252.05078125
@@ -9318,7 +9318,7 @@
    "near": "tiles/1_6.glb",
    "far": "tiles/1_6_far.glb",
    "tris": 74640,
-   "farTris": 11597,
+   "farTris": 11231,
    "objects": 1048,
    "zMin": 146.06236267089844,
    "zMax": 225.44375610351562
@@ -9331,7 +9331,7 @@
    "near": "tiles/1_7.glb",
    "far": "tiles/1_7_far.glb",
    "tris": 37776,
-   "farTris": 5630,
+   "farTris": 5416,
    "objects": 497,
    "zMin": 151.93264770507812,
    "zMax": 278.9426574707031
@@ -9344,7 +9344,7 @@
    "near": "tiles/1_8.glb",
    "far": "tiles/1_8_far.glb",
    "tris": 101275,
-   "farTris": 12527,
+   "farTris": 11861,
    "objects": 1682,
    "zMin": 179.38870239257812,
    "zMax": 250.01304626464844
@@ -9357,7 +9357,7 @@
    "near": "tiles/1_9.glb",
    "far": "tiles/1_9_far.glb",
    "tris": 33870,
-   "farTris": 5460,
+   "farTris": 5037,
    "objects": 659,
    "zMin": 186.80784606933594,
    "zMax": 292.1333923339844
@@ -9370,7 +9370,7 @@
    "near": "tiles/10_-1.glb",
    "far": "tiles/10_-1_far.glb",
    "tris": 19315,
-   "farTris": 3054,
+   "farTris": 3045,
    "objects": 398,
    "zMin": -14.495549201965332,
    "zMax": 55.34330368041992
@@ -9383,7 +9383,7 @@
    "near": "tiles/10_0.glb",
    "far": "tiles/10_0_far.glb",
    "tris": 54988,
-   "farTris": 9318,
+   "farTris": 9022,
    "objects": 1126,
    "zMin": -15.881136894226074,
    "zMax": 141.86160278320312
@@ -9396,7 +9396,7 @@
    "near": "tiles/10_1.glb",
    "far": "tiles/10_1_far.glb",
    "tris": 72734,
-   "farTris": 9486,
+   "farTris": 8973,
    "objects": 1323,
    "zMin": 18.07105255126953,
    "zMax": 146.49615478515625
@@ -9409,7 +9409,7 @@
    "near": "tiles/10_2.glb",
    "far": "tiles/10_2_far.glb",
    "tris": 64351,
-   "farTris": 7421,
+   "farTris": 7044,
    "objects": 1156,
    "zMin": -9.85704231262207,
    "zMax": 129.47239685058594
@@ -9422,7 +9422,7 @@
    "near": "tiles/10_3.glb",
    "far": "tiles/10_3_far.glb",
    "tris": 51024,
-   "farTris": 7277,
+   "farTris": 6909,
    "objects": 877,
    "zMin": -0.3125,
    "zMax": 102.10429382324219
@@ -9435,7 +9435,7 @@
    "near": "tiles/10_4.glb",
    "far": "tiles/10_4_far.glb",
    "tris": 52125,
-   "farTris": 6256,
+   "farTris": 5847,
    "objects": 824,
    "zMin": -10.347118377685547,
    "zMax": 114.95768737792969
@@ -9448,7 +9448,7 @@
    "near": "tiles/10_5.glb",
    "far": "tiles/10_5_far.glb",
    "tris": 39570,
-   "farTris": 4766,
+   "farTris": 4494,
    "objects": 748,
    "zMin": -0.8671875,
    "zMax": 115.93494415283203
@@ -9461,7 +9461,7 @@
    "near": "tiles/10_6.glb",
    "far": "tiles/10_6_far.glb",
    "tris": 31424,
-   "farTris": 4861,
+   "farTris": 4775,
    "objects": 659,
    "zMin": -4.323459625244141,
    "zMax": 110.42475128173828
@@ -9474,7 +9474,7 @@
    "near": "tiles/10_7.glb",
    "far": "tiles/10_7_far.glb",
    "tris": 22381,
-   "farTris": 2881,
+   "farTris": 2784,
    "objects": 432,
    "zMin": -4.174689292907715,
    "zMax": 76.52350616455078
@@ -9487,7 +9487,7 @@
    "near": "tiles/10_8.glb",
    "far": "tiles/10_8_far.glb",
    "tris": 18079,
-   "farTris": 3063,
+   "farTris": 2874,
    "objects": 255,
    "zMin": -23.089962005615234,
    "zMax": 53.85400390625
@@ -9513,7 +9513,7 @@
    "near": "tiles/11_0.glb",
    "far": "tiles/11_0_far.glb",
    "tris": 91664,
-   "farTris": 10669,
+   "farTris": 10234,
    "objects": 1553,
    "zMin": -18.28487777709961,
    "zMax": 56.24396514892578
@@ -9526,7 +9526,7 @@
    "near": "tiles/11_1.glb",
    "far": "tiles/11_1_far.glb",
    "tris": 89861,
-   "farTris": 12373,
+   "farTris": 11767,
    "objects": 1638,
    "zMin": -12.045609474182129,
    "zMax": 102.59986877441406
@@ -9539,7 +9539,7 @@
    "near": "tiles/11_2.glb",
    "far": "tiles/11_2_far.glb",
    "tris": 96965,
-   "farTris": 10872,
+   "farTris": 10470,
    "objects": 1774,
    "zMin": 1.1233341693878174,
    "zMax": 101.5567626953125
@@ -9552,7 +9552,7 @@
    "near": "tiles/11_3.glb",
    "far": "tiles/11_3_far.glb",
    "tris": 29662,
-   "farTris": 3791,
+   "farTris": 3734,
    "objects": 676,
    "zMin": -3.948155164718628,
    "zMax": 74.85570526123047
@@ -9617,7 +9617,7 @@
    "near": "tiles/12_2.glb",
    "far": "tiles/12_2_far.glb",
    "tris": 10605,
-   "farTris": 1624,
+   "farTris": 1569,
    "objects": 248,
    "zMin": -1.289299488067627,
    "zMax": 33.355289459228516
@@ -9760,7 +9760,7 @@
    "near": "tiles/2_-1.glb",
    "far": "tiles/2_-1_far.glb",
    "tris": 53716,
-   "farTris": 6081,
+   "farTris": 5809,
    "objects": 842,
    "zMin": 57.181739807128906,
    "zMax": 369.4082946777344
@@ -9773,7 +9773,7 @@
    "near": "tiles/2_-2.glb",
    "far": "tiles/2_-2_far.glb",
    "tris": 51236,
-   "farTris": 8032,
+   "farTris": 7936,
    "objects": 985,
    "zMin": 68.47537231445312,
    "zMax": 275.5235290527344
@@ -9786,7 +9786,7 @@
    "near": "tiles/2_-3.glb",
    "far": "tiles/2_-3_far.glb",
    "tris": 34145,
-   "farTris": 4072,
+   "farTris": 3932,
    "objects": 567,
    "zMin": 86.54061126708984,
    "zMax": 242.8416748046875
@@ -9799,7 +9799,7 @@
    "near": "tiles/2_0.glb",
    "far": "tiles/2_0_far.glb",
    "tris": 69803,
-   "farTris": 8866,
+   "farTris": 8628,
    "objects": 1006,
    "zMin": 56.54411315917969,
    "zMax": 356.0840759277344
@@ -9812,7 +9812,7 @@
    "near": "tiles/2_1.glb",
    "far": "tiles/2_1_far.glb",
    "tris": 49518,
-   "farTris": 7066,
+   "farTris": 6547,
    "objects": 884,
    "zMin": -3.1452484130859375,
    "zMax": 348.509521484375
@@ -9825,7 +9825,7 @@
    "near": "tiles/2_10.glb",
    "far": "tiles/2_10_far.glb",
    "tris": 48336,
-   "farTris": 8717,
+   "farTris": 7755,
    "objects": 637,
    "zMin": 100.39330291748047,
    "zMax": 299.5570373535156
@@ -9838,7 +9838,7 @@
    "near": "tiles/2_11.glb",
    "far": "tiles/2_11_far.glb",
    "tris": 20177,
-   "farTris": 5583,
+   "farTris": 5556,
    "objects": 299,
    "zMin": 148.5804443359375,
    "zMax": 271.58087158203125
@@ -9890,7 +9890,7 @@
    "near": "tiles/2_3.glb",
    "far": "tiles/2_3_far.glb",
    "tris": 3725,
-   "farTris": 917,
+   "farTris": 815,
    "objects": 40,
    "zMin": 22.08732795715332,
    "zMax": 258.890625
@@ -9903,7 +9903,7 @@
    "near": "tiles/2_4.glb",
    "far": "tiles/2_4_far.glb",
    "tris": 22373,
-   "farTris": 5323,
+   "farTris": 5112,
    "objects": 336,
    "zMin": 76.515625,
    "zMax": 269.953125
@@ -9916,7 +9916,7 @@
    "near": "tiles/2_5.glb",
    "far": "tiles/2_5_far.glb",
    "tris": 55856,
-   "farTris": 9173,
+   "farTris": 8987,
    "objects": 809,
    "zMin": 127.98046875,
    "zMax": 271.09765625
@@ -9929,7 +9929,7 @@
    "near": "tiles/2_6.glb",
    "far": "tiles/2_6_far.glb",
    "tris": 47263,
-   "farTris": 8033,
+   "farTris": 7918,
    "objects": 714,
    "zMin": 141.51394653320312,
    "zMax": 221.72683715820312
@@ -9942,7 +9942,7 @@
    "near": "tiles/2_7.glb",
    "far": "tiles/2_7_far.glb",
    "tris": 24783,
-   "farTris": 5135,
+   "farTris": 4849,
    "objects": 386,
    "zMin": 151.8701934814453,
    "zMax": 250.16038513183594
@@ -9955,7 +9955,7 @@
    "near": "tiles/2_8.glb",
    "far": "tiles/2_8_far.glb",
    "tris": 61253,
-   "farTris": 10683,
+   "farTris": 10388,
    "objects": 1321,
    "zMin": 188.3682098388672,
    "zMax": 492.0498046875
@@ -9968,7 +9968,7 @@
    "near": "tiles/2_9.glb",
    "far": "tiles/2_9_far.glb",
    "tris": 88117,
-   "farTris": 13069,
+   "farTris": 12533,
    "objects": 1452,
    "zMin": 91.35578918457031,
    "zMax": 454.329345703125
@@ -10007,7 +10007,7 @@
    "near": "tiles/3_-1.glb",
    "far": "tiles/3_-1_far.glb",
    "tris": 39240,
-   "farTris": 5928,
+   "farTris": 5851,
    "objects": 702,
    "zMin": 69.45747375488281,
    "zMax": 267.7609558105469
@@ -10020,7 +10020,7 @@
    "near": "tiles/3_-2.glb",
    "far": "tiles/3_-2_far.glb",
    "tris": 16698,
-   "farTris": 3074,
+   "farTris": 3023,
    "objects": 292,
    "zMin": 70.238525390625,
    "zMax": 260.9389953613281
@@ -10033,7 +10033,7 @@
    "near": "tiles/3_-3.glb",
    "far": "tiles/3_-3_far.glb",
    "tris": 8285,
-   "farTris": 1170,
+   "farTris": 1119,
    "objects": 178,
    "zMin": -20.079851150512695,
    "zMax": 268.17584228515625
@@ -10046,7 +10046,7 @@
    "near": "tiles/3_0.glb",
    "far": "tiles/3_0_far.glb",
    "tris": 57047,
-   "farTris": 8832,
+   "farTris": 8740,
    "objects": 1065,
    "zMin": 11.49197006225586,
    "zMax": 499.844482421875
@@ -10059,7 +10059,7 @@
    "near": "tiles/3_1.glb",
    "far": "tiles/3_1_far.glb",
    "tris": 37197,
-   "farTris": 5671,
+   "farTris": 5441,
    "objects": 638,
    "zMin": 75.64920806884766,
    "zMax": 237.36221313476562
@@ -10072,7 +10072,7 @@
    "near": "tiles/3_10.glb",
    "far": "tiles/3_10_far.glb",
    "tris": 34996,
-   "farTris": 6719,
+   "farTris": 5906,
    "objects": 474,
    "zMin": 80.28620147705078,
    "zMax": 321.40625
@@ -10085,7 +10085,7 @@
    "near": "tiles/3_11.glb",
    "far": "tiles/3_11_far.glb",
    "tris": 15313,
-   "farTris": 3889,
+   "farTris": 3759,
    "objects": 377,
    "zMin": 164.64402770996094,
    "zMax": 312.4296875
@@ -10124,7 +10124,7 @@
    "near": "tiles/3_2.glb",
    "far": "tiles/3_2_far.glb",
    "tris": 31789,
-   "farTris": 5243,
+   "farTris": 5049,
    "objects": 515,
    "zMin": 93.84723663330078,
    "zMax": 174.875
@@ -10137,7 +10137,7 @@
    "near": "tiles/3_3.glb",
    "far": "tiles/3_3_far.glb",
    "tris": 48567,
-   "farTris": 6854,
+   "farTris": 6499,
    "objects": 758,
    "zMin": 75.67578125,
    "zMax": 220.96888732910156
@@ -10150,7 +10150,7 @@
    "near": "tiles/3_4.glb",
    "far": "tiles/3_4_far.glb",
    "tris": 29014,
-   "farTris": 6098,
+   "farTris": 5727,
    "objects": 311,
    "zMin": 124.44087982177734,
    "zMax": 252.98162841796875
@@ -10163,7 +10163,7 @@
    "near": "tiles/3_5.glb",
    "far": "tiles/3_5_far.glb",
    "tris": 50756,
-   "farTris": 9250,
+   "farTris": 8889,
    "objects": 647,
    "zMin": 130.1009979248047,
    "zMax": 226.82861328125
@@ -10176,7 +10176,7 @@
    "near": "tiles/3_6.glb",
    "far": "tiles/3_6_far.glb",
    "tris": 42245,
-   "farTris": 8520,
+   "farTris": 8118,
    "objects": 482,
    "zMin": 141.5546875,
    "zMax": 217.02285766601562
@@ -10189,7 +10189,7 @@
    "near": "tiles/3_7.glb",
    "far": "tiles/3_7_far.glb",
    "tris": 22005,
-   "farTris": 4689,
+   "farTris": 4251,
    "objects": 259,
    "zMin": 162.9453125,
    "zMax": 238.08721923828125
@@ -10202,7 +10202,7 @@
    "near": "tiles/3_8.glb",
    "far": "tiles/3_8_far.glb",
    "tris": 17794,
-   "farTris": 3029,
+   "farTris": 2917,
    "objects": 337,
    "zMin": 187.82846069335938,
    "zMax": 256.27838134765625
@@ -10215,7 +10215,7 @@
    "near": "tiles/3_9.glb",
    "far": "tiles/3_9_far.glb",
    "tris": 53205,
-   "farTris": 8549,
+   "farTris": 8212,
    "objects": 663,
    "zMin": 77.2734375,
    "zMax": 275.17498779296875
@@ -10228,7 +10228,7 @@
    "near": "tiles/4_-1.glb",
    "far": "tiles/4_-1_far.glb",
    "tris": 43048,
-   "farTris": 7629,
+   "farTris": 7450,
    "objects": 806,
    "zMin": 75.8515625,
    "zMax": 221.98695373535156
@@ -10241,7 +10241,7 @@
    "near": "tiles/4_-2.glb",
    "far": "tiles/4_-2_far.glb",
    "tris": 29425,
-   "farTris": 6320,
+   "farTris": 6246,
    "objects": 424,
    "zMin": 76.83984375,
    "zMax": 178.25390625
@@ -10267,7 +10267,7 @@
    "near": "tiles/4_0.glb",
    "far": "tiles/4_0_far.glb",
    "tris": 58494,
-   "farTris": 10426,
+   "farTris": 10114,
    "objects": 1074,
    "zMin": 80.3271484375,
    "zMax": 313.1184387207031
@@ -10280,7 +10280,7 @@
    "near": "tiles/4_1.glb",
    "far": "tiles/4_1_far.glb",
    "tris": 56569,
-   "farTris": 6467,
+   "farTris": 6151,
    "objects": 861,
    "zMin": 74.20854949951172,
    "zMax": 163.6952667236328
@@ -10293,7 +10293,7 @@
    "near": "tiles/4_10.glb",
    "far": "tiles/4_10_far.glb",
    "tris": 38311,
-   "farTris": 8157,
+   "farTris": 7775,
    "objects": 714,
    "zMin": 162.52734375,
    "zMax": 327.19921875
@@ -10306,7 +10306,7 @@
    "near": "tiles/4_11.glb",
    "far": "tiles/4_11_far.glb",
    "tris": 1767,
-   "farTris": 501,
+   "farTris": 498,
    "objects": 24,
    "zMin": 201.49374389648438,
    "zMax": 336.17578125
@@ -10319,7 +10319,7 @@
    "near": "tiles/4_2.glb",
    "far": "tiles/4_2_far.glb",
    "tris": 80575,
-   "farTris": 11441,
+   "farTris": 11135,
    "objects": 1456,
    "zMin": 93.98326873779297,
    "zMax": 178.27796936035156
@@ -10332,7 +10332,7 @@
    "near": "tiles/4_3.glb",
    "far": "tiles/4_3_far.glb",
    "tris": 18162,
-   "farTris": 2452,
+   "farTris": 2329,
    "objects": 299,
    "zMin": 121.98639678955078,
    "zMax": 189.16477966308594
@@ -10345,7 +10345,7 @@
    "near": "tiles/4_4.glb",
    "far": "tiles/4_4_far.glb",
    "tris": 51416,
-   "farTris": 10976,
+   "farTris": 10659,
    "objects": 729,
    "zMin": 53.07548522949219,
    "zMax": 236.82763671875
@@ -10358,7 +10358,7 @@
    "near": "tiles/4_5.glb",
    "far": "tiles/4_5_far.glb",
    "tris": 56727,
-   "farTris": 11136,
+   "farTris": 10502,
    "objects": 703,
    "zMin": 129.87542724609375,
    "zMax": 222.7460174560547
@@ -10371,7 +10371,7 @@
    "near": "tiles/4_6.glb",
    "far": "tiles/4_6_far.glb",
    "tris": 13258,
-   "farTris": 3037,
+   "farTris": 2951,
    "objects": 128,
    "zMin": 129.76953125,
    "zMax": 199.43873596191406
@@ -10384,7 +10384,7 @@
    "near": "tiles/4_7.glb",
    "far": "tiles/4_7_far.glb",
    "tris": 2181,
-   "farTris": 946,
+   "farTris": 885,
    "objects": 33,
    "zMin": 135.7421875,
    "zMax": 219.59898376464844
@@ -10397,7 +10397,7 @@
    "near": "tiles/4_8.glb",
    "far": "tiles/4_8_far.glb",
    "tris": 20720,
-   "farTris": 3183,
+   "farTris": 2927,
    "objects": 339,
    "zMin": 156.41346740722656,
    "zMax": 222.04005432128906
@@ -10410,7 +10410,7 @@
    "near": "tiles/4_9.glb",
    "far": "tiles/4_9_far.glb",
    "tris": 46223,
-   "farTris": 11753,
+   "farTris": 11077,
    "objects": 619,
    "zMin": 155.74407958984375,
    "zMax": 254.58255004882812
@@ -10423,7 +10423,7 @@
    "near": "tiles/5_-1.glb",
    "far": "tiles/5_-1_far.glb",
    "tris": 35424,
-   "farTris": 6840,
+   "farTris": 6660,
    "objects": 741,
    "zMin": 72.60798645019531,
    "zMax": 541.5723876953125
@@ -10436,7 +10436,7 @@
    "near": "tiles/5_-2.glb",
    "far": "tiles/5_-2_far.glb",
    "tris": 19462,
-   "farTris": 3479,
+   "farTris": 3456,
    "objects": 215,
    "zMin": 93.85813903808594,
    "zMax": 178.13844299316406
@@ -10475,7 +10475,7 @@
    "near": "tiles/5_0.glb",
    "far": "tiles/5_0_far.glb",
    "tris": 53441,
-   "farTris": 10166,
+   "farTris": 9672,
    "objects": 1093,
    "zMin": 67.32245635986328,
    "zMax": 137.18821716308594
@@ -10488,7 +10488,7 @@
    "near": "tiles/5_1.glb",
    "far": "tiles/5_1_far.glb",
    "tris": 21768,
-   "farTris": 3124,
+   "farTris": 2987,
    "objects": 282,
    "zMin": 80.4435806274414,
    "zMax": 195.2022705078125
@@ -10501,7 +10501,7 @@
    "near": "tiles/5_10.glb",
    "far": "tiles/5_10_far.glb",
    "tris": 73135,
-   "farTris": 15022,
+   "farTris": 13889,
    "objects": 929,
    "zMin": 182.11328125,
    "zMax": 308.49688720703125
@@ -10514,7 +10514,7 @@
    "near": "tiles/5_11.glb",
    "far": "tiles/5_11_far.glb",
    "tris": 29003,
-   "farTris": 4827,
+   "farTris": 4560,
    "objects": 386,
    "zMin": 206.203125,
    "zMax": 336.4922180175781
@@ -10540,7 +10540,7 @@
    "near": "tiles/5_2.glb",
    "far": "tiles/5_2_far.glb",
    "tris": 42200,
-   "farTris": 8480,
+   "farTris": 8178,
    "objects": 656,
    "zMin": 0.00003746032598428428,
    "zMax": 177.88369750976562
@@ -10553,7 +10553,7 @@
    "near": "tiles/5_3.glb",
    "far": "tiles/5_3_far.glb",
    "tris": 75257,
-   "farTris": 10169,
+   "farTris": 9780,
    "objects": 1231,
    "zMin": -81.73129272460938,
    "zMax": 190.21717834472656
@@ -10566,7 +10566,7 @@
    "near": "tiles/5_4.glb",
    "far": "tiles/5_4_far.glb",
    "tris": 18881,
-   "farTris": 3446,
+   "farTris": 3342,
    "objects": 297,
    "zMin": 113.44436645507812,
    "zMax": 197.0738525390625
@@ -10579,7 +10579,7 @@
    "near": "tiles/5_5.glb",
    "far": "tiles/5_5_far.glb",
    "tris": 12665,
-   "farTris": 2651,
+   "farTris": 2580,
    "objects": 140,
    "zMin": 134.52719116210938,
    "zMax": 236.63082885742188
@@ -10592,7 +10592,7 @@
    "near": "tiles/5_6.glb",
    "far": "tiles/5_6_far.glb",
    "tris": 68924,
-   "farTris": 9637,
+   "farTris": 9314,
    "objects": 1197,
    "zMin": 100.92037963867188,
    "zMax": 208.50242614746094
@@ -10605,7 +10605,7 @@
    "near": "tiles/5_7.glb",
    "far": "tiles/5_7_far.glb",
    "tris": 34606,
-   "farTris": 7706,
+   "farTris": 7462,
    "objects": 496,
    "zMin": 115.140625,
    "zMax": 237.9050750732422
@@ -10618,7 +10618,7 @@
    "near": "tiles/5_8.glb",
    "far": "tiles/5_8_far.glb",
    "tris": 46744,
-   "farTris": 8445,
+   "farTris": 7998,
    "objects": 669,
    "zMin": 136.02734375,
    "zMax": 253.51690673828125
@@ -10631,7 +10631,7 @@
    "near": "tiles/5_9.glb",
    "far": "tiles/5_9_far.glb",
    "tris": 37326,
-   "farTris": 10359,
+   "farTris": 9734,
    "objects": 482,
    "zMin": 157.24415588378906,
    "zMax": 303.4559631347656
@@ -10644,7 +10644,7 @@
    "near": "tiles/6_-1.glb",
    "far": "tiles/6_-1_far.glb",
    "tris": 18085,
-   "farTris": 2406,
+   "farTris": 2340,
    "objects": 285,
    "zMin": 40.157711029052734,
    "zMax": 177.0767059326172
@@ -10657,7 +10657,7 @@
    "near": "tiles/6_-2.glb",
    "far": "tiles/6_-2_far.glb",
    "tris": 8165,
-   "farTris": 1457,
+   "farTris": 1432,
    "objects": 93,
    "zMin": 89.83658599853516,
    "zMax": 212.574462890625
@@ -10683,7 +10683,7 @@
    "near": "tiles/6_0.glb",
    "far": "tiles/6_0_far.glb",
    "tris": 42792,
-   "farTris": 7473,
+   "farTris": 7305,
    "objects": 811,
    "zMin": 35.840633392333984,
    "zMax": 166.64865112304688
@@ -10696,7 +10696,7 @@
    "near": "tiles/6_1.glb",
    "far": "tiles/6_1_far.glb",
    "tris": 56697,
-   "farTris": 10079,
+   "farTris": 9625,
    "objects": 976,
    "zMin": -7.026827812194824,
    "zMax": 235.04656982421875
@@ -10709,7 +10709,7 @@
    "near": "tiles/6_10.glb",
    "far": "tiles/6_10_far.glb",
    "tris": 37939,
-   "farTris": 7790,
+   "farTris": 7463,
    "objects": 560,
    "zMin": 149.58567810058594,
    "zMax": 324.2308654785156
@@ -10722,7 +10722,7 @@
    "near": "tiles/6_11.glb",
    "far": "tiles/6_11_far.glb",
    "tris": 15937,
-   "farTris": 3608,
+   "farTris": 3363,
    "objects": 212,
    "zMin": 234.609375,
    "zMax": 360.6210632324219
@@ -10748,7 +10748,7 @@
    "near": "tiles/6_2.glb",
    "far": "tiles/6_2_far.glb",
    "tris": 34419,
-   "farTris": 6681,
+   "farTris": 6598,
    "objects": 566,
    "zMin": -1.41796875,
    "zMax": 253.59130859375
@@ -10761,7 +10761,7 @@
    "near": "tiles/6_3.glb",
    "far": "tiles/6_3_far.glb",
    "tris": 17893,
-   "farTris": 2895,
+   "farTris": 2793,
    "objects": 277,
    "zMin": 72.46526336669922,
    "zMax": 238.43963623046875
@@ -10774,7 +10774,7 @@
    "near": "tiles/6_4.glb",
    "far": "tiles/6_4_far.glb",
    "tris": 30980,
-   "farTris": 4647,
+   "farTris": 4503,
    "objects": 409,
    "zMin": 92.57180786132812,
    "zMax": 211.5625
@@ -10787,7 +10787,7 @@
    "near": "tiles/6_5.glb",
    "far": "tiles/6_5_far.glb",
    "tris": 80541,
-   "farTris": 8408,
+   "farTris": 8039,
    "objects": 1534,
    "zMin": -33.12748718261719,
    "zMax": 180.52944946289062
@@ -10800,7 +10800,7 @@
    "near": "tiles/6_6.glb",
    "far": "tiles/6_6_far.glb",
    "tris": 31327,
-   "farTris": 5130,
+   "farTris": 4932,
    "objects": 569,
    "zMin": 57.55078125,
    "zMax": 196.9181365966797
@@ -10813,7 +10813,7 @@
    "near": "tiles/6_7.glb",
    "far": "tiles/6_7_far.glb",
    "tris": 13594,
-   "farTris": 2871,
+   "farTris": 2581,
    "objects": 206,
    "zMin": 53.20860290527344,
    "zMax": 263.9447326660156
@@ -10826,7 +10826,7 @@
    "near": "tiles/6_8.glb",
    "far": "tiles/6_8_far.glb",
    "tris": 16278,
-   "farTris": 3258,
+   "farTris": 3065,
    "objects": 233,
    "zMin": 139.71847534179688,
    "zMax": 308.99505615234375
@@ -10839,7 +10839,7 @@
    "near": "tiles/6_9.glb",
    "far": "tiles/6_9_far.glb",
    "tris": 17158,
-   "farTris": 4056,
+   "farTris": 3782,
    "objects": 310,
    "zMin": 104.12109375,
    "zMax": 303.82183837890625
@@ -10852,7 +10852,7 @@
    "near": "tiles/7_-1.glb",
    "far": "tiles/7_-1_far.glb",
    "tris": 7901,
-   "farTris": 1754,
+   "farTris": 1635,
    "objects": 150,
    "zMin": -16.06403350830078,
    "zMax": 151.41015625
@@ -10878,7 +10878,7 @@
    "near": "tiles/7_0.glb",
    "far": "tiles/7_0_far.glb",
    "tris": 36109,
-   "farTris": 7192,
+   "farTris": 6840,
    "objects": 704,
    "zMin": -17.13671875,
    "zMax": 165.09317016601562
@@ -10891,7 +10891,7 @@
    "near": "tiles/7_1.glb",
    "far": "tiles/7_1_far.glb",
    "tris": 39152,
-   "farTris": 7392,
+   "farTris": 7157,
    "objects": 674,
    "zMin": 0.549407958984375,
    "zMax": 139.55685424804688
@@ -10930,7 +10930,7 @@
    "near": "tiles/7_2.glb",
    "far": "tiles/7_2_far.glb",
    "tris": 41621,
-   "farTris": 6622,
+   "farTris": 6481,
    "objects": 730,
    "zMin": -8.9375,
    "zMax": 190.3585662841797
@@ -10943,7 +10943,7 @@
    "near": "tiles/7_3.glb",
    "far": "tiles/7_3_far.glb",
    "tris": 25258,
-   "farTris": 3216,
+   "farTris": 3061,
    "objects": 386,
    "zMin": -11.04183578491211,
    "zMax": 203.5234375
@@ -10956,7 +10956,7 @@
    "near": "tiles/7_4.glb",
    "far": "tiles/7_4_far.glb",
    "tris": 39924,
-   "farTris": 5853,
+   "farTris": 5701,
    "objects": 664,
    "zMin": 89.27944946289062,
    "zMax": 214.93359375
@@ -10969,7 +10969,7 @@
    "near": "tiles/7_5.glb",
    "far": "tiles/7_5_far.glb",
    "tris": 49096,
-   "farTris": 6239,
+   "farTris": 5856,
    "objects": 981,
    "zMin": 40.43871307373047,
    "zMax": 169.60711669921875
@@ -10982,7 +10982,7 @@
    "near": "tiles/7_6.glb",
    "far": "tiles/7_6_far.glb",
    "tris": 57480,
-   "farTris": 8183,
+   "farTris": 7657,
    "objects": 1141,
    "zMin": 7.54339599609375,
    "zMax": 134.16796875
@@ -10995,7 +10995,7 @@
    "near": "tiles/7_7.glb",
    "far": "tiles/7_7_far.glb",
    "tris": 44580,
-   "farTris": 7373,
+   "farTris": 6839,
    "objects": 866,
    "zMin": 7.027220249176025,
    "zMax": 321.16796875
@@ -11008,7 +11008,7 @@
    "near": "tiles/7_8.glb",
    "far": "tiles/7_8_far.glb",
    "tris": 42268,
-   "farTris": 5874,
+   "farTris": 5539,
    "objects": 893,
    "zMin": -4.01431131362915,
    "zMax": 374.89453125
@@ -11034,7 +11034,7 @@
    "near": "tiles/8_-1.glb",
    "far": "tiles/8_-1_far.glb",
    "tris": 24908,
-   "farTris": 5709,
+   "farTris": 5329,
    "objects": 433,
    "zMin": -2.90625,
    "zMax": 58.97111511230469
@@ -11047,7 +11047,7 @@
    "near": "tiles/8_-2.glb",
    "far": "tiles/8_-2_far.glb",
    "tris": 757,
-   "farTris": 121,
+   "farTris": 111,
    "objects": 19,
    "zMin": 17.067296981811523,
    "zMax": 60.81715393066406
@@ -11073,7 +11073,7 @@
    "near": "tiles/8_0.glb",
    "far": "tiles/8_0_far.glb",
    "tris": 23990,
-   "farTris": 4768,
+   "farTris": 4634,
    "objects": 660,
    "zMin": -17.13671875,
    "zMax": 101.1982192993164
@@ -11086,7 +11086,7 @@
    "near": "tiles/8_1.glb",
    "far": "tiles/8_1_far.glb",
    "tris": 34539,
-   "farTris": 6482,
+   "farTris": 6229,
    "objects": 776,
    "zMin": -22.214107513427734,
    "zMax": 64.61265563964844
@@ -11099,7 +11099,7 @@
    "near": "tiles/8_2.glb",
    "far": "tiles/8_2_far.glb",
    "tris": 91264,
-   "farTris": 9579,
+   "farTris": 9481,
    "objects": 1519,
    "zMin": -9.4140625,
    "zMax": 195.19728088378906
@@ -11112,7 +11112,7 @@
    "near": "tiles/8_3.glb",
    "far": "tiles/8_3_far.glb",
    "tris": 51843,
-   "farTris": 6250,
+   "farTris": 6056,
    "objects": 712,
    "zMin": -10.863058090209961,
    "zMax": 143.64898681640625
@@ -11125,7 +11125,7 @@
    "near": "tiles/8_4.glb",
    "far": "tiles/8_4_far.glb",
    "tris": 58029,
-   "farTris": 6702,
+   "farTris": 6434,
    "objects": 1032,
    "zMin": 69.625,
    "zMax": 240.5513916015625
@@ -11138,7 +11138,7 @@
    "near": "tiles/8_5.glb",
    "far": "tiles/8_5_far.glb",
    "tris": 18123,
-   "farTris": 3830,
+   "farTris": 3479,
    "objects": 375,
    "zMin": -2.125,
    "zMax": 165.80235290527344
@@ -11151,7 +11151,7 @@
    "near": "tiles/8_6.glb",
    "far": "tiles/8_6_far.glb",
    "tris": 21307,
-   "farTris": 4972,
+   "farTris": 4608,
    "objects": 345,
    "zMin": 0.0859375,
    "zMax": 133.37109375
@@ -11164,7 +11164,7 @@
    "near": "tiles/8_7.glb",
    "far": "tiles/8_7_far.glb",
    "tris": 43269,
-   "farTris": 7810,
+   "farTris": 7511,
    "objects": 644,
    "zMin": -12.918437004089355,
    "zMax": 93.7421875
@@ -11177,7 +11177,7 @@
    "near": "tiles/8_8.glb",
    "far": "tiles/8_8_far.glb",
    "tris": 32977,
-   "farTris": 5124,
+   "farTris": 4870,
    "objects": 651,
    "zMin": -4.174689292907715,
    "zMax": 297.59765625
@@ -11190,7 +11190,7 @@
    "near": "tiles/8_9.glb",
    "far": "tiles/8_9_far.glb",
    "tris": 16457,
-   "farTris": 3423,
+   "farTris": 3175,
    "objects": 364,
    "zMin": -9.034202575683594,
    "zMax": 145.64102172851562
@@ -11203,7 +11203,7 @@
    "near": "tiles/9_-1.glb",
    "far": "tiles/9_-1_far.glb",
    "tris": 37725,
-   "farTris": 6578,
+   "farTris": 6407,
    "objects": 679,
    "zMin": -7.026900291442871,
    "zMax": 79.43959045410156
@@ -11216,7 +11216,7 @@
    "near": "tiles/9_-2.glb",
    "far": "tiles/9_-2_far.glb",
    "tris": 486,
-   "farTris": 93,
+   "farTris": 83,
    "objects": 9,
    "zMin": -0.87109375,
    "zMax": 47.99014663696289
@@ -11242,7 +11242,7 @@
    "near": "tiles/9_0.glb",
    "far": "tiles/9_0_far.glb",
    "tris": 13029,
-   "farTris": 1514,
+   "farTris": 1468,
    "objects": 388,
    "zMin": -0.8700313568115234,
    "zMax": 98.23339080810547
@@ -11255,7 +11255,7 @@
    "near": "tiles/9_1.glb",
    "far": "tiles/9_1_far.glb",
    "tris": 49591,
-   "farTris": 6710,
+   "farTris": 6409,
    "objects": 1101,
    "zMin": -17.85777473449707,
    "zMax": 127.00434875488281
@@ -11281,7 +11281,7 @@
    "near": "tiles/9_2.glb",
    "far": "tiles/9_2_far.glb",
    "tris": 53299,
-   "farTris": 7236,
+   "farTris": 6717,
    "objects": 1002,
    "zMin": -9.2890625,
    "zMax": 129.47239685058594
@@ -11294,7 +11294,7 @@
    "near": "tiles/9_3.glb",
    "far": "tiles/9_3_far.glb",
    "tris": 52853,
-   "farTris": 5176,
+   "farTris": 4966,
    "objects": 810,
    "zMin": 39.40144348144531,
    "zMax": 126.46702575683594
@@ -11307,7 +11307,7 @@
    "near": "tiles/9_4.glb",
    "far": "tiles/9_4_far.glb",
    "tris": 23919,
-   "farTris": 2387,
+   "farTris": 2279,
    "objects": 328,
    "zMin": -8.03005599975586,
    "zMax": 229.20794677734375
@@ -11320,7 +11320,7 @@
    "near": "tiles/9_5.glb",
    "far": "tiles/9_5_far.glb",
    "tris": 56674,
-   "farTris": 6699,
+   "farTris": 6480,
    "objects": 847,
    "zMin": -8.03005599975586,
    "zMax": 212.9140625
@@ -11333,7 +11333,7 @@
    "near": "tiles/9_6.glb",
    "far": "tiles/9_6_far.glb",
    "tris": 13632,
-   "farTris": 2103,
+   "farTris": 1987,
    "objects": 235,
    "zMin": -17.299556732177734,
    "zMax": 49.3355712890625
@@ -11346,7 +11346,7 @@
    "near": "tiles/9_7.glb",
    "far": "tiles/9_7_far.glb",
    "tris": 13378,
-   "farTris": 1635,
+   "farTris": 1624,
    "objects": 230,
    "zMin": -17.233478546142578,
    "zMax": 44.886566162109375
@@ -11359,7 +11359,7 @@
    "near": "tiles/9_8.glb",
    "far": "tiles/9_8_far.glb",
    "tris": 62195,
-   "farTris": 9848,
+   "farTris": 9596,
    "objects": 975,
    "zMin": -4.174689292907715,
    "zMax": 58.90234375
@@ -11372,7 +11372,7 @@
    "near": "tiles/9_9.glb",
    "far": "tiles/9_9_far.glb",
    "tris": 3634,
-   "farTris": 577,
+   "farTris": 549,
    "objects": 63,
    "zMin": -3.0120162963867188,
    "zMax": 101.28337860107422

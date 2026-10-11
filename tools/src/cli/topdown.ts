@@ -37,7 +37,7 @@ const toPx = (x: number, y: number) => [(x - minX) * scale, PX - 1 - (y - minY) 
 let tris = 0;
 for (const { buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const inst of sc.instances) {
   const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
-  if (!so) continue;
+  if (!so || so.name.startsWith("SHD_")) continue;
   const r = inst.rotation, t = inst.position;
   const W = (v: number[]) => [v[0] * r[0] + v[1] * r[3] + v[2] * r[6] + t[0], v[0] * r[1] + v[1] * r[4] + v[2] * r[7] + t[1], v[0] * r[2] + v[1] * r[5] + v[2] * r[8] + t[2]];
   for (const st of so.strips) {

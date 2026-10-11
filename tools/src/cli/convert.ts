@@ -175,6 +175,8 @@ if (mode === "tiles") {
   for (const { s, buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const [k, inst] of sc.instances.entries()) {
     const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
     if (!so || !h) continue;
+    // El cielo (SKYDOME/SKY_SPECULAR) usa texturas que el juego genera al vuelo y no están en el disco: lo dibuja el visor.
+    if (/^SKY(DOME|_SPECULAR)/i.test(so.name)) continue;
     const gi = memberOf.get(`${sc.sectionNumber}:${k}`);
     const hidden = (inst.excludeFlags & 0x10) !== 0; // oculto por defecto: solo aparece si el juego activa su grupo
     // Nivel lejano: el LOD más ligero que trae el propio juego (hashes 1..3 de SceneryInfo).
@@ -200,7 +202,8 @@ if (mode === "tiles") {
     // Nivel lejano: una sola malla con color por vértice = color medio de textura × luz horneada.
     const farMats = new MaterialTable(new Map(), { unlit: true });
     const farMat = farMats.get(undefined); farMats.materials[farMat] = { name: "lejano", color: [1, 1, 1, 1], unlit: true };
-    const farInst = list.filter(i => i.size >= FAR_MIN).map((it0, id) => {
+    // El nivel lejano no lleva sombras horneadas (SHD_*): su color medio es negro y oscurecería la casilla.
+    const farInst = list.filter(i => i.size >= FAR_MIN && !i.so.name.startsWith("SHD_")).map((it0, id) => {
       const it = { ...it0, so: it0.low };
       const m = solidToMesh(it.so, () => farMat);
       // teñir los vértices con el color medio de la textura de cada tira

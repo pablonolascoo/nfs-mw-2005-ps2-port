@@ -22,3 +22,8 @@ Plano cenital: `map-data/SLES-53559/rockport-plano.png` (1,49 m/px; calibración
 ## Zonas de garaje y tiendas [V]
 15 zonas en `GAMEPLAY.BIN` (ver doc 05): 4 refugios, 3 concesionarios, 8 talleres. Cada una tiene su edificio cerca: `XS_SafeGarage` / `XB_CT_SafehouseA` (refugio 1), `XB_CarParkDealership` (concesionarios), `XB_ChopShopA` (los 8 talleres, mismo modelo).
 En el juego original, pulsar el botón en la zona llama a `EQuitToFE(GARAGETYPE_*)`: sale del mundo y carga el menú con el fondo del interior (`FRONTEND\PLATFORMS\*.BIN`).
+
+## Sombras, agua y cielo [V]/[H]
+- **Sombras horneadas** `SHD_*` (1 026 texturas): RGB negro y alfa = densidad. Se mezclan encima del suelo; no van al nivel lejano [V].
+- **Agua animada** `ANM_WATERA_000…013` (14 fotogramas) en `TRN_Ocean_*` y piezas de costa, con alfa de vértice 0,5 [V]. Esos modelos solo cubren la costa; el cuerpo de agua se dibuja como plano a z = 0 en el visor [H: no localizado aún en el código del juego].
+- **Cielo** `SKYDOME`/`SKY_SPECULAR`: sus texturas no existen en el disco (se generan al vuelo); el visor dibuja un degradado propio [V: búsqueda en todos los archivos].

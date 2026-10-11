@@ -22,3 +22,8 @@ Top-down map: `map-data/<disc>/rockport-plano.png` (1.49 m/px; calibration in `r
 ## Garage and shop zones [V]
 15 zones in `GAMEPLAY.BIN` (see doc 05): 4 safehouses, 3 car lots, 8 custom shops. Each has its building nearby: `XS_SafeGarage` / `XB_CT_SafehouseA` (safehouse 1), `XB_CarParkDealership` (car lots), `XB_ChopShopA` (all 8 shops, same model).
 In the original game, pressing the button in a zone calls `EQuitToFE(GARAGETYPE_*)`: it leaves the world and loads the menu with the interior backdrop (`FRONTEND\PLATFORMS\*.BIN`).
+
+## Shadows, water and sky [V]/[H]
+- **Baked shadows** `SHD_*` (1,026 textures): black RGB, alpha = density. Blended over the ground; excluded from the far level [V].
+- **Animated water** `ANM_WATERA_000…013` (14 frames) on `TRN_Ocean_*` and shoreline pieces, vertex alpha 0.5 [V]. Those meshes only cover shorelines; the viewer draws the water body as a plane at z = 0 [H: not yet located in the game code].
+- **Sky** `SKYDOME`/`SKY_SPECULAR`: their textures are not on the disc (generated at runtime); the viewer draws its own gradient [V: searched every file].
