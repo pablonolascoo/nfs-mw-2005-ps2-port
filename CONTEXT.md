@@ -69,7 +69,7 @@ Carreteras: `L2RA.BUN` chunk `0x0003B800` (RNgp). Colisión: `STREAML2RA.BUN` ch
 Hecho: todo el mapa a 60 fps, garajes sin pantalla de carga (15), 91 coches con pintura, llantas de serie y ruedas, capa de carreteras en el visor, base de datos completa, red de carreteras y colisión decodificadas, mods.
 
 Siguiente, por orden:
-1. Colisión real (`0x0003B801`) en la conducción. La capa de carreteras ya está en el visor.
+1. Usar la colisión real en la conducción: ya exportada a `map-data/<ID>/collision/*.bin` (`tools/src/cli/collision.ts`); falta cargarla en `viewer/src/drive.ts`.
 2. Garajes de los refugios sin edificio (2, 4, 5).
 3. Llantas de tuneo, escalado de ruedas y caída.
 4. Explorar carreras y Lista Negra en el visor; carreras jugables (rutas: `TrackPathManager` + datos de evento).

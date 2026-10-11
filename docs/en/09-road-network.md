@@ -143,6 +143,12 @@ Yes: this chunk is **collision geometry**. It is not the road network.
 - Midpoint of each Bézier: 6277 of 6538 within 1 m of the ground (median 0.08 m).
 - This validates the network, the collision and the instance matrix together.
 
+## 6b. Collision export
+- `bun src/cli/collision.ts <iso> <ID>` → `map-data/<ID>/collision/<tx>_<ty>.bin` (400 m tiles) + `index.json`. Under 1 s, 9.7 MB.
+- Format NFSC v1: 16-byte header, triangles (9 f32) and walls (ax, ay, bx, by, zMin, zMax).
+- Wall = vertical segment in plan: the A–B plan distance equals `1/invXZLength` [V]. One end holds the low height, the other the high one.
+- Driving does not use it yet (still the visual geometry).
+
 ## 7. In the viewer
 - "Red de carreteras" layer (`viewer/src/roads.ts`): Bézier centre lines coloured by kind (street, one-way, junction, no traffic), carriageway edges from the node profile, and nodes.
 - `roads.json` is downloaded only when the layer is switched on. One draw call per kind.

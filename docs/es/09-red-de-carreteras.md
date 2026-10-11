@@ -143,6 +143,12 @@ Sí: este chunk es **geometría de colisión**. No es la red de carreteras.
 - Punto medio de cada Bézier: 6277 de 6538 a < 1 m del suelo (mediana 0,08 m).
 - Esto valida a la vez la red, la colisión y la matriz de las instancias.
 
+## 6b. Exportación de la colisión
+- `bun src/cli/collision.ts <iso> <ID>` → `map-data/<ID>/collision/<tx>_<ty>.bin` (casillas de 400 m) + `index.json`. Menos de 1 s, 9,7 MB.
+- Formato NFSC v1: cabecera de 16 B, triángulos (9 f32) y muros (ax, ay, bx, by, zMin, zMax).
+- Muro = segmento vertical en planta: la distancia A–B en planta coincide con `1/invXZLength` [V]. Un extremo guarda la cota baja y el otro la alta.
+- Aún no lo usa la conducción (sigue usando la geometría visual).
+
 ## 7. En el visor
 - Capa «Red de carreteras» (`viewer/src/roads.ts`): ejes Bézier por color (calle, sentido único, cruce, sin tráfico), bordes de calzada según el perfil del nodo y nodos.
 - Se descarga `roads.json` solo al activar la capa. Una sola llamada de dibujo por tipo.

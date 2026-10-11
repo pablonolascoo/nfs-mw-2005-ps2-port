@@ -19,3 +19,4 @@ map-data/**/gameplay.json
 map-data/**/zones.json
 experiments/.metadata_never_index
 map-data/**/roads.json
+map-data/**/collision/

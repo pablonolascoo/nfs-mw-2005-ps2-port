@@ -23,7 +23,8 @@ const steps: [string, string[]][] = [
   ["Interiores", ["src/cli/convert.ts", iso, id, "interior", "CAREER_SAFEHOUSE", "PLATFORMCRIB", "CAR_LOT", "CUSTOMIZATION_SHOP", "CUSTOMIZATION_SHOP_BACKROOM"]],
   ["Garajes y puertas", ["src/cli/garages.ts", iso, id]],
   ["Atributos de coches (ruedas)", ["src/cli/car-attribs.ts", iso, id]],
-  ["Red de carreteras y colisión", ["src/cli/roads.ts", iso, id]],
+  ["Red de carreteras", ["src/cli/roads.ts", iso, id]],
+  ["Colisión por casillas", ["src/cli/collision.ts", iso, id]],
   ["Plano cenital", ["src/cli/topdown.ts", iso, id, "4096"]],
 ];
 const t0 = performance.now();
