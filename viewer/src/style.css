@@ -78,3 +78,6 @@ button.ghost:focus-visible { outline: 1px solid var(--amber); }
 .prompt { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); padding: 10px 18px; background: rgba(10,11,9,.82); border: 1px solid var(--amber); color: var(--paper); font: 800 20px/1 var(--display); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
 .prompt kbd { font: 700 14px var(--mono); color: var(--ink); background: var(--amber); padding: 1px 6px; margin-right: 6px; }
 .mods { margin: 4px 0 0; color: var(--fog); font-size: 11px; }
+.legend { margin: 2px 12px 8px 30px; color: var(--fog); font-size: 10px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.legend[hidden] { display: none; }
+.legend i { display: inline-block; width: 14px; height: 3px; margin-right: -6px; }

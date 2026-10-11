@@ -44,7 +44,7 @@ No están en ningún `TEXTURES.BIN` del disco [V]. Por eso el conversor les pone
 | `LICENSEPLATE` | `matricula` | blanco |
 | `0x5799E60B` DRIVER | `piloto_conductor` | gris oscuro |
 | `BRAKE_GLOBAL*`, `0x7811C149` | `freno` | gris metal |
-| `0x03C906EF`, `0xE38806E3` (caras de la llanta en la pieza TIRE) | `llanta` | gris metal [I: por la geometría] |
+| `0xE38806E3` (tarjeta cuadrada exterior) y `0x03C906EF` (cilindro interior) de la pieza TIRE | `llanta` | **oculto** con llantas de serie |
 
 Hashes aún sin nombre en el BMW: `1b049702 cc772afb bd1f0e0a 721aff7c 4e8cf857` → gris oscuro neutro.
 Para resolver más nombres: `experiments/decomp/.../Generated/Hash.hpp` y prueba de `bStringHash` (ver `tools/src/lib/hash.ts`).
@@ -53,6 +53,12 @@ Para resolver más nombres: `experiments/decomp/.../Generated/Hash.hpp` y prueba
 - `paintCar(model, "#rrggbb")` cambia solo los materiales con `role = "pintura"`.
 - Coche del jugador: parámetro de URL `?pintura=1f6fd1` (por defecto plata `aeb7c2`).
 - Coches de exposición: campo `paint` en cada `display` del mod (`mods/garajes-unicos/mod.json`).
+
+### Llantas
+- La textura `<COCHE>_TIRE` ya dibuja **goma y llanta de serie** juntas [V: BMW M3 GTR].
+- La pieza TIRE trae además una tarjeta cuadrada en la cara exterior y un cilindro interior.
+  Son para **llantas de tuneo**: textura `<MARCA>_STYLEnn_WHEEL` (cara) y máscara `<MARCA>_STYLEnn_WHEEL_INNER_MASK` [D: `CarSkin.cpp`, V: `CARS\WHEELS\TEXTURES.BIN`, 82 texturas].
+- Con llantas de serie el visor las oculta (`hideAftermarketRimCards` en `viewer/src/drive.ts`). Si no, se ve un cuadrado.
 
 ## 4. Ruedas
 El modelo trae **una sola rueda** (la delantera). El juego la copia cuatro veces [D].

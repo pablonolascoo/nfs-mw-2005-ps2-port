@@ -5,6 +5,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
 import { Driver, makeCollider, carHolder } from "./drive";
+import { buildRoads, type RoadsFile } from "./roads";
 import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
@@ -153,7 +154,10 @@ async function open(it: Item) {
   const sec = it.id.startsWith("sec:") ? world.find(w => `sec:${w.name}` === it.id) : undefined;
   if (sec && (streaming || !sec.glb)) { flyTo(sec); return; } // con la ciudad cargada, solo volamos allí
   content.clear();
-  const obj = await loadGlb(it.glb);
+  let obj = await loadGlb(it.glb);
+  // Coches: 4 ruedas (TireOffsets) y pintura, igual que al conducir
+  const carName = it.id.startsWith("car:") ? it.id.slice(4).toLowerCase() : "";
+  if (carAttribs[carName]) obj = carHolder(obj, carAttribs[carName].tires, playerPaint).holder;
   content.add(obj);
   $("tri-count").textContent = Math.round(countTris(obj)).toLocaleString("es-ES");
   frame(obj);
@@ -311,6 +315,21 @@ function buildZones() {
 }
 $("n-mods").textContent = mods.length ? mods.map(m => `${m.name} ${m.version}`).join(" · ") : "ninguno";
 $<HTMLInputElement>("layer-zonas").addEventListener("change", e => (zoneLayer.visible = (e.target as HTMLInputElement).checked));
+// Red de carreteras: se descarga (≈2 MB) solo la primera vez que se activa
+let roadLayer: THREE.Group | null = null, roadLoading = false;
+$<HTMLInputElement>("layer-carreteras").addEventListener("change", async e => {
+  const on = (e.target as HTMLInputElement).checked;
+  $("roads-legend").hidden = !on;
+  if (roadLayer) { roadLayer.visible = on; return; }
+  if (!on || roadLoading) return;
+  roadLoading = true; $("n-carreteras").textContent = "cargando…";
+  const r = await fetch(`/${disc}/roads.json`);
+  if (!r.ok) { $("n-carreteras").textContent = "falta roads.json (bun src/cli/roads.ts)"; roadLoading = false; return; }
+  const data = (await r.json()) as RoadsFile;
+  roadLayer = buildRoads(data); scene.add(roadLayer);
+  roadLayer.visible = $<HTMLInputElement>("layer-carreteras").checked;
+  $("n-carreteras").textContent = `${data.nodes.length} nodos · ${data.segments.length} tramos`;
+});
 
 function buildBounds() {
   bounds.clear();

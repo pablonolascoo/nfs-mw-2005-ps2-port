@@ -143,7 +143,11 @@ Sí: este chunk es **geometría de colisión**. No es la red de carreteras.
 - Punto medio de cada Bézier: 6277 de 6538 a < 1 m del suelo (mediana 0,08 m).
 - Esto valida a la vez la red, la colisión y la matriz de las instancias.
 
-## 7. Pendiente
+## 7. En el visor
+- Capa «Red de carreteras» (`viewer/src/roads.ts`): ejes Bézier por color (calle, sentido único, cruce, sin tráfico), bordes de calzada según el perfil del nodo y nodos.
+- Se descarga `roads.json` solo al activar la capa. Una sola llamada de dibujo por tipo.
+
+## 8. Pendiente
 - Nombres de los tipos de carril 2, 3, 4, 7, 10 [H].
 - Unidad de `nMinWidth` y `nSpeechId` de `RNrd` [H].
 - Unidad de `radio` en las esferas de tiras (¿/16?) [H].

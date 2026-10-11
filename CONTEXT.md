@@ -66,10 +66,10 @@ Carreteras: `L2RA.BUN` chunk `0x0003B800` (RNgp). Colisión: `STREAML2RA.BUN` ch
 - Carreteras en espacio "Bond": X = z, Y = −x, Z = y. Tramos = Bézier cúbicas.
 
 ## 7. Estado y pendientes (2026-10-12)
-Hecho: todo el mapa a 60 fps, garajes sin pantalla de carga (15), 91 coches con pintura y ruedas, base de datos completa, red de carreteras y colisión decodificadas, mods.
+Hecho: todo el mapa a 60 fps, garajes sin pantalla de carga (15), 91 coches con pintura, llantas de serie y ruedas, capa de carreteras en el visor, base de datos completa, red de carreteras y colisión decodificadas, mods.
 
 Siguiente, por orden:
-1. Capa de carreteras en el visor (líneas Bézier y carriles) y colisión real en la conducción.
+1. Colisión real (`0x0003B801`) en la conducción. La capa de carreteras ya está en el visor.
 2. Garajes de los refugios sin edificio (2, 4, 5).
 3. Llantas de tuneo, escalado de ruedas y caída.
 4. Explorar carreras y Lista Negra en el visor; carreras jugables (rutas: `TrackPathManager` + datos de evento).
@@ -86,4 +86,4 @@ Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, hashes
 - Layout: `tools/` readers and converters (Bun/TS), `viewer/` Three.js WebGPU prototype, `mods/` data-only mods, `docs/en` research 00–11 (table above), `map-data/<ID>/` generated output (not committed).
 - Build everything: `cd tools && bun run build-all ../original/SLES-53559.iso`; then `cd viewer && bun run dev`.
 - What each generated file answers: [docs/en/11-data-catalog.md](docs/en/11-data-catalog.md).
-- Next steps: road layer and real collision in driving, garages for building-less safehouses, aftermarket rims, playable races, game physics and audio from the decomp, native Metal engine, road/district editor, story/sequel mods.
+- Next steps: real collision in driving (road layer already in the viewer), garages for building-less safehouses, aftermarket rims, playable races, game physics and audio from the decomp, native Metal engine, road/district editor, story/sequel mods.

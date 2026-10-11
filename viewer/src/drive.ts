@@ -162,9 +162,19 @@ export function paintCar(model: THREE.Object3D, color: string) {
   });
 }
 
+/** Llantas de serie: la textura <COCHE>_TIRE ya trae la llanta dibujada. Las tarjetas "llanta" (cara exterior cuadrada
+ *  y cilindro interior) solo se usan con llantas de tuneo (<MARCA>_STYLEnn_WHEEL / _WHEEL_INNER_MASK): se ocultan. */
+export function hideAftermarketRimCards(model: THREE.Object3D) {
+  model.traverse(o => {
+    const m = o as THREE.Mesh; if (!m.isMesh) return;
+    for (const mat of Array.isArray(m.material) ? m.material : [m.material]) if (mat.userData?.role === "llanta") mat.visible = false;
+  });
+}
+
 /** Envuelve un coche del juego: centrado, apoyado en z = 0 y con el morro hacia +X (deducido de los faros). */
 export function carHolder(model0: THREE.Object3D, tires?: number[][], paint?: string) {
   if (paint) paintCar(model0, paint);
+  hideAftermarketRimCards(model0);
   const model = mountWheels(model0, tires);
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());

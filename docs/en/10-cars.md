@@ -44,7 +44,7 @@ They are not in any `TEXTURES.BIN` on the disc [V], so the converter gives them 
 | `LICENSEPLATE` | `matricula` | white |
 | `0x5799E60B` DRIVER | `piloto_conductor` | dark grey |
 | `BRAKE_GLOBAL*`, `0x7811C149` | `freno` | metal grey |
-| `0x03C906EF`, `0xE38806E3` (rim faces on the TIRE part) | `llanta` | metal grey [I: from geometry] |
+| `0xE38806E3` (outer square card) and `0x03C906EF` (inner barrel) on the TIRE part | `llanta` | **hidden** with stock rims |
 
 Still unnamed on the BMW: `1b049702 cc772afb bd1f0e0a 721aff7c 4e8cf857` → neutral dark grey.
 To name more: `experiments/decomp/.../Generated/Hash.hpp` and `bStringHash` trials (`tools/src/lib/hash.ts`).
@@ -53,6 +53,12 @@ To name more: `experiments/decomp/.../Generated/Hash.hpp` and `bStringHash` tria
 - `paintCar(model, "#rrggbb")` changes only materials with `role = "pintura"`.
 - Player car: URL parameter `?pintura=1f6fd1` (default silver `aeb7c2`).
 - Display cars: `paint` field in each mod `display` entry (`mods/garajes-unicos/mod.json`).
+
+### Rims
+- The `<CAR>_TIRE` texture already paints **tyre and stock rim** together [V: BMW M3 GTR].
+- The TIRE part also carries a square card on the outer face and an inner barrel.
+  They are for **aftermarket rims**: texture `<BRAND>_STYLEnn_WHEEL` (face) and mask `<BRAND>_STYLEnn_WHEEL_INNER_MASK` [D: `CarSkin.cpp`, V: `CARS\WHEELS\TEXTURES.BIN`, 82 textures].
+- With stock rims the viewer hides them (`hideAftermarketRimCards` in `viewer/src/drive.ts`); otherwise a square shows.
 
 ## 4. Wheels
 The model ships **one wheel** (the front one). The game draws it four times [D].

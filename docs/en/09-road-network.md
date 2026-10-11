@@ -143,7 +143,11 @@ Yes: this chunk is **collision geometry**. It is not the road network.
 - Midpoint of each Bézier: 6277 of 6538 within 1 m of the ground (median 0.08 m).
 - This validates the network, the collision and the instance matrix together.
 
-## 7. Still open
+## 7. In the viewer
+- "Red de carreteras" layer (`viewer/src/roads.ts`): Bézier centre lines coloured by kind (street, one-way, junction, no traffic), carriageway edges from the node profile, and nodes.
+- `roads.json` is downloaded only when the layer is switched on. One draw call per kind.
+
+## 8. Still open
 - Names of lane types 2, 3, 4, 7, 10 [H].
 - Units of `nMinWidth` and `nSpeechId` in `RNrd` [H].
 - Unit of the strip-sphere `radius` (/16?) [H].
