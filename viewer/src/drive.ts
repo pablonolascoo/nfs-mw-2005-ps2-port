@@ -29,15 +29,7 @@ export class Driver {
   /** Coloca el modelo: lo centra, lo apoya en z = 0 y lo gira para que su morro mire a +X. */
   setModel(model: THREE.Object3D) {
     this.body.clear();
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-    // El morro se deduce de los faros (piezas *HEADLIGHT*): lado de X donde caen.
-    let front = 1;
-    model.traverse(o => { if (/HEADLIGHT/i.test(o.name)) { const b = new THREE.Box3().setFromObject(o); front = b.getCenter(new THREE.Vector3()).x >= c.x ? 1 : -1; } });
-    const holder = new THREE.Group();
-    model.position.set(-c.x, -c.y, -box.min.z);
-    holder.add(model);
-    holder.rotation.z = front > 0 ? 0 : Math.PI;
+    const { holder, size } = carHolder(model);
     this.body.add(holder);
     this.halfLength = Math.max(size.x, size.y) / 2; this.halfWidth = Math.min(size.x, size.y) / 2;
   }
@@ -118,4 +110,18 @@ export function makeCollider(m: THREE.Mesh) {
   const g = m.geometry as THREE.BufferGeometry & { boundsTree?: MeshBVH };
   if (!g.boundsTree) g.boundsTree = new MeshBVH(g, { maxLeafTris: 12 });
   return m;
+}
+
+/** Envuelve un coche del juego: centrado, apoyado en z = 0 y con el morro hacia +X (deducido de los faros). */
+export function carHolder(model: THREE.Object3D) {
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  let front = 1;
+  model.traverse(o => { if (/HEADLIGHT/i.test(o.name)) { const b = new THREE.Box3().setFromObject(o); front = b.getCenter(new THREE.Vector3()).x >= c.x ? 1 : -1; } });
+  const holder = new THREE.Group();
+  model.position.set(-c.x, -c.y, -box.min.z);
+  holder.add(model);
+  holder.rotation.z = front > 0 ? 0 : Math.PI;
+  const outer = new THREE.Group(); outer.add(holder);
+  return { holder: outer, size };
 }

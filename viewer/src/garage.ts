@@ -90,13 +90,15 @@ export class RollerDoor {
 }
 
 /** Sustituye los materiales del interior por unos que solo se ven dentro de la caja del edificio. */
-export function clipToBox(obj: THREE.Object3D, worldToBox: THREE.Matrix4) {
+export function clipToBox(obj: THREE.Object3D, worldToBox: THREE.Matrix4, tint = new THREE.Color(1, 1, 1)) {
   const m = uniform(worldToBox.clone());
   obj.traverse(o => {
     const mesh = o as THREE.Mesh; if (!mesh.isMesh) return;
-    const src = mesh.material as THREE.MeshStandardMaterial;
+    // Siempre se parte del material original (el interior se reutiliza entre garajes: no acumular tonos)
+    mesh.userData.origMat ??= mesh.material;
+    const src = mesh.userData.origMat as THREE.MeshStandardMaterial;
     const mat = new THREE.MeshBasicNodeMaterial({ map: src.map ?? null, color: src.color ?? new THREE.Color(1, 1, 1), side: THREE.DoubleSide, transparent: src.transparent, alphaTest: src.alphaTest, name: src.name });
-    const col = src.color ?? new THREE.Color(1, 1, 1);
+    const col = (src.color ?? new THREE.Color(1, 1, 1)).clone().multiply(tint);
     const base = src.map ? tslTexture(src.map, uv()).mul(vec4(col.r, col.g, col.b, 1)) : vec4(col.r, col.g, col.b, 1);
     mat.colorNode = Fn(() => {
       const l = m.mul(vec4(positionWorld, 1));
@@ -107,4 +109,15 @@ export function clipToBox(obj: THREE.Object3D, worldToBox: THREE.Matrix4) {
     mesh.material = mat;
   });
   return m;
+}
+
+/** Mods: datos propios que se aplican encima de lo extraído de la ISO (ver mods/README.md). */
+export interface GarageMod { name?: string; interior?: string; tint?: string; display?: { car: string; offset: [number, number]; yaw?: number }[] }
+export interface ModManifest { id: string; name: string; version: string; author?: string; description?: string; garages?: Record<string, GarageMod> }
+const modFiles = import.meta.glob("../../mods/*/mod.json", { eager: true, import: "default" }) as Record<string, ModManifest>;
+export const mods: ModManifest[] = Object.keys(modFiles).sort().map(k => modFiles[k]);
+/** Ajustes del garaje combinando todos los mods (el último gana). */
+export function garageMod(collection: string): GarageMod {
+  const key = collection.split("/").pop()!;
+  return mods.reduce<GarageMod>((acc, m) => ({ ...acc, ...(m.garages?.[key] ?? {}) }), {});
 }

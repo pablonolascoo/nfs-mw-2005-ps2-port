@@ -4,8 +4,8 @@ import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
-import { Driver, makeCollider } from "./drive";
-import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, type GarageInfo } from "./garage";
+import { Driver, makeCollider, carHolder } from "./drive";
+import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
 //   map-data/<disco>/index.json  → recursos sueltos (coches, secciones)
@@ -306,6 +306,7 @@ function buildZones() {
   }
   $("n-zonas").textContent = String(zones.length);
 }
+$("n-mods").textContent = mods.length ? mods.map(m => `${m.name} ${m.version}`).join(" · ") : "ninguno";
 $<HTMLInputElement>("layer-zonas").addEventListener("change", e => (zoneLayer.visible = (e.target as HTMLInputElement).checked));
 
 function buildBounds() {
@@ -445,8 +446,7 @@ interface Placed { zone: Zone; obj: THREE.Object3D; door: RollerDoor; spot: THRE
 const interiorCache = new Map<string, Promise<{ obj: THREE.Object3D; layout: ReturnType<typeof analyzeInterior> }>>();
 let garage: Placed | null = null;
 const ZONE_NAME = { safehouse: "refugio", carlot: "concesionario", customshop: "taller" } as const;
-function interiorFor(type: Zone["zoneType"]) {
-  const name = INTERIOR_FOR[type];
+function interiorFor(name: string) {
   let p = interiorCache.get(name);
   if (!p) { const it = index!.items.find(i => i.id === `int:${name}`)!; p = loadGlb(it.glb).then(obj => { const holder = new THREE.Group(); holder.add(obj); return { obj: holder, layout: analyzeInterior(holder) }; }); interiorCache.set(name, p); }
   return p;
@@ -458,9 +458,10 @@ async function placeGarage(z: Zone) {
   try { await placeGarageNow(z); } finally { placing = null; }
 }
 async function placeGarageNow(z: Zone) {
-  const { obj, layout } = await interiorFor(z.zoneType);
+  const mod = garageMod(z.collection);
+  const { obj, layout } = await interiorFor(mod.interior ?? INTERIOR_FOR[z.zoneType]);
   if (garage?.zone === z) return;
-  if (garage) { scene.remove(garage.obj, garage.door.group, garage.spot); }
+  if (garage) { scene.remove(garage.obj, garage.door.group, garage.spot, ...((garage as unknown as { display?: THREE.Object3D[] }).display ?? [])); }
   const info = garageInfo.find(g => g.collection === z.collection);
   const out = new THREE.Vector2(...((info?.out ?? [1, 0]) as [number, number])).normalize();
   const yawOut = Math.atan2(out.y, out.x), qOut = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), yawOut);
@@ -486,7 +487,7 @@ async function placeGarageNow(z: Zone) {
   obj.position.copy(origin); obj.rotation.set(0, 0, rot); obj.visible = false; obj.updateMatrixWorld(true);
   // El interior se recorta con una caja que baja hasta 0,6 m bajo el suelo (para conservar su propio suelo).
   const interiorBox = new THREE.Matrix4().compose(innerCenter.clone().setZ(ground - 0.6 + (height + 0.6) / 2), qOut, new THREE.Vector3(depth / 2 - 0.4, width / 2 - 0.5, (height + 0.6) / 2));
-  clipToBox(obj, interiorBox.clone().invert());
+  clipToBox(obj, interiorBox.clone().invert(), new THREE.Color(mod.tint ?? "#ffffff"));
   const meshes: THREE.Mesh[] = []; obj.traverse(o => { if ((o as THREE.Mesh).isMesh) meshes.push(o as THREE.Mesh); });
   const map = info?.doorTexture ? await new THREE.TextureLoader().loadAsync(`/${index!.disc}/textures/${info.doorTexture}.png`).then(t => { t.colorSpace = THREE.SRGBColorSpace; return t; }).catch(() => undefined) : undefined;
   const door = new RollerDoor(doorW, doorH, map);
@@ -503,7 +504,19 @@ async function placeGarageNow(z: Zone) {
     const d = Math.max(5.5, Math.min(spotDist, reach - 3.2));
     spot.position.copy(doorP).sub(new THREE.Vector3(out.x, out.y, 0).multiplyScalar(d)).setZ(ground + 0.06);
   }
+  // Coches de exposición del mod, colocados respecto a la plaza (x = hacia la puerta, y = izquierda)
+  const display: THREE.Object3D[] = [];
+  const left = new THREE.Vector3(-out.y, out.x, 0);
+  for (const d of mod.display ?? []) {
+    const it = index!.items.find(i => i.id === `car:${d.car}`); if (!it) continue;
+    const { holder } = carHolder(await loadGlb(it.glb));
+    holder.position.copy(spot.position).addScaledVector(outV3, d.offset[0]).addScaledVector(left, d.offset[1]).setZ(ground);
+    holder.rotation.z = yawOut + THREE.MathUtils.degToRad(d.yaw ?? 0);
+    holder.visible = false; display.push(holder); scene.add(holder);
+  }
   garage = { zone: z, obj, door, spot, meshes, box: corridor, phase: "cerrada", t: 0 };
+  (garage as unknown as { display: THREE.Object3D[]; name?: string }).display = display;
+  (garage as unknown as { name?: string }).name = mod.name;
   (garage as unknown as { inner: THREE.Matrix4; innerInv: THREE.Matrix4 }).inner = inner;
   (garage as unknown as { innerInv: THREE.Matrix4 }).innerInv = interiorBox.clone().invert();
   (garage as unknown as { info: unknown }).info = { depth, width, height, spotDist, doorW, doorH, source: info?.source };
@@ -515,6 +528,7 @@ function setCutout(on: boolean) {
   cutoutState.on = on; cutoutState.inv.copy(garage.box).invert(); cutoutState.inv2.copy((garage as unknown as { inner: THREE.Matrix4 }).inner).invert();
   cutout.worldToBox.value.copy(cutoutState.inv); cutout.worldToBox2.value.copy(cutoutState.inv2);
   garage.obj.visible = on; garage.spot.visible = on;
+  for (const d of (garage as unknown as { display?: THREE.Object3D[] }).display ?? []) d.visible = on;
 }
 // Colisiones: se atraviesa el hueco de la puerta; del interior solo cuenta lo que queda dentro del edificio.
 driver.ignore = (pt, obj) => {
@@ -546,10 +560,12 @@ function updateGarage(dt: number) {
     const fwd = new THREE.Vector3(Math.cos(driver.yaw), Math.sin(driver.yaw), 0);
     if (fwd.dot(outV) < 0) { p.addScaledVector(outV, 1.2 - pastDoor); driver.speed = 0; }
   }
-  const label = ZONE_NAME[garage.zone.zoneType];
+  const modName = (garage as unknown as { name?: string }).name;
+  const label = modName ? modName : `${ZONE_NAME[garage.zone.zoneType]}`;
+  const article = modName ? "" : "al ";
   if (garage.phase === "cerrada") {
     prompt.hidden = !(atGate && driver.kmh < 25);
-    prompt.innerHTML = `<kbd>E</kbd>Entrar al ${label}`;
+    prompt.innerHTML = modName ? `<kbd>E</kbd>Entrar · ${label}` : `<kbd>E</kbd>Entrar ${article}${label}`;
   } else if (garage.phase === "abierta") {
     prompt.hidden = false; prompt.innerHTML = `Entra con el coche`;
     if (pastDoor < -4) { garage.phase = "dentro"; garage.t = 0; }
@@ -561,7 +577,7 @@ function updateGarage(dt: number) {
   } else if (garage.phase === "aparcado") {
     // Vista de exposición: la cámara pasa sin cortes a girar alrededor del coche (como el garaje del juego)
     garage.t += dt;
-    prompt.hidden = false; prompt.innerHTML = `En el ${label} · <kbd>E</kbd>Salir`;
+    prompt.hidden = false; prompt.innerHTML = `${modName ? label : `En el ${label}`} · <kbd>E</kbd>Salir`;
   } else if (garage.phase === "saliendo") {
     prompt.hidden = true;
     if (pastDoor > 3 && garage.door.open <= 0.001) { setCutout(false); garage.phase = "cerrada"; }

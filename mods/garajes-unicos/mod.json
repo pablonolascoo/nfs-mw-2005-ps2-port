@@ -1,0 +1,25 @@
+{
+  "id": "garajes-unicos",
+  "name": "Garajes únicos",
+  "version": "1.0.0",
+  "author": "nfs-mw-2005-ps2-port",
+  "description": "Cada uno de los 15 garajes y tiendas con su propio interior, ambiente, nombre y coches de exposición. Ejemplo de mod: solo datos, sin recursos del juego.",
+  "requires": { "disc": ["SLES-53559", "SLUS-21351"] },
+  "garages": {
+    "zone_safehouse_1": { "name": "Refugio de Rosewood", "interior": "CAREER_SAFEHOUSE", "tint": "#ffe2b8", "display": [{ "car": "GTO", "offset": [-2, 6], "yaw": 150 }] },
+    "zone_safehouse_2": { "name": "Refugio del muelle", "interior": "CAREER_SAFEHOUSE", "tint": "#b8d8ff", "display": [{ "car": "SUPRA", "offset": [-2, 6], "yaw": 160 }] },
+    "zone_safehouse_4": { "name": "Refugio de Point Camden", "interior": "CUSTOMIZATION_SHOP_BACKROOM", "tint": "#d0ffd0", "display": [{ "car": "RX7", "offset": [-2, -6], "yaw": 20 }] },
+    "zone_safehouse_5": { "name": "Refugio de East Park", "interior": "CAREER_SAFEHOUSE", "tint": "#ffc8c8", "display": [{ "car": "MUSTANGGT", "offset": [-2, 6], "yaw": 140 }] },
+    "zone_carlot_1": { "name": "Concesionario de Rosewood", "interior": "CAR_LOT", "tint": "#fff4dc", "display": [{ "car": "GALLARDO", "offset": [-3, 5], "yaw": 90 }, { "car": "CARRERAGT", "offset": [-3, -5], "yaw": 90 }] },
+    "zone_carlot_2": { "name": "Concesionario de Camden", "interior": "CAR_LOT", "tint": "#e0f0ff", "display": [{ "car": "SLR", "offset": [-3, 5], "yaw": 90 }, { "car": "DB9", "offset": [-3, -5], "yaw": 90 }] },
+    "zone_carlot_3": { "name": "Concesionario del centro", "interior": "CAR_LOT", "tint": "#ffe8f0", "display": [{ "car": "FORDGT", "offset": [-3, 5], "yaw": 90 }, { "car": "MURCIELAGO", "offset": [-3, -5], "yaw": 90 }] },
+    "zone_customshop_1": { "name": "Taller de las colinas", "interior": "CUSTOMIZATION_SHOP", "tint": "#fff0d0", "display": [{ "car": "IMPREZAWRX", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_2": { "name": "Taller de Rosewood", "interior": "CUSTOMIZATION_SHOP", "tint": "#d8f8ff", "display": [{ "car": "LANCEREVO8", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_3": { "name": "Taller de la estación", "interior": "CUSTOMIZATION_SHOP", "tint": "#ffffff", "display": [{ "car": "ECLIPSEGT", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_4": { "name": "Taller del puerto pesquero", "interior": "CUSTOMIZATION_SHOP_BACKROOM", "tint": "#c8e8d8", "display": [{ "car": "RX8", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_5": { "name": "Taller de la refinería", "interior": "CUSTOMIZATION_SHOP", "tint": "#ffd8a8", "display": [{ "car": "CAMARO", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_6": { "name": "Taller de la playa", "interior": "CUSTOMIZATION_SHOP", "tint": "#fff8c0", "display": [{ "car": "GTI", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_7": { "name": "Taller de los astilleros", "interior": "CUSTOMIZATION_SHOP_BACKROOM", "tint": "#d0d8ff", "display": [{ "car": "VIPER", "offset": [-2, 6], "yaw": 120 }] },
+    "zone_customshop_8": { "name": "Taller de West Park", "interior": "CUSTOMIZATION_SHOP", "tint": "#f0d8ff", "display": [{ "car": "CORVETTE", "offset": [-2, 6], "yaw": 120 }] }
+  }
+}

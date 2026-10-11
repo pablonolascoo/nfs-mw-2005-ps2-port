@@ -3,6 +3,6 @@ import { defineConfig } from "vite";
 // "three" apunta a la versión WebGPU para que addons y núcleo compartan clases.
 export default defineConfig({
   publicDir: "../map-data",
-  server: { port: 5181 },
+  server: { port: 5181, fs: { allow: [".."] } }, // los mods viven en ../mods
   resolve: { alias: [{ find: /^three$/, replacement: "three/webgpu" }] },
 });
