@@ -16,6 +16,7 @@ import { readSolidListsDeep, stripTriangles } from "../lib/solid-ps2";
 import type { GlbMesh, GlbNode } from "../lib/glb";
 import { flatten, type FlatInstance } from "../lib/flatten";
 import { clusterSimplify } from "../lib/simplify";
+import { carPlaceholders } from "../lib/car-textures";
 import { mkdirSync, existsSync, readFileSync } from "node:fs";
 
 const [iso, disc, mode, ...names] = Bun.argv.slice(2);
@@ -57,7 +58,7 @@ if (mode === "car") {
     if (!geo) { console.error(`No existe CARS\\${name}\\GEOMETRY.BIN`); continue; }
     const solids = bestLod(readSolidList(await d.readEntry(geo)));
     const textures = await texturesFrom([`CARS\\${name}\\TEXTURES.BIN`, "CARS\\TEXTURES.BIN"]);
-    const mats = new MaterialTable(textures);
+    const mats = new MaterialTable(textures, { placeholders: carPlaceholders(name), missingColor: [0.16, 0.16, 0.17, 1] });
     const meshes = solids.map(s => solidToMesh(s, h => mats.get(h)));
     const glb = writeGlb(meshes, mats.materials, mats.images, name);
     await Bun.write(`${outDir}/cars/${name}.glb`, glb);

@@ -14,7 +14,7 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | PS2 geometry (VIF packets, strip restarts) | ✅ 181,535 strips decoded, 0 errors |
 | PS2 textures PSMT8 / PSMT4 (GS swizzle) | ✅ |
 | Whole Rockport: 718 sections, 106,714 objects, 5.8 M triangles | ✅ exported to glTF |
-| Cars with textures | ✅ (paint is generated at runtime by the game; placeholder colour) |
+| Cars with textures, paint, glass, lights and 4 wheels (TireOffsets) | ✅ |
 | Web viewer (Three.js, WebGPU → Metal) | ✅ |
 | Decompilation (dbalatoni13/nfsmw) builds on Apple Silicon | ✅ with Rosetta 2 |
 | Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
@@ -23,7 +23,8 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Drivable car on the real city (arcade prototype, 60 fps) | ✅ |
 | Garages without loading screens: real door opens, interior already loaded, park, showcase, drive out | ✅ |
 | Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
-| Road network, game physics, races, audio | 🔜 |
+| Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
+| Game physics, playable races, audio | 🔜 |
 
 ## Quick start
 **One PAL ISO (SLES-53559) is enough for the whole project** (SLUS-21351 also works).
@@ -57,6 +58,10 @@ cd ../viewer && bun install && bunx vite                                    # ht
 | Mods and expansions | [docs/en/08](docs/en/08-mods.md) | [docs/es/08](docs/es/08-mods.md) |
 | Gameplay database (VLT): zones, races, Blacklist | [docs/en/05](docs/en/05-vlt-attributes.md) | [docs/es/05](docs/es/05-vlt-atributos.md) |
 | Viewer performance | [docs/en/06](docs/en/06-performance.md) | [docs/es/06](docs/es/06-rendimiento.md) |
+| Road network and collision | [docs/en/09](docs/en/09-road-network.md) | [docs/es/09](docs/es/09-red-de-carreteras.md) |
+| Cars: replacement textures, paint, wheels | [docs/en/10](docs/en/10-cars.md) | [docs/es/10](docs/es/10-coches.md) |
+| Generated data catalog (which file answers what) | [docs/en/11](docs/en/11-data-catalog.md) | [docs/es/11](docs/es/11-catalogo-de-datos.md) |
+| **Project context: start here to resume work** | [CONTEXT.md](CONTEXT.md) | [CONTEXT.md](CONTEXT.md) |
 
 Every claim is tagged **[V]** verified on real data, **[D]** from the decomp's debug types, **[I]** inferred, or **[H]** hypothesis.
 

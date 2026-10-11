@@ -14,7 +14,7 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Geometría PS2 (paquetes VIF, cortes de tira) | ✅ 181.535 tiras, 0 errores |
 | Texturas PS2 PSMT8 / PSMT4 (swizzle del GS) | ✅ |
 | Rockport entero: 718 secciones, 106.714 objetos, 5,8 M triángulos | ✅ exportado a glTF |
-| Coches con texturas | ✅ (la pintura la genera el juego al vuelo; color provisional) |
+| Coches con texturas, pintura, cristales, pilotos y 4 ruedas (TireOffsets) | ✅ |
 | Visor web (Three.js, WebGPU → Metal) | ✅ |
 | Descompilación (dbalatoni13/nfsmw) en Apple Silicon | ✅ con Rosetta 2 |
 | Base de datos del juego (VLT): 6.287 colecciones, 255 eventos, Blacklist, 15 zonas de garaje/tienda | ✅ |
@@ -23,7 +23,8 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Coche conducible sobre la ciudad real (prototipo arcade, 60 fps) | ✅ |
 | Garajes sin pantallas de carga: se abre la puerta real, interior ya cargado, aparcas, vista de exposición, sales conduciendo | ✅ |
 | Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
-| Red de carreteras, física del juego, carreras, audio | 🔜 |
+| Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
+| Física del juego, carreras jugables, audio | 🔜 |
 
 ## Inicio rápido
 **Con una sola ISO PAL (SLES-53559) basta para todo el proyecto** (también vale SLUS-21351).
@@ -47,6 +48,9 @@ cd ../viewer && bun install && bunx vite                                    # ht
 
 ## Documentación
 Ver la tabla del [README en inglés](README.md#documentation): cada documento existe en `docs/es/` y `docs/en/`.
+
+Para retomar el proyecto en cualquier momento: **[CONTEXT.md](CONTEXT.md)** (estado, rutas, comandos, pendientes) y el índice [docs/es/README.md](docs/es/README.md).
+Nuevos: [09 Red de carreteras](docs/es/09-red-de-carreteras.md) · [10 Coches](docs/es/10-coches.md) · [11 Catálogo de datos](docs/es/11-catalogo-de-datos.md).
 Cada afirmación lleva **[V]** verificado, **[D]** tipos de depuración de la decomp, **[I]** inferido o **[H]** hipótesis.
 
 ## Licencia

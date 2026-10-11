@@ -112,7 +112,7 @@ export function clipToBox(obj: THREE.Object3D, worldToBox: THREE.Matrix4, tint =
 }
 
 /** Mods: datos propios que se aplican encima de lo extraído de la ISO (ver mods/README.md). */
-export interface GarageMod { name?: string; interior?: string; tint?: string; display?: { car: string; offset: [number, number]; yaw?: number }[] }
+export interface GarageMod { name?: string; interior?: string; tint?: string; display?: { car: string; offset: [number, number]; yaw?: number; paint?: string }[] }
 export interface ModManifest { id: string; name: string; version: string; author?: string; description?: string; garages?: Record<string, GarageMod> }
 const modFiles = import.meta.glob("../../mods/*/mod.json", { eager: true, import: "default" }) as Record<string, ModManifest>;
 export const mods: ModManifest[] = Object.keys(modFiles).sort().map(k => modFiles[k]);

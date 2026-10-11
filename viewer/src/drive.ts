@@ -27,9 +27,9 @@ export class Driver {
   constructor() { this.root.add(this.body); }
 
   /** Coloca el modelo: lo centra, lo apoya en z = 0 y lo gira para que su morro mire a +X. */
-  setModel(model: THREE.Object3D) {
+  setModel(model: THREE.Object3D, tires?: number[][], paint?: string) {
     this.body.clear();
-    const { holder, size } = carHolder(model);
+    const { holder, size } = carHolder(model, tires, paint);
     this.body.add(holder);
     this.halfLength = Math.max(size.x, size.y) / 2; this.halfWidth = Math.min(size.x, size.y) / 2;
   }
@@ -112,8 +112,60 @@ export function makeCollider(m: THREE.Mesh) {
   return m;
 }
 
+/**
+ * Monta las cuatro ruedas: el modelo trae una sola (pieza *_TIRE_*); el juego las coloca con TireOffsets
+ * (x, y, z, radio) de GLOBAL\ATTRIBUTES.BIN [D: CarRender.cpp]. Las del lado contrario se reflejan.
+ */
+export function mountWheels(model: THREE.Object3D, tires?: number[][]): THREE.Object3D {
+  if (!tires) return model;
+  model.updateMatrixWorld(true); // el modelo aún no tiene padre: su espacio de mundo = coordenadas del coche
+  let tire: THREE.Object3D | null = null;
+  model.traverse(o => { if (!tire && /_TIRE_[A-Z]$/i.test(o.name)) tire = o; });
+  if (!tire) return model;
+  const t = tire as THREE.Object3D;
+  const tireBox = new THREE.Box3().setFromObject(t);
+  const c = tireBox.getCenter(new THREE.Vector3());
+  const assembly = new THREE.Group();
+  assembly.add(model);
+  t.visible = false;
+  for (const [x, y, z] of tires) {
+    const pivot = new THREE.Group();
+    t.traverse(o => {
+      const m = o as THREE.Mesh; if (!m.isMesh) return;
+      const part = new THREE.Mesh(m.geometry, m.material);
+      part.applyMatrix4(m.matrixWorld); part.position.sub(c); // pieza centrada en el eje de la rueda
+      pivot.add(part);
+    });
+    // CarRender.cpp (WheelPivotTranslationAmount = 0.5): la cara exterior de la llanta queda en |y| = TireOffsets.y
+    // y la goma se extiende hacia dentro el ancho de la pieza.
+    const halfW = (tireBox.max.y - tireBox.min.y) / 2;
+    pivot.position.set(x, Math.sign(y) * (Math.abs(y) - halfW), z === 0 ? c.z : z);
+    if (Math.sign(y) !== Math.sign(c.y || 1)) pivot.scale.y = -1; // lado contrario: espejo
+    assembly.add(pivot);
+  }
+  assembly.userData.tireCenter = c.toArray();
+  return assembly;
+}
+
+/** Pinta la carrocería: materiales con extras.role = "pintura" (sustitutos de <COCHE>_SKIN1, ver tools/src/lib/car-textures.ts). */
+export function paintCar(model: THREE.Object3D, color: string) {
+  const done = new Map<THREE.Material, THREE.Material>();
+  model.traverse(o => {
+    const m = o as THREE.Mesh; if (!m.isMesh) return;
+    const swap = (mat: THREE.Material) => {
+      if (mat.userData?.role !== "pintura") return mat;
+      let c = done.get(mat);
+      if (!c) { const n = mat.clone() as THREE.MeshStandardMaterial; n.color.set(color); n.roughness = 0.32; n.metalness = 0.45; c = n; done.set(mat, n); }
+      return c;
+    };
+    m.material = Array.isArray(m.material) ? m.material.map(swap) : swap(m.material);
+  });
+}
+
 /** Envuelve un coche del juego: centrado, apoyado en z = 0 y con el morro hacia +X (deducido de los faros). */
-export function carHolder(model: THREE.Object3D) {
+export function carHolder(model0: THREE.Object3D, tires?: number[][], paint?: string) {
+  if (paint) paintCar(model0, paint);
+  const model = mountWheels(model0, tires);
   const box = new THREE.Box3().setFromObject(model);
   const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
   let front = 1;

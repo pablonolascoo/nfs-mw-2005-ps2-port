@@ -78,6 +78,9 @@ let tiles: Tile[] = [];
 let groups: Group[] = [];
 let zones: Zone[] = [];
 let garageInfo: GarageInfo[] = [];
+let carAttribs: Record<string, { tires: number[][] }> = {};
+/** Color de la pintura del coche del jugador (?pintura=1f6fd1). El BMW M3 GTR de la historia es plata y azul. */
+let playerPaint = "#" + (new URLSearchParams(location.search).get("pintura") ?? "aeb7c2").replace(/^#/, "");
 // Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
 // (No usamos THREE.Cache: al liberar una casilla cerraría imágenes que otras siguen usando.)
 const sharedTex = new Map<string, THREE.Texture>();
@@ -395,7 +398,7 @@ driver.root.visible = false;
 const pick = $<HTMLSelectElement>("car-pick");
 async function loadCarInto(name: string) {
   const it = index?.items.find(i => i.id === `car:${name}`);
-  if (it) driver.setModel(await loadGlb(it.glb));
+  if (it) driver.setModel(await loadGlb(it.glb), carAttribs[name.toLowerCase()]?.tires, playerPaint);
 }
 /** Busca suelo desde muy arriba (para aparecer). */
 function groundFromSky(x: number, y: number) {
@@ -509,7 +512,7 @@ async function placeGarageNow(z: Zone) {
   const left = new THREE.Vector3(-out.y, out.x, 0);
   for (const d of mod.display ?? []) {
     const it = index!.items.find(i => i.id === `car:${d.car}`); if (!it) continue;
-    const { holder } = carHolder(await loadGlb(it.glb));
+    const { holder } = carHolder(await loadGlb(it.glb), carAttribs[d.car.toLowerCase()]?.tires, d.paint ?? "#20242c");
     holder.position.copy(spot.position).addScaledVector(outV3, d.offset[0]).addScaledVector(left, d.offset[1]).setZ(ground);
     holder.rotation.z = yawOut + THREE.MathUtils.degToRad(d.yaw ?? 0);
     holder.visible = false; display.push(holder); scene.add(holder);
@@ -692,7 +695,8 @@ try {
   if (w.ok) { const wj = (await w.json()) as { sections: WorldSection[]; tiles?: Tile[]; groups?: Group[] }; world = wj.sections; tiles = wj.tiles ?? []; groups = wj.groups ?? [];
     for (const k of ["carrera", "candado", "puerta"] as const) $(`n-${k}`).textContent = String(groups.filter(g => g.kind === k).length);
     const zr = await fetch(`/${disc}/zones.json`); if (zr.ok) { zones = ((await zr.json()) as { zones: Zone[] }).zones; buildZones(); }
-    const gr = await fetch(`/${disc}/garages.json`); if (gr.ok) garageInfo = ((await gr.json()) as { garages: GarageInfo[] }).garages; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
+    const gr = await fetch(`/${disc}/garages.json`); if (gr.ok) garageInfo = ((await gr.json()) as { garages: GarageInfo[] }).garages;
+    const cr = await fetch(`/${disc}/cars.json`); if (cr.ok) carAttribs = ((await cr.json()) as { cars: typeof carAttribs }).cars; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
   for (const it of index.items.filter(i => i.group === "Coches")) pick.append(new Option(it.label, it.label, it.label === "BMWM3GTRE46", it.label === "BMWM3GTRE46"));
   renderTree();

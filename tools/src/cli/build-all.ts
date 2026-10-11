@@ -1,5 +1,5 @@
 // Todo el proyecto desde UNA ISO (probado con SLES-53559 PAL): inventario, base de datos del juego, mundo en casillas,
-// grupos de bloqueo, interiores, coches, garajes y plano. Uso: bun src/cli/build-all.ts <iso> [ID]
+// grupos de bloqueo, interiores, coches, garajes, ruedas, carreteras y plano. Uso: bun src/cli/build-all.ts <iso> [ID]
 import { GameDisc } from "../lib/zdir";
 import { spawnSync } from "node:child_process";
 
@@ -22,6 +22,8 @@ const steps: [string, string[]][] = [
   ["Mundo en casillas + grupos de bloqueo", ["src/cli/convert.ts", iso, id, "tiles", "400", "3"]],
   ["Interiores", ["src/cli/convert.ts", iso, id, "interior", "CAREER_SAFEHOUSE", "PLATFORMCRIB", "CAR_LOT", "CUSTOMIZATION_SHOP", "CUSTOMIZATION_SHOP_BACKROOM"]],
   ["Garajes y puertas", ["src/cli/garages.ts", iso, id]],
+  ["Atributos de coches (ruedas)", ["src/cli/car-attribs.ts", iso, id]],
+  ["Red de carreteras y colisión", ["src/cli/roads.ts", iso, id]],
   ["Plano cenital", ["src/cli/topdown.ts", iso, id, "4096"]],
 ];
 const t0 = performance.now();

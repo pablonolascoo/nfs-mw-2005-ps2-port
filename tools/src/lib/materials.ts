@@ -3,6 +3,7 @@ import type { GlbImage, GlbMaterial } from "./glb";
 import type { Texture } from "./tex-ps2";
 import { encodePng } from "./png";
 import { hex8 } from "./hash";
+import type { Placeholder } from "./car-textures";
 
 export class MaterialTable {
   materials: GlbMaterial[] = [];
@@ -10,7 +11,7 @@ export class MaterialTable {
   private byHash = new Map<string, number>();
   missing = new Set<number>();
   /** external: carpeta donde escribir PNG compartidos y prefijo de URI relativo al GLB. */
-  constructor(private textures: Map<number, Texture>, private opts: { unlit?: boolean; external?: { dir: string; uriPrefix: string; written: Set<number> } } = {}) {}
+  constructor(private textures: Map<number, Texture>, private opts: { unlit?: boolean; external?: { dir: string; uriPrefix: string; written: Set<number> }; placeholders?: Map<number, Placeholder>; missingColor?: [number, number, number, number] } = {}) {}
 
   get(hash: number | undefined): number {
     const key = hash === undefined ? "none" : hex8(hash);
@@ -25,6 +26,12 @@ export class MaterialTable {
         this.images.push({ name: t.name, uri: `${ext.uriPrefix}${hex8(t.nameHash)}.png` });
       } else this.images.push({ name: t.name, png: encodePng(t.rgba, t.width, t.height) });
       m = { name: t.name, color: [1, 1, 1, 1], texture: this.images.length - 1, unlit: this.opts.unlit, ...alphaFor(t) };
+    } else if (hash !== undefined && this.opts.placeholders?.has(hash)) {
+      const { role, ...p } = this.opts.placeholders.get(hash)!;
+      m = { color: [1, 1, 1, 1], unlit: this.opts.unlit, ...p, extras: { ...p.extras, role } };
+    } else if (this.opts.missingColor) {
+      if (hash !== undefined) this.missing.add(hash);
+      m = { name: `sin_textura_${key}`, color: this.opts.missingColor, unlit: this.opts.unlit };
     } else {
       if (hash !== undefined) this.missing.add(hash);
       const h = hash ?? 0x9e3779b9, r = 0.35 + ((h & 0xff) / 255) * 0.4, g = 0.35 + (((h >> 8) & 0xff) / 255) * 0.4, b = 0.35 + (((h >> 16) & 0xff) / 255) * 0.4;
