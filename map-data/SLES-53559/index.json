@@ -1,8 +1,71 @@
 {
  "disc": "SLES-53559",
- "generated": "2026-10-11T21:31:38.198Z",
+ "generated": "2026-10-11T22:09:24.757Z",
  "upAxis": "Z",
  "items": [
+  {
+   "id": "car:911GT2",
+   "group": "Coches",
+   "label": "911GT2",
+   "glb": "cars/911GT2.glb",
+   "tris": 5992,
+   "verts": 8704,
+   "source": "CARS\\911GT2\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:911TURBO",
+   "group": "Coches",
+   "label": "911TURBO",
+   "glb": "cars/911TURBO.glb",
+   "tris": 18614,
+   "verts": 27588,
+   "source": "CARS\\911TURBO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:997S",
+   "group": "Coches",
+   "label": "997S",
+   "glb": "cars/997S.glb",
+   "tris": 21775,
+   "verts": 32925,
+   "source": "CARS\\997S\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:A3",
+   "group": "Coches",
+   "label": "A3",
+   "glb": "cars/A3.glb",
+   "tris": 22824,
+   "verts": 33422,
+   "source": "CARS\\A3\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:A4",
+   "group": "Coches",
+   "label": "A4",
+   "glb": "cars/A4.glb",
+   "tris": 24623,
+   "verts": 36517,
+   "source": "CARS\\A4\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:BMWM3",
+   "group": "Coches",
+   "label": "BMWM3",
+   "glb": "cars/BMWM3.glb",
+   "tris": 14127,
+   "verts": 21761,
+   "source": "CARS\\BMWM3\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:BMWM3GTR",
+   "group": "Coches",
+   "label": "BMWM3GTR",
+   "glb": "cars/BMWM3GTR.glb",
+   "tris": 5697,
+   "verts": 8323,
+   "source": "CARS\\BMWM3GTR\\GEOMETRY.BIN"
+  },
   {
    "id": "car:BMWM3GTRE46",
    "group": "Coches",
@@ -13,13 +76,58 @@
    "source": "CARS\\BMWM3GTRE46\\GEOMETRY.BIN"
   },
   {
-   "id": "car:COPMIDSIZE",
+   "id": "car:CAMARO",
    "group": "Coches",
-   "label": "COPMIDSIZE",
-   "glb": "cars/COPMIDSIZE.glb",
-   "tris": 530,
-   "verts": 838,
-   "source": "CARS\\COPMIDSIZE\\GEOMETRY.BIN"
+   "label": "CAMARO",
+   "glb": "cars/CAMARO.glb",
+   "tris": 5850,
+   "verts": 7884,
+   "source": "CARS\\CAMARO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:CARRERAGT",
+   "group": "Coches",
+   "label": "CARRERAGT",
+   "glb": "cars/CARRERAGT.glb",
+   "tris": 15212,
+   "verts": 22628,
+   "source": "CARS\\CARRERAGT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:CAYMANS",
+   "group": "Coches",
+   "label": "CAYMANS",
+   "glb": "cars/CAYMANS.glb",
+   "tris": 23757,
+   "verts": 35543,
+   "source": "CARS\\CAYMANS\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:CLIO",
+   "group": "Coches",
+   "label": "CLIO",
+   "glb": "cars/CLIO.glb",
+   "tris": 23126,
+   "verts": 35630,
+   "source": "CARS\\CLIO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:CLK500",
+   "group": "Coches",
+   "label": "CLK500",
+   "glb": "cars/CLK500.glb",
+   "tris": 24759,
+   "verts": 38769,
+   "source": "CARS\\CLK500\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COBALTSS",
+   "group": "Coches",
+   "label": "COBALTSS",
+   "glb": "cars/COBALTSS.glb",
+   "tris": 24544,
+   "verts": 39592,
+   "source": "CARS\\COBALTSS\\GEOMETRY.BIN"
   },
   {
    "id": "car:CORVETTE",
@@ -31,6 +139,78 @@
    "source": "CARS\\CORVETTE\\GEOMETRY.BIN"
   },
   {
+   "id": "car:CORVETTEC6R",
+   "group": "Coches",
+   "label": "CORVETTEC6R",
+   "glb": "cars/CORVETTEC6R.glb",
+   "tris": 5752,
+   "verts": 8854,
+   "source": "CARS\\CORVETTEC6R\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:CTS",
+   "group": "Coches",
+   "label": "CTS",
+   "glb": "cars/CTS.glb",
+   "tris": 20463,
+   "verts": 30403,
+   "source": "CARS\\CTS\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:DB9",
+   "group": "Coches",
+   "label": "DB9",
+   "glb": "cars/DB9.glb",
+   "tris": 23110,
+   "verts": 35006,
+   "source": "CARS\\DB9\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:ECLIPSEGT",
+   "group": "Coches",
+   "label": "ECLIPSEGT",
+   "glb": "cars/ECLIPSEGT.glb",
+   "tris": 22224,
+   "verts": 32678,
+   "source": "CARS\\ECLIPSEGT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:ELISE",
+   "group": "Coches",
+   "label": "ELISE",
+   "glb": "cars/ELISE.glb",
+   "tris": 26727,
+   "verts": 39801,
+   "source": "CARS\\ELISE\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:FORDGT",
+   "group": "Coches",
+   "label": "FORDGT",
+   "glb": "cars/FORDGT.glb",
+   "tris": 17522,
+   "verts": 26264,
+   "source": "CARS\\FORDGT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:GALLARDO",
+   "group": "Coches",
+   "label": "GALLARDO",
+   "glb": "cars/GALLARDO.glb",
+   "tris": 20773,
+   "verts": 30919,
+   "source": "CARS\\GALLARDO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:GTI",
+   "group": "Coches",
+   "label": "GTI",
+   "glb": "cars/GTI.glb",
+   "tris": 18940,
+   "verts": 28514,
+   "source": "CARS\\GTI\\GEOMETRY.BIN"
+  },
+  {
    "id": "car:GTO",
    "group": "Coches",
    "label": "GTO",
@@ -38,6 +218,150 @@
    "tris": 22093,
    "verts": 32495,
    "source": "CARS\\GTO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:IMPREZAWRX",
+   "group": "Coches",
+   "label": "IMPREZAWRX",
+   "glb": "cars/IMPREZAWRX.glb",
+   "tris": 22100,
+   "verts": 33498,
+   "source": "CARS\\IMPREZAWRX\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:IS300",
+   "group": "Coches",
+   "label": "IS300",
+   "glb": "cars/IS300.glb",
+   "tris": 22112,
+   "verts": 32674,
+   "source": "CARS\\IS300\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:LANCEREVO8",
+   "group": "Coches",
+   "label": "LANCEREVO8",
+   "glb": "cars/LANCEREVO8.glb",
+   "tris": 25297,
+   "verts": 36611,
+   "source": "CARS\\LANCEREVO8\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:MONARO",
+   "group": "Coches",
+   "label": "MONARO",
+   "glb": "cars/MONARO.glb",
+   "tris": 22800,
+   "verts": 34246,
+   "source": "CARS\\MONARO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:MURCIELAGO",
+   "group": "Coches",
+   "label": "MURCIELAGO",
+   "glb": "cars/MURCIELAGO.glb",
+   "tris": 12681,
+   "verts": 19519,
+   "source": "CARS\\MURCIELAGO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:MUSTANGGT",
+   "group": "Coches",
+   "label": "MUSTANGGT",
+   "glb": "cars/MUSTANGGT.glb",
+   "tris": 20246,
+   "verts": 31028,
+   "source": "CARS\\MUSTANGGT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:PUNTO",
+   "group": "Coches",
+   "label": "PUNTO",
+   "glb": "cars/PUNTO.glb",
+   "tris": 20009,
+   "verts": 30943,
+   "source": "CARS\\PUNTO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:RX7",
+   "group": "Coches",
+   "label": "RX7",
+   "glb": "cars/RX7.glb",
+   "tris": 21637,
+   "verts": 32019,
+   "source": "CARS\\RX7\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:RX8",
+   "group": "Coches",
+   "label": "RX8",
+   "glb": "cars/RX8.glb",
+   "tris": 22286,
+   "verts": 32640,
+   "source": "CARS\\RX8\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:RX8SPEEDT",
+   "group": "Coches",
+   "label": "RX8SPEEDT",
+   "glb": "cars/RX8SPEEDT.glb",
+   "tris": 6747,
+   "verts": 9853,
+   "source": "CARS\\RX8SPEEDT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SL500",
+   "group": "Coches",
+   "label": "SL500",
+   "glb": "cars/SL500.glb",
+   "tris": 29086,
+   "verts": 42614,
+   "source": "CARS\\SL500\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SL65",
+   "group": "Coches",
+   "label": "SL65",
+   "glb": "cars/SL65.glb",
+   "tris": 6357,
+   "verts": 9389,
+   "source": "CARS\\SL65\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SLR",
+   "group": "Coches",
+   "label": "SLR",
+   "glb": "cars/SLR.glb",
+   "tris": 19531,
+   "verts": 29931,
+   "source": "CARS\\SLR\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SUPRA",
+   "group": "Coches",
+   "label": "SUPRA",
+   "glb": "cars/SUPRA.glb",
+   "tris": 22573,
+   "verts": 33057,
+   "source": "CARS\\SUPRA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TT",
+   "group": "Coches",
+   "label": "TT",
+   "glb": "cars/TT.glb",
+   "tris": 23797,
+   "verts": 32975,
+   "source": "CARS\\TT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:VIPER",
+   "group": "Coches",
+   "label": "VIPER",
+   "glb": "cars/VIPER.glb",
+   "tris": 23743,
+   "verts": 36161,
+   "source": "CARS\\VIPER\\GEOMETRY.BIN"
   },
   {
    "id": "int:CAR_LOT",
@@ -83,6 +407,222 @@
    "tris": 4843,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\PLATFORMCRIB.BIN"
+  },
+  {
+   "id": "car:BRAKES",
+   "group": "Piezas de tuneo",
+   "label": "BRAKES",
+   "glb": "cars/BRAKES.glb",
+   "tris": 129,
+   "verts": 227,
+   "source": "CARS\\BRAKES\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:ROOF",
+   "group": "Piezas de tuneo",
+   "label": "ROOF",
+   "glb": "cars/ROOF.glb",
+   "tris": 11164,
+   "verts": 18414,
+   "source": "CARS\\ROOF\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SPOILER",
+   "group": "Piezas de tuneo",
+   "label": "SPOILER",
+   "glb": "cars/SPOILER.glb",
+   "tris": 17794,
+   "verts": 30584,
+   "source": "CARS\\SPOILER\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SPOILER_CARRERA",
+   "group": "Piezas de tuneo",
+   "label": "SPOILER_CARRERA",
+   "glb": "cars/SPOILER_CARRERA.glb",
+   "tris": 17550,
+   "verts": 29660,
+   "source": "CARS\\SPOILER_CARRERA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SPOILER_HATCH",
+   "group": "Piezas de tuneo",
+   "label": "SPOILER_HATCH",
+   "glb": "cars/SPOILER_HATCH.glb",
+   "tris": 17450,
+   "verts": 29962,
+   "source": "CARS\\SPOILER_HATCH\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SPOILER_PORSCHES",
+   "group": "Piezas de tuneo",
+   "label": "SPOILER_PORSCHES",
+   "glb": "cars/SPOILER_PORSCHES.glb",
+   "tris": 11610,
+   "verts": 19082,
+   "source": "CARS\\SPOILER_PORSCHES\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:WHEELS",
+   "group": "Piezas de tuneo",
+   "label": "WHEELS",
+   "glb": "cars/WHEELS.glb",
+   "tris": 86112,
+   "verts": 123430,
+   "source": "CARS\\WHEELS\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPGHOST",
+   "group": "Policía",
+   "label": "COPGHOST",
+   "glb": "cars/COPGHOST.glb",
+   "tris": 241,
+   "verts": 423,
+   "source": "CARS\\COPGHOST\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPGTO",
+   "group": "Policía",
+   "label": "COPGTO",
+   "glb": "cars/COPGTO.glb",
+   "tris": 347,
+   "verts": 589,
+   "source": "CARS\\COPGTO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPGTOGHOST",
+   "group": "Policía",
+   "label": "COPGTOGHOST",
+   "glb": "cars/COPGTOGHOST.glb",
+   "tris": 347,
+   "verts": 589,
+   "source": "CARS\\COPGTOGHOST\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPHELI",
+   "group": "Policía",
+   "label": "COPHELI",
+   "glb": "cars/COPHELI.glb",
+   "tris": 935,
+   "verts": 1731,
+   "source": "CARS\\COPHELI\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPMIDSIZE",
+   "group": "Policía",
+   "label": "COPMIDSIZE",
+   "glb": "cars/COPMIDSIZE.glb",
+   "tris": 530,
+   "verts": 838,
+   "source": "CARS\\COPMIDSIZE\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPMIDSIZEINT",
+   "group": "Policía",
+   "label": "COPMIDSIZEINT",
+   "glb": "cars/COPMIDSIZEINT.glb",
+   "tris": 4892,
+   "verts": 7200,
+   "source": "CARS\\COPMIDSIZEINT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPSPORT",
+   "group": "Policía",
+   "label": "COPSPORT",
+   "glb": "cars/COPSPORT.glb",
+   "tris": 374,
+   "verts": 610,
+   "source": "CARS\\COPSPORT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPSPORTGHOST",
+   "group": "Policía",
+   "label": "COPSPORTGHOST",
+   "glb": "cars/COPSPORTGHOST.glb",
+   "tris": 374,
+   "verts": 610,
+   "source": "CARS\\COPSPORTGHOST\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPSPORTHENCH",
+   "group": "Policía",
+   "label": "COPSPORTHENCH",
+   "glb": "cars/COPSPORTHENCH.glb",
+   "tris": 374,
+   "verts": 610,
+   "source": "CARS\\COPSPORTHENCH\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPSUV",
+   "group": "Policía",
+   "label": "COPSUV",
+   "glb": "cars/COPSUV.glb",
+   "tris": 349,
+   "verts": 571,
+   "source": "CARS\\COPSUV\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPSUVL",
+   "group": "Policía",
+   "label": "COPSUVL",
+   "glb": "cars/COPSUVL.glb",
+   "tris": 241,
+   "verts": 429,
+   "source": "CARS\\COPSUVL\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERA",
+   "group": "Remolques",
+   "label": "TRAILERA",
+   "glb": "cars/TRAILERA.glb",
+   "tris": 463,
+   "verts": 815,
+   "source": "CARS\\TRAILERA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERB",
+   "group": "Remolques",
+   "label": "TRAILERB",
+   "glb": "cars/TRAILERB.glb",
+   "tris": 2525,
+   "verts": 4957,
+   "source": "CARS\\TRAILERB\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERCMT",
+   "group": "Remolques",
+   "label": "TRAILERCMT",
+   "glb": "cars/TRAILERCMT.glb",
+   "tris": 1050,
+   "verts": 1740,
+   "source": "CARS\\TRAILERCMT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERCON",
+   "group": "Remolques",
+   "label": "TRAILERCON",
+   "glb": "cars/TRAILERCON.glb",
+   "tris": 586,
+   "verts": 1148,
+   "source": "CARS\\TRAILERCON\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERCRATE",
+   "group": "Remolques",
+   "label": "TRAILERCRATE",
+   "glb": "cars/TRAILERCRATE.glb",
+   "tris": 614,
+   "verts": 1204,
+   "source": "CARS\\TRAILERCRATE\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAILERLOG",
+   "group": "Remolques",
+   "label": "TRAILERLOG",
+   "glb": "cars/TRAILERLOG.glb",
+   "tris": 968,
+   "verts": 1708,
+   "source": "CARS\\TRAILERLOG\\GEOMETRY.BIN"
   },
   {
    "id": "sec:A26",
@@ -6545,6 +7085,249 @@
    "tris": 0,
    "verts": 0,
    "source": "TRACKS\\STREAML2RA.BUN @425984"
+  },
+  {
+   "id": "car:CEMTR",
+   "group": "Tráfico",
+   "label": "CEMTR",
+   "glb": "cars/CEMTR.glb",
+   "tris": 1371,
+   "verts": 2369,
+   "source": "CARS\\CEMTR\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:GARB",
+   "group": "Tráfico",
+   "label": "GARB",
+   "glb": "cars/GARB.glb",
+   "tris": 1402,
+   "verts": 2782,
+   "source": "CARS\\GARB\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:MINIVAN",
+   "group": "Tráfico",
+   "label": "MINIVAN",
+   "glb": "cars/MINIVAN.glb",
+   "tris": 1130,
+   "verts": 1950,
+   "source": "CARS\\MINIVAN\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:PICKUPA",
+   "group": "Tráfico",
+   "label": "PICKUPA",
+   "glb": "cars/PICKUPA.glb",
+   "tris": 977,
+   "verts": 1671,
+   "source": "CARS\\PICKUPA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:PIZZA",
+   "group": "Tráfico",
+   "label": "PIZZA",
+   "glb": "cars/PIZZA.glb",
+   "tris": 1068,
+   "verts": 1808,
+   "source": "CARS\\PIZZA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:SEMI",
+   "group": "Tráfico",
+   "label": "SEMI",
+   "glb": "cars/SEMI.glb",
+   "tris": 1200,
+   "verts": 2264,
+   "source": "CARS\\SEMI\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TAXI",
+   "group": "Tráfico",
+   "label": "TAXI",
+   "glb": "cars/TAXI.glb",
+   "tris": 1008,
+   "verts": 1734,
+   "source": "CARS\\TAXI\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAF4DSEDA",
+   "group": "Tráfico",
+   "label": "TRAF4DSEDA",
+   "glb": "cars/TRAF4DSEDA.glb",
+   "tris": 475,
+   "verts": 919,
+   "source": "CARS\\TRAF4DSEDA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAF4DSEDB",
+   "group": "Tráfico",
+   "label": "TRAF4DSEDB",
+   "glb": "cars/TRAF4DSEDB.glb",
+   "tris": 632,
+   "verts": 1138,
+   "source": "CARS\\TRAF4DSEDB\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAF4DSEDC",
+   "group": "Tráfico",
+   "label": "TRAF4DSEDC",
+   "glb": "cars/TRAF4DSEDC.glb",
+   "tris": 669,
+   "verts": 1159,
+   "source": "CARS\\TRAF4DSEDC\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFAMB",
+   "group": "Tráfico",
+   "label": "TRAFAMB",
+   "glb": "cars/TRAFAMB.glb",
+   "tris": 858,
+   "verts": 1484,
+   "source": "CARS\\TRAFAMB\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFCAMPER",
+   "group": "Tráfico",
+   "label": "TRAFCAMPER",
+   "glb": "cars/TRAFCAMPER.glb",
+   "tris": 268,
+   "verts": 494,
+   "source": "CARS\\TRAFCAMPER\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFCEMTR",
+   "group": "Tráfico",
+   "label": "TRAFCEMTR",
+   "glb": "cars/TRAFCEMTR.glb",
+   "tris": 1348,
+   "verts": 2336,
+   "source": "CARS\\TRAFCEMTR\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFCOURT",
+   "group": "Tráfico",
+   "label": "TRAFCOURT",
+   "glb": "cars/TRAFCOURT.glb",
+   "tris": 667,
+   "verts": 1201,
+   "source": "CARS\\TRAFCOURT\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFDMPTR",
+   "group": "Tráfico",
+   "label": "TRAFDMPTR",
+   "glb": "cars/TRAFDMPTR.glb",
+   "tris": 955,
+   "verts": 1835,
+   "source": "CARS\\TRAFDMPTR\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFFICCOUP",
+   "group": "Tráfico",
+   "label": "TRAFFICCOUP",
+   "glb": "cars/TRAFFICCOUP.glb",
+   "tris": 739,
+   "verts": 1291,
+   "source": "CARS\\TRAFFICCOUP\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFFIRE",
+   "group": "Tráfico",
+   "label": "TRAFFIRE",
+   "glb": "cars/TRAFFIRE.glb",
+   "tris": 1049,
+   "verts": 2045,
+   "source": "CARS\\TRAFFIRE\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFGARB",
+   "group": "Tráfico",
+   "label": "TRAFGARB",
+   "glb": "cars/TRAFGARB.glb",
+   "tris": 895,
+   "verts": 1811,
+   "source": "CARS\\TRAFGARB\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFHA",
+   "group": "Tráfico",
+   "label": "TRAFHA",
+   "glb": "cars/TRAFHA.glb",
+   "tris": 696,
+   "verts": 1262,
+   "source": "CARS\\TRAFHA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFMINIVAN",
+   "group": "Tráfico",
+   "label": "TRAFMINIVAN",
+   "glb": "cars/TRAFMINIVAN.glb",
+   "tris": 733,
+   "verts": 1369,
+   "source": "CARS\\TRAFMINIVAN\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFNEWS",
+   "group": "Tráfico",
+   "label": "TRAFNEWS",
+   "glb": "cars/TRAFNEWS.glb",
+   "tris": 1025,
+   "verts": 1821,
+   "source": "CARS\\TRAFNEWS\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFPICKUPA",
+   "group": "Tráfico",
+   "label": "TRAFPICKUPA",
+   "glb": "cars/TRAFPICKUPA.glb",
+   "tris": 609,
+   "verts": 1087,
+   "source": "CARS\\TRAFPICKUPA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFPIZZA",
+   "group": "Tráfico",
+   "label": "TRAFPIZZA",
+   "glb": "cars/TRAFPIZZA.glb",
+   "tris": 716,
+   "verts": 1278,
+   "source": "CARS\\TRAFPIZZA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFSTWAG",
+   "group": "Tráfico",
+   "label": "TRAFSTWAG",
+   "glb": "cars/TRAFSTWAG.glb",
+   "tris": 805,
+   "verts": 1403,
+   "source": "CARS\\TRAFSTWAG\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFSUVA",
+   "group": "Tráfico",
+   "label": "TRAFSUVA",
+   "glb": "cars/TRAFSUVA.glb",
+   "tris": 687,
+   "verts": 1219,
+   "source": "CARS\\TRAFSUVA\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFTAXI",
+   "group": "Tráfico",
+   "label": "TRAFTAXI",
+   "glb": "cars/TRAFTAXI.glb",
+   "tris": 477,
+   "verts": 919,
+   "source": "CARS\\TRAFTAXI\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:TRAFVANB",
+   "group": "Tráfico",
+   "label": "TRAFVANB",
+   "glb": "cars/TRAFVANB.glb",
+   "tris": 701,
+   "verts": 1195,
+   "source": "CARS\\TRAFVANB\\GEOMETRY.BIN"
   }
  ]
 }

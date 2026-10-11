@@ -11,6 +11,8 @@ import { loadTile, loadPackedTile } from "./tile-loader";
 interface Item { id: string; group: string; label: string; glb: string; tris: number; verts: number; source: string }
 interface Index { disc: string; generated: string; upAxis: "Z"; items: Item[] }
 interface WorldSection { name: string; number: number; centre: [number, number]; radius: number; glb: string; instances: number; tris: number }
+interface Group { name: string; hash: string; number: number; kind: "carrera" | "candado" | "puerta" | "otro"; barrier: boolean; driveThrough: boolean; objects: number; glb: string; min: number[]; max: number[] }
+interface Zone { collection: string; zoneType: "safehouse" | "carlot" | "customshop"; position: [number, number, number]; radius: number; respawn?: { position: [number, number, number]; rotation: number } }
 interface Tile { id: string; x: number; y: number; size: number; near: string; far: string; tris: number; farTris: number; objects: number; zMin: number; zMax: number }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -49,6 +51,8 @@ const loader = new GLTFLoader();
 let index: Index | null = null;
 let world: WorldSection[] = [];
 let tiles: Tile[] = [];
+let groups: Group[] = [];
+let zones: Zone[] = [];
 // Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
 // (No usamos THREE.Cache: al liberar una casilla cerraría imágenes que otras siguen usando.)
 const sharedTex = new Map<string, THREE.Texture>();
@@ -163,6 +167,7 @@ btn.onclick = async () => {
   content.clear(); current = null;
   renderTree($<HTMLInputElement>("filter").value);
   frameCity();
+  setLayer("candado", $<HTMLInputElement>("layer-candado").checked); setLayer("puerta", $<HTMLInputElement>("layer-puerta").checked);
   const status = $("city-status"), bar = $("city-bar");
   const queue = [...tiles];
   let done = 0;
@@ -237,6 +242,47 @@ function dispose(o: THREE.Object3D) {
   });
 }
 
+// ---------- Capas del juego: grupos de escenario (bloqueos) y zonas de garaje ----------
+// El juego oculta estos objetos por defecto (ExcludeFlags 0x10) y los activa por carrera o progreso.
+const layerGroups = { carrera: new THREE.Group(), candado: new THREE.Group(), puerta: new THREE.Group(), otro: new THREE.Group() };
+const zoneLayer = new THREE.Group();
+scene.add(...Object.values(layerGroups), zoneLayer);
+const layerLoaded = new Set<string>();
+async function setLayer(kind: keyof typeof layerGroups, on: boolean) {
+  layerGroups[kind].visible = on;
+  if (!on || layerLoaded.has(kind) || !index) return;
+  layerLoaded.add(kind);
+  const list = groups.filter(g => g.kind === kind);
+  let i = 0;
+  const worker = async () => { for (let g = list[i++]; g; g = list[i++]) { try { const o = await loadGlb(g.glb); o.name = g.name; o.userData = { ...o.userData, Grupo: g.name, Tipo: kind }; layerGroups[kind].add(o); } catch { /* grupo vacío */ } } };
+  await Promise.all(Array.from({ length: 6 }, worker));
+}
+for (const kind of ["carrera", "candado", "puerta"] as const) {
+  const box = $<HTMLInputElement>(`layer-${kind}`);
+  box.addEventListener("change", () => setLayer(kind, box.checked));
+}
+const ZONE_COLORS = { safehouse: 0x4dff9a, carlot: 0x5cc8ff, customshop: 0xffb21a } as const;
+const ZONE_LABEL = { safehouse: "Refugio", carlot: "Concesionario", customshop: "Taller" } as const;
+function buildZones() {
+  zoneLayer.clear();
+  const list = $("zones"); list.innerHTML = "";
+  for (const z of zones) {
+    const c = ZONE_COLORS[z.zoneType];
+    const ring = new THREE.Mesh(new THREE.RingGeometry(z.radius * 0.85, z.radius, 48), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.85, side: THREE.DoubleSide, depthWrite: false }));
+    ring.position.set(z.position[0], z.position[1], z.position[2] + 0.15);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 60, 8), new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.35, depthWrite: false }));
+    beam.rotation.x = Math.PI / 2; beam.position.set(z.position[0], z.position[1], z.position[2] + 30);
+    ring.userData = { Zona: z.collection.split("/").pop(), Tipo: ZONE_LABEL[z.zoneType], Radio: `${z.radius} m` };
+    zoneLayer.add(ring, beam);
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.innerHTML = `<span><i class="dot" style="background:#${c.toString(16).padStart(6, "0")}"></i>${ZONE_LABEL[z.zoneType]} ${z.collection.split("_").pop()}</span><small>${z.position[0].toFixed(0)}, ${z.position[1].toFixed(0)}</small>`;
+    b.onclick = () => { const p = new THREE.Vector3(...z.position); controls.target.copy(p); camera.position.copy(p).add(new THREE.Vector3(35, -35, 25)); };
+    li.append(b); list.append(li);
+  }
+  $("n-zonas").textContent = String(zones.length);
+}
+$<HTMLInputElement>("layer-zonas").addEventListener("change", e => (zoneLayer.visible = (e.target as HTMLInputElement).checked));
+
 function buildBounds() {
   bounds.clear();
   const mat = new THREE.LineBasicMaterial({ color: 0xffb21a, transparent: true, opacity: 0.45 });
@@ -258,7 +304,7 @@ renderer.domElement.addEventListener("pointerup", e => {
   const r = renderer.domElement.getBoundingClientRect();
   ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects([content, city], true)[0];
+  const hit = ray.intersectObjects([content, city, zoneLayer, ...Object.values(layerGroups)], true)[0];
   select(hit?.object ?? null, hit?.point, hit?.face?.a);
 });
 
@@ -383,7 +429,9 @@ try {
   $("disc-tag").textContent = index.disc;
   $("empty").hidden = true;
   const w = await fetch(`/${disc}/world.json`);
-  if (w.ok) { const wj = (await w.json()) as { sections: WorldSection[]; tiles?: Tile[] }; world = wj.sections; tiles = wj.tiles ?? []; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
+  if (w.ok) { const wj = (await w.json()) as { sections: WorldSection[]; tiles?: Tile[]; groups?: Group[] }; world = wj.sections; tiles = wj.tiles ?? []; groups = wj.groups ?? [];
+    for (const k of ["carrera", "candado", "puerta"] as const) $(`n-${k}`).textContent = String(groups.filter(g => g.kind === k).length);
+    const zr = await fetch(`/${disc}/zones.json`); if (zr.ok) { zones = ((await zr.json()) as { zones: Zone[] }).zones; buildZones(); } buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
   renderTree();
   const first = index.items.find(i => i.group === "Coches") ?? index.items[0];

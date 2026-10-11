@@ -26,6 +26,14 @@
         <p id="city-status" class="muted" aria-live="polite">—</p>
         <label class="toggle"><input type="checkbox" id="show-bounds" /> Límites de sección</label>
       </div>
+      <div class="panel-head"><i class="ph ph-traffic-cone"></i>Capas del juego</div>
+      <div class="city">
+        <label class="toggle"><input type="checkbox" id="layer-candado" checked /> Candados de la historia <small id="n-candado"></small></label>
+        <label class="toggle"><input type="checkbox" id="layer-puerta" checked /> Cierres de calle <small id="n-puerta"></small></label>
+        <label class="toggle"><input type="checkbox" id="layer-carrera" /> Bloqueos de carrera <small id="n-carrera"></small></label>
+        <label class="toggle"><input type="checkbox" id="layer-zonas" checked /> Garajes y tiendas <small id="n-zonas"></small></label>
+        <ul id="zones" class="tree zones" aria-label="Garajes y tiendas"></ul>
+      </div>
       <div class="panel-head"><i class="ph ph-stack"></i>Recursos</div>
       <label class="search"><i class="ph ph-magnifying-glass"></i><input id="filter" placeholder="Filtrar por nombre o hash" autocomplete="off" /></label>
       <ul id="tree" class="tree" aria-label="Recursos recuperados"></ul>

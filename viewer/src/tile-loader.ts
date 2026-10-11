@@ -28,14 +28,15 @@ function texture(url: string) {
 const GL2THREE: Record<string, string> = { POSITION: "position", NORMAL: "normal", TEXCOORD_0: "uv", COLOR_0: "color", _ID: "_id" };
 
 export async function loadTile(url: string, materialCache: Map<string, THREE.Material>): Promise<THREE.Object3D> {
-  const data = await call<{ meshes: { name: string; prims: { material: number; index: Uint32Array; attrs: Record<string, Float32Array> }[] }[]; materials: { name: string; alphaMode: string; color: number[]; image: string | null }[]; extras: Record<string, unknown> | null }>("glb", url);
+  const data = await call<{ meshes: { name: string; prims: { material: number; index: Uint32Array; attrs: Record<string, Float32Array> }[] }[]; materials: { name: string; alphaMode: string; cutoff: number; additive: boolean; color: number[]; image: string | null }[]; extras: Record<string, unknown> | null }>("glb", url);
   const mats = await Promise.all(data.materials.map(async m => {
     const key = `${m.name}|${m.image ?? ""}|${m.alphaMode}`;
     let mat = materialCache.get(key);
     if (!mat) {
       const mb = new THREE.MeshBasicMaterial({ name: m.name, color: new THREE.Color(m.color[0], m.color[1], m.color[2]), side: THREE.DoubleSide, vertexColors: true });
       if (m.image) mb.map = await texture(m.image);
-      if (m.alphaMode === "MASK") mb.alphaTest = 0.5;
+      if (m.alphaMode === "MASK") mb.alphaTest = m.cutoff;
+      if (m.additive) { mb.transparent = true; mb.depthWrite = false; mb.blending = THREE.AdditiveBlending; }
       mat = mb; materialCache.set(key, mat);
     }
     return mat;
@@ -66,7 +67,7 @@ export async function loadTile(url: string, materialCache: Map<string, THREE.Mat
 /** Casilla cercana en 2 llamadas de dibujo: array de texturas + atributo de capa por vértice (ver tile-worker.ts). */
 export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer): Promise<THREE.Object3D> {
   type G = { pos: Float32Array; uv: Float32Array; col: Float32Array; layer: Float32Array; id: Float32Array; idx: Uint32Array } | null;
-  const d = await call<{ S: number; layers: number; data: Uint8Array; mips: Uint8Array[]; opaque: G; masked: G; extras: Record<string, unknown> | null; layerNames: string[] }>("tile", url);
+  const d = await call<{ S: number; layers: number; data: Uint8Array; mips: Uint8Array[]; groups: Record<"opaque" | "mask50" | "mask30" | "additive", G>; extras: Record<string, unknown> | null; layerNames: string[] }>("tile", url);
   const arr = new THREE.DataArrayTexture(d.data as Uint8Array<ArrayBuffer>, d.S, d.S, d.layers);
   arr.colorSpace = THREE.SRGBColorSpace; arr.wrapS = arr.wrapT = THREE.RepeatWrapping;
   arr.magFilter = THREE.LinearFilter; arr.minFilter = THREE.LinearMipmapLinearFilter; arr.anisotropy = 4;
@@ -81,7 +82,7 @@ export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer
   if (gpuTex) d.mips.forEach((m, i) => { const w = d.S >> (i + 1); backend.device.queue.writeTexture({ texture: gpuTex, mipLevel: i + 1 }, m as Uint8Array<ArrayBuffer>, { bytesPerRow: w * 4, rowsPerImage: w }, { width: w, height: w, depthOrArrayLayers: d.layers }); });
   const root = new THREE.Group();
   root.userData = { ...(d.extras ?? {}), capas: d.layerNames };
-  for (const [kind, g] of [["opaque", d.opaque], ["masked", d.masked]] as const) {
+  for (const [kind, g] of Object.entries(d.groups) as ["opaque" | "mask50" | "mask30" | "additive", G][]) {
     if (!g) continue;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(g.pos, 3));
@@ -91,10 +92,11 @@ export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer
     geo.setAttribute("_id", new THREE.BufferAttribute(g.id, 1));
     geo.setIndex(new THREE.BufferAttribute(g.idx, 1));
     geo.computeBoundingSphere();
-    const mat = new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide, name: kind === "masked" ? "array (recorte)" : "array" });
+    const mat = new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide, name: `array ${kind}` });
     const tex = texNode(arr, uv()).depth(attribute("layer", "float"));
     mat.colorNode = tex.rgb.mul(vertexColor().rgb);
-    if (kind === "masked") { mat.opacityNode = tex.a; mat.alphaTest = 0.5; }
+    if (kind === "mask50" || kind === "mask30") { mat.opacityNode = tex.a; mat.alphaTest = kind === "mask50" ? 0.5 : 0.3; }
+    if (kind === "additive") { mat.opacityNode = tex.a; mat.transparent = true; mat.depthWrite = false; mat.blending = THREE.AdditiveBlending; }
     const mesh = new THREE.Mesh(geo, mat);
     mesh.matrixAutoUpdate = false;
     root.add(mesh);

@@ -12,3 +12,13 @@
 ## Cifras de la conversión completa
 718 secciones con escenario · 106 714 instancias · 18 156 sólidos únicos · 5,84 M triángulos · 2 627 texturas · 4 instancias sin modelo · 7 texturas no encontradas.
 Plano cenital: `map-data/SLES-53559/rockport-plano.png` (1,49 m/px; calibración en `rockport-plano.json`).
+
+## Grupos de escenario y bloqueos [V]
+- `ExcludeFlags` (u32 @0x18 de la instancia PS2): bit `0x10` = oculto por defecto, `0x400` = arte volteado [D: `SceneryGroup::EnableRendering`].
+- `L2RA.BUN` → `0x00034108` SceneryOverrideInfo[] (6 B: sección, instancia, flags) y `0x00034109` SceneryGroup (`NameHash`, `GroupNumber`, `NumObjects`, `BarrierFlag`, `DriveThroughBarrierFlag`, índices u16; tamaño `(n·2+0x17)&~3`).
+- 754 grupos: 675 `BARRIER_SPLINE_n` (bloqueos con flecha de cada carrera), 6 `BARRIER_LOCKED_10..15` (candados de la historia), `SCENERY_GROUP_DOOR` (escombros y excavadoras que cierran calles; el juego lo activa al cargar), 71 bloqueos más resueltos por fuerza bruta y un grupo grande sin nombre (#1, 7 353 objetos, visible).
+- El juego activa los grupos por nombre con `EnableBarrierSceneryGroup` (carreras y progreso).
+
+## Zonas de garaje y tiendas [V]
+15 zonas en `GAMEPLAY.BIN` (ver doc 05): 4 refugios, 3 concesionarios, 8 talleres. Cada una tiene su edificio cerca: `XS_SafeGarage` / `XB_CT_SafehouseA` (refugio 1), `XB_CarParkDealership` (concesionarios), `XB_ChopShopA` (los 8 talleres, mismo modelo).
+En el juego original, pulsar el botón en la zona llama a `EQuitToFE(GARAGETYPE_*)`: sale del mundo y carga el menú con el fondo del interior (`FRONTEND\PLATFORMS\*.BIN`).

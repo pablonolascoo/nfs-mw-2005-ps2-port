@@ -4,7 +4,9 @@ import { parseChunks, type Chunk } from "./bchunk";
 
 export interface Section { index: number; name: string; number: number; fileType: number; offset: number; size: number; priority: number; centre: [number, number]; radius: number; checksum: number }
 export interface SceneryInfo { name: string; hashes: number[]; radius: number }
-export interface SceneryInstance { bbMin: number[]; bbMax: number[]; position: number[]; rotation: number[]; info: number }
+export interface SceneryInstance { bbMin: number[]; bbMax: number[]; position: number[]; rotation: number[]; info: number; excludeFlags: number }
+/** Grupo de escenario (bloqueos de carril, puertas…): lista de (sección, instancia). [decomp Scenery.hpp + verificado en L2RA.BUN] */
+export interface SceneryGroup { nameHash: number; number: number; barrier: boolean; driveThrough: boolean; members: { section: number; instance: number; excludeFlags: number }[] }
 export interface ScenerySection { sectionNumber: number; infos: SceneryInfo[]; instances: SceneryInstance[] }
 
 export function readSectionTable(l2ra: Uint8Array): Section[] {
@@ -29,6 +31,7 @@ const skipPad = (dv: DataView, o: number, end: number) => { while (o + 4 <= end 
 /**
  * SceneryInstance PS2 (0x40): f32 bbMin[3] @0x00, f32 bbMax[3] @0x0C, … f32 pos[3] @0x20, s16 rot[9]/8192 @0x2C, s16 info @0x3E.
  * Diferencia con PC/GC: la caja es float, no s16 [verificado: coincide con el centro de la sección].
+ * u32 ExcludeFlags @0x18: bit 0x10 = oculto (grupos desactivados), 0x400 = arte volteado [decomp SceneryGroup::EnableRendering].
  */
 export function readScenery(buf: Uint8Array, chunks: Chunk[]): ScenerySection[] {
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
@@ -44,7 +47,7 @@ export function readScenery(buf: Uint8Array, chunks: Chunk[]): ScenerySection[] 
     }
     for (let o = skipPad(dv, (ins.dataOffset + 15) & ~15, ins.dataOffset + ins.size); o + 0x40 <= ins.dataOffset + ins.size; o += 0x40) {
       const f = (k: number) => dv.getFloat32(o + k, true);
-      s.instances.push({ bbMin: [f(0), f(4), f(8)], bbMax: [f(12), f(16), f(20)], position: [f(0x20), f(0x24), f(0x28)], rotation: Array.from({ length: 9 }, (_, k) => dv.getInt16(o + 0x2c + k * 2, true) / 8192), info: dv.getInt16(o + 0x3e, true) });
+      s.instances.push({ bbMin: [f(0), f(4), f(8)], bbMax: [f(12), f(16), f(20)], position: [f(0x20), f(0x24), f(0x28)], rotation: Array.from({ length: 9 }, (_, k) => dv.getInt16(o + 0x2c + k * 2, true) / 8192), info: dv.getInt16(o + 0x3e, true), excludeFlags: dv.getUint32(o + 0x18, true) });
     }
     out.push(s);
   }
@@ -54,3 +57,23 @@ export function readScenery(buf: Uint8Array, chunks: Chunk[]): ScenerySection[] 
 const NONE = new Set([0, 0xbe43edbb, 0x90f70174]);
 /** Primer hash de modelo válido (LOD de más detalle disponible). */
 export const modelHash = (i: SceneryInfo) => i.hashes.find(h => !NONE.has(h));
+
+/** Grupos de escenario de L2RA.BUN: 0x00034108 = SceneryOverrideInfo[] (6 B), 0x00034109 = SceneryGroup (tamaño variable). */
+export function readSceneryGroups(l2ra: Uint8Array): SceneryGroup[] {
+  const dv = new DataView(l2ra.buffer, l2ra.byteOffset, l2ra.byteLength);
+  const top = parseChunks(l2ra);
+  const ov = top.find(c => c.id === 0x00034108), gr = top.find(c => c.id === 0x00034109);
+  if (!ov || !gr) return [];
+  let oo = skipPad(dv, ov.dataOffset, ov.dataOffset + ov.size);
+  const overrides: { section: number; instance: number; excludeFlags: number }[] = [];
+  for (; oo + 6 <= ov.dataOffset + ov.size; oo += 6) overrides.push({ section: dv.getInt16(oo, true), instance: dv.getInt16(oo + 2, true), excludeFlags: dv.getUint16(oo + 4, true) });
+  const out: SceneryGroup[] = [];
+  let g = skipPad(dv, gr.dataOffset, gr.dataOffset + gr.size);
+  while (g + 0x14 <= gr.dataOffset + gr.size) {
+    const n = dv.getInt16(g + 0x0e, true);
+    const members = Array.from({ length: n }, (_, k) => overrides[dv.getUint16(g + 0x14 + k * 2, true)]).filter(Boolean);
+    out.push({ nameHash: dv.getUint32(g + 8, true), number: dv.getInt16(g + 0x0c, true), barrier: !!l2ra[g + 0x10], driveThrough: !!l2ra[g + 0x11], members });
+    g += (n * 2 + 0x17) & ~3;
+  }
+  return out;
+}

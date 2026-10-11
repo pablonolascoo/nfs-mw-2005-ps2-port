@@ -37,3 +37,6 @@ Reference code: `tools/src/lib/`.
 - Pack `0xB3300000` (same IDs as PC). Tables `0x33310004` TextureInfo (0x7C) + `0x33310005` PlatInfo (0x54) [D][V]; or compressed streaming entries `0x33310003` (cars) with TextureInfo+PlatInfo at the end [V].
 - Formats: PSMT8 (`0x13`) and PSMT4 (`0x14`) with a PSMCT32 CLUT; PS2 alpha (0x80 = opaque). World: 2,472 of 2,622 textures are PSMT4 [V].
 - **Swizzle** [V, visually]: PSMT8 was uploaded as PSMCT32 of (W/2)×(H/2); PSMT4 as **PSMCT16** of (W/2)×(H/2). 8-bit CLUT in CSM1 order (index bits 3↔4 swapped).
+
+## Transparency [V][D]
+`TextureInfo.AlphaUsageType` (0 none, 1 punch-through, 2 modulated) and `AlphaBlendType` (0 src-copy, 1 blend, 2 additive…). Modulated + src-copy means alpha is not transparency (asphalt `TRNS_*_PAVEMENT*`): opaque. It used to be treated as cut-out and the roads vanished.

@@ -10,7 +10,8 @@ import { MaterialTable } from "../lib/materials";
 import { writeGlb } from "../lib/glb";
 import { hex8 } from "../lib/hash";
 import { parseChunks } from "../lib/bchunk";
-import { readSectionTable, readScenery, modelHash } from "../lib/world-ps2";
+import { readSectionTable, readScenery, modelHash, readSceneryGroups } from "../lib/world-ps2";
+import { groupNameTable, groupKind } from "../lib/group-names";
 import { readSolidListsDeep, stripTriangles } from "../lib/solid-ps2";
 import type { GlbMesh, GlbNode } from "../lib/glb";
 import { flatten, type FlatInstance } from "../lib/flatten";
@@ -65,7 +66,8 @@ if (mode === "car") {
     const warn = solids.flatMap(s => s.warnings.map(w => `${s.name}: ${w}`));
     console.log(`${name}: ${solids.length} piezas, ${tris} triángulos, ${textures.size} texturas disponibles, ${mats.images.length} usadas, sin encontrar: ${[...mats.missing].map(hex8).join(" ") || "ninguna"}${warn.length ? `\n  avisos: ${warn.slice(0, 5).join(" | ")}` : ""}`);
     index.items = index.items.filter(i => i.id !== `car:${name}`);
-    index.items.push({ id: `car:${name}`, group: "Coches", label: name, glb: `cars/${name}.glb`, tris, verts, source: `CARS\\${name}\\GEOMETRY.BIN` });
+    const group = /^COP/.test(name) ? "Policía" : /^(TRAF|TAXI|PIZZA|GARB|CEMTR|MINIVAN|PICKUPA|SEMI)/.test(name) ? "Tráfico" : /^TRAILER/.test(name) ? "Remolques" : /^(WHEELS|SPOILER|ROOF|BRAKES)/.test(name) ? "Piezas de tuneo" : "Coches";
+    index.items.push({ id: `car:${name}`, group, label: name, glb: `cars/${name}.glb`, tris, verts, source: `CARS\\${name}\\GEOMETRY.BIN` });
   }
 }
 if (mode === "world") {
@@ -161,16 +163,29 @@ if (mode === "tiles") {
   for (const t of textures.values()) { let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < t.rgba.length; i += 16) if (t.rgba[i + 3] > 64) { r += t.rgba[i]; g += t.rgba[i + 1]; b += t.rgba[i + 2]; n++; } if (n) avg.set(t.nameHash, [r / n / 255, g / n / 255, b / n / 255]); }
   type Inst = { so: Solid; low: Solid; matrix: number[]; meta: Record<string, unknown>; size: number };
   const tiles = new Map<string, Inst[]>();
+  // Grupos de escenario (bloqueos de carril, candados, puertas): sus objetos van a capas aparte.
+  const l2ra = await d.readEntry(d.find("TRACKS\\L2RA.BUN")!);
+  const groups = readSceneryGroups(l2ra);
+  const elfEntry = d.files.find(f => /^S[LC][A-Z]{2}_\d{3}\.\d{2}$/.test(f.path));
+  const gnames = groupNameTable(elfEntry ? await d.iso.read(elfEntry.lba * 2048, elfEntry.size) : undefined, `${outDir}/gameplay.json`);
+  const memberOf = new Map<string, number>(); // "sección:instancia" → índice de grupo
+  groups.forEach((g, gi) => { if (g.number !== 1) for (const m of g.members) memberOf.set(`${m.section}:${m.instance}`, gi); });
+  const groupInst = new Map<number, Inst[]>();
+  let hiddenSkipped = 0;
   for (const { s, buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const [k, inst] of sc.instances.entries()) {
     const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
     if (!so || !h) continue;
+    const gi = memberOf.get(`${sc.sectionNumber}:${k}`);
+    const hidden = (inst.excludeFlags & 0x10) !== 0; // oculto por defecto: solo aparece si el juego activa su grupo
     // Nivel lejano: el LOD más ligero que trae el propio juego (hashes 1..3 de SceneryInfo).
     const lods = info.hashes.map(x => solids.get(x)).filter((x): x is Solid => !!x);
     const low = lods.reduce((a, b) => (b.strips.reduce((t, st) => t + st.np, 0) < a.strips.reduce((t, st) => t + st.np, 0) ? b : a), so);
     const cx = (inst.bbMin[0] + inst.bbMax[0]) / 2, cy = (inst.bbMin[1] + inst.bbMax[1]) / 2;
     const key = `${Math.floor(cx / TILE)}_${Math.floor(cy / TILE)}`;
     const r = inst.rotation, p = inst.position;
-    (tiles.get(key) ?? tiles.set(key, []).get(key)!).push({ so, low, matrix: [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, p[0], p[1], p[2], 1], size: Math.hypot(inst.bbMax[0] - inst.bbMin[0], inst.bbMax[1] - inst.bbMin[1], inst.bbMax[2] - inst.bbMin[2]), meta: { "Sección": s.name, "Modelo": info.name, "Hash modelo": hex8(h), "Instancia": k } });
+    const target = gi !== undefined ? (groupInst.get(gi) ?? groupInst.set(gi, []).get(gi)!) : hidden ? null : (tiles.get(key) ?? tiles.set(key, []).get(key)!);
+    if (!target) { hiddenSkipped++; continue; }
+    target.push({ so, low, matrix: [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, p[0], p[1], p[2], 1], size: Math.hypot(inst.bbMax[0] - inst.bbMin[0], inst.bbMax[1] - inst.bbMin[1], inst.bbMax[2] - inst.bbMin[2]), meta: { "Sección": s.name, "Modelo": info.name, "Hash modelo": hex8(h), "Instancia": k } });
   }
   const written = new Set<number>();
   const out: { id: string; x: number; y: number; size: number; near: string; far: string; tris: number; farTris: number; objects: number; zMin: number; zMax: number }[] = [];
@@ -201,7 +216,20 @@ if (mode === "tiles") {
     out.push({ id: key, x: tx * TILE, y: ty * TILE, size: TILE, near: `tiles/${key}.glb`, far: `tiles/${key}_far.glb`, tris, farTris, objects: list.length, zMin, zMax });
     nearTris += tris; farTrisAll += farTris;
   }
+  mkdirSync(`${outDir}/groups`, { recursive: true });
+  const groupOut: { name: string; hash: string; number: number; kind: string; barrier: boolean; driveThrough: boolean; objects: number; glb: string; min: number[]; max: number[] }[] = [];
+  for (const [gi, list] of groupInst) {
+    const g = groups[gi], name = gnames.get(g.nameHash) ?? hex8(g.nameHash);
+    const mats = new MaterialTable(textures, { unlit: true, external: { dir: `${outDir}/textures`, uriPrefix: "../textures/", written } });
+    const prims = flatten(list.map((it, id) => ({ mesh: solidToMesh(it.so, t => mats.get(t)), matrix: it.matrix, id })));
+    await Bun.write(`${outDir}/groups/${name}.glb`, writeGlb([{ name, primitives: prims, extras: { Grupo: name, objetos: list.map(i => i.meta) } }], mats.materials, mats.images, name));
+    const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
+    for (const p of prims) for (let i = 0; i < p.positions.length; i++) { min[i % 3] = Math.min(min[i % 3], p.positions[i]); max[i % 3] = Math.max(max[i % 3], p.positions[i]); }
+    groupOut.push({ name, hash: hex8(g.nameHash), number: g.number, kind: groupKind(gnames.get(g.nameHash), g.barrier), barrier: g.barrier, driveThrough: g.driveThrough, objects: list.length, glb: `groups/${name}.glb`, min, max });
+  }
+  console.log(`Grupos: ${groupOut.length} exportados (${["carrera", "candado", "puerta", "otro"].map(k => `${k} ${groupOut.filter(g => g.kind === k).length}`).join(", ")}) · objetos ocultos sin grupo omitidos: ${hiddenSkipped}`);
   const wj = existsSync(`${outDir}/world.json`) ? JSON.parse(readFileSync(`${outDir}/world.json`, "utf8")) : { disc, upAxis: "Z", sections: [] };
+  wj.groups = groupOut.sort((a, b) => a.number - b.number);
   wj.tiles = out.sort((a, b) => a.id.localeCompare(b.id)); wj.tileSize = TILE;
   if (!wj.sections?.length) wj.sections = sections.filter(s => s.radius > 0).map(s => ({ name: s.name, number: s.number, centre: s.centre, radius: s.radius, glb: "", instances: 0, tris: 0 }));
   await Bun.write(`${outDir}/world.json`, JSON.stringify(wj, null, 1));

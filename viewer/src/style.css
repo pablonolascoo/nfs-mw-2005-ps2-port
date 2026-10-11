@@ -67,3 +67,6 @@ button.ghost:focus-visible { outline: 1px solid var(--amber); }
 .city .muted { margin: 0; color: var(--fog); font-size: 11px; }
 .toggle { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--paper); }
 .toggle input { accent-color: var(--amber); }
+.toggle small { color: var(--fog); margin-left: auto; }
+.zones { max-height: 180px; overflow: auto; }
+.zones .dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; }

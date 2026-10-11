@@ -28,8 +28,8 @@ async function parseGlb(url: string) {
   }));
   const base = url.slice(0, url.lastIndexOf("/") + 1);
   const images = (json.images ?? []).map((im: { uri?: string }) => (im.uri ? new URL(im.uri, new URL(base, self.location.href)).href : null));
-  const materials = (json.materials ?? []).map((m: { name: string; alphaMode?: string; pbrMetallicRoughness?: { baseColorFactor?: number[]; baseColorTexture?: { index: number } } }) => ({
-    name: m.name, alphaMode: m.alphaMode ?? "OPAQUE", color: m.pbrMetallicRoughness?.baseColorFactor ?? [1, 1, 1, 1],
+  const materials = (json.materials ?? []).map((m: { name: string; alphaMode?: string; alphaCutoff?: number; extras?: { blend?: string }; pbrMetallicRoughness?: { baseColorFactor?: number[]; baseColorTexture?: { index: number } } }) => ({
+    name: m.name, alphaMode: m.alphaMode ?? "OPAQUE", cutoff: m.alphaCutoff ?? 0.5, additive: m.extras?.blend === "aditiva", color: m.pbrMetallicRoughness?.baseColorFactor ?? [1, 1, 1, 1],
     image: m.pbrMetallicRoughness?.baseColorTexture ? images[json.textures[m.pbrMetallicRoughness.baseColorTexture.index].source] : null,
   }));
   const extras = json.nodes?.find((n: { mesh?: number; extras?: unknown }) => n.mesh !== undefined && n.extras)?.extras ?? null;
@@ -42,14 +42,15 @@ async function parseGlb(url: string) {
  */
 async function packTile(url: string) {
   const { result } = await parseGlb(url);
-  const mats = result.materials as { name: string; alphaMode: string; color: number[]; image: string | null }[];
+  const mats = result.materials as { name: string; alphaMode: string; cutoff: number; additive: boolean; color: number[]; image: string | null }[];
   const imgs = [...new Set(mats.map(m => m.image).filter((x): x is string => !!x))];
   const S = imgs.length <= 32 ? 256 : 128;
   const layers = 1 + imgs.length; // capa 0 = blanco (materiales sin textura)
   const data = new Uint8Array(S * S * 4 * layers);
   data.fill(255, 0, S * S * 4);
   const canvas = new OffscreenCanvas(S, S), ctx = canvas.getContext("2d", { willReadFrequently: true })!;
-  const masked = new Set<number>();
+  type K = "opaque" | "mask50" | "mask30" | "additive";
+  const kindOf = (m: (typeof mats)[number]): K => m.additive ? "additive" : m.alphaMode === "MASK" ? (m.cutoff >= 0.45 ? "mask50" : "mask30") : "opaque";
   await Promise.all(imgs.map(async (u, i) => {
     const bmp = await createImageBitmap(await (await fetch(u)).blob(), { resizeWidth: S, resizeHeight: S, resizeQuality: "high", premultiplyAlpha: "none", colorSpaceConversion: "none" });
     return { i, bmp };
@@ -68,10 +69,10 @@ async function packTile(url: string) {
     mips.push(m); prev = m;
   }
   const layerOf = mats.map(m => (m.image ? imgs.indexOf(m.image) + 1 : 0));
-  mats.forEach((m, k) => { if (m.alphaMode === "MASK") masked.add(k); });
-  const out: Record<"opaque" | "masked", { pos: number[]; uv: number[]; col: number[]; layer: number[]; id: number[]; idx: number[] }> = { opaque: { pos: [], uv: [], col: [], layer: [], id: [], idx: [] }, masked: { pos: [], uv: [], col: [], layer: [], id: [], idx: [] } };
+  const mk = () => ({ pos: [] as number[], uv: [] as number[], col: [] as number[], layer: [] as number[], id: [] as number[], idx: [] as number[] });
+  const out: Record<K, ReturnType<typeof mk>> = { opaque: mk(), mask50: mk(), mask30: mk(), additive: mk() };
   for (const mesh of result.meshes as { prims: { material: number; index: Uint32Array; attrs: Record<string, Float32Array> }[] }[]) for (const p of mesh.prims) {
-    const g = out[masked.has(p.material) ? "masked" : "opaque"], base = g.pos.length / 3, n = p.attrs.POSITION.length / 3;
+    const g = out[kindOf(mats[p.material])], base = g.pos.length / 3, n = p.attrs.POSITION.length / 3;
     const mc = mats[p.material].color, L = layerOf[p.material];
     for (let i = 0; i < n; i++) {
       g.pos.push(p.attrs.POSITION[i * 3], p.attrs.POSITION[i * 3 + 1], p.attrs.POSITION[i * 3 + 2]);
@@ -83,7 +84,7 @@ async function packTile(url: string) {
   }
   const transfer: ArrayBuffer[] = [data.buffer, ...mips.map(m => m.buffer as ArrayBuffer)];
   const pack = (g: typeof out.opaque) => { if (!g.idx.length) return null; const r = { pos: new Float32Array(g.pos), uv: new Float32Array(g.uv), col: new Float32Array(g.col), layer: new Float32Array(g.layer), id: new Float32Array(g.id), idx: new Uint32Array(g.idx) }; transfer.push(...Object.values(r).map(a => a.buffer as ArrayBuffer)); return r; };
-  return { result: { S, layers, data, mips, opaque: pack(out.opaque), masked: pack(out.masked), extras: result.extras, layerNames: ["(sin textura)", ...imgs.map(u => mats.find(m => m.image === u)!.name)] }, transfer };
+  return { result: { S, layers, data, mips, groups: { opaque: pack(out.opaque), mask50: pack(out.mask50), mask30: pack(out.mask30), additive: pack(out.additive) }, extras: result.extras, layerNames: ["(sin textura)", ...imgs.map(u => mats.find(m => m.image === u)!.name)] }, transfer };
 }
 
 self.onmessage = async (e: MessageEvent<Req>) => {

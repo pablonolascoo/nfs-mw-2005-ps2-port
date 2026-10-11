@@ -24,8 +24,7 @@ export class MaterialTable {
         if (!ext.written.has(t.nameHash)) { Bun.write(`${ext.dir}/${hex8(t.nameHash)}.png`, encodePng(t.rgba, t.width, t.height)); ext.written.add(t.nameHash); }
         this.images.push({ name: t.name, uri: `${ext.uriPrefix}${hex8(t.nameHash)}.png` });
       } else this.images.push({ name: t.name, png: encodePng(t.rgba, t.width, t.height) });
-      let minA = 255; for (let i = 3; i < t.rgba.length; i += 4) minA = Math.min(minA, t.rgba[i]);
-      m = { name: t.name, color: [1, 1, 1, 1], texture: this.images.length - 1, alphaMode: minA < 250 ? "MASK" : "OPAQUE", unlit: this.opts.unlit };
+      m = { name: t.name, color: [1, 1, 1, 1], texture: this.images.length - 1, unlit: this.opts.unlit, ...alphaFor(t) };
     } else {
       if (hash !== undefined) this.missing.add(hash);
       const h = hash ?? 0x9e3779b9, r = 0.35 + ((h & 0xff) / 255) * 0.4, g = 0.35 + (((h >> 8) & 0xff) / 255) * 0.4, b = 0.35 + (((h >> 16) & 0xff) / 255) * 0.4;
@@ -35,4 +34,16 @@ export class MaterialTable {
     this.byHash.set(key, this.materials.length - 1);
     return this.materials.length - 1;
   }
+}
+
+/**
+ * Modo de alfa según TextureInfo.AlphaUsageType / AlphaBlendType [tipos de la decomp, verificado con el asfalto].
+ * MODULATED + SRCCOPY = el alfa no es transparencia (p. ej. asfalto): opaco.
+ */
+export function alphaFor(t: Texture): Pick<GlbMaterial, "alphaMode" | "alphaCutoff" | "extras"> {
+  const usage = t.alphaUsage, blend = t.alphaBlend;
+  if (usage === 0 || (usage === 2 && blend === 0)) return { alphaMode: "OPAQUE" };
+  if (blend === 2 || blend === 6) return { alphaMode: "BLEND", extras: { blend: "aditiva" } };
+  if (usage === 1) return { alphaMode: "MASK", alphaCutoff: 0.5 };
+  return { alphaMode: "MASK", alphaCutoff: 0.3 };
 }
