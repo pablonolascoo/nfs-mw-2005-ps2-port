@@ -1,5 +1,6 @@
 // Construye en el hilo principal las casillas que descodifica tile-worker.ts. Coste aquí: crear objetos, no parsear.
 import * as THREE from "three/webgpu";
+import { MeshBVH } from "three-mesh-bvh";
 import { texture as texNode, uv, attribute, vertexColor, time, vec2, float } from "three/tsl";
 
 type Msg = { id: number; ok: boolean; result?: any; error?: string };
@@ -68,7 +69,7 @@ export async function loadTile(url: string, materialCache: Map<string, THREE.Mat
 
 /** Casilla cercana en 2 llamadas de dibujo: array de texturas + atributo de capa por vértice (ver tile-worker.ts). */
 export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer): Promise<THREE.Object3D> {
-  type G = { pos: Float32Array; uv: Float32Array; col: Float32Array; layer: Float32Array; id: Float32Array; idx: Uint32Array } | null;
+  type G = { pos: Float32Array; uv: Float32Array; col: Float32Array; layer: Float32Array; id: Float32Array; idx: Uint32Array; bvh: unknown } | null;
   const d = await call<{ S: number; layers: number; data: Uint8Array; mips: Uint8Array[]; groups: Record<"opaque" | "mask50" | "mask30" | "additive" | "shadow" | "water", G>; extras: Record<string, unknown> | null; layerNames: string[] }>("tile", url);
   const arr = new THREE.DataArrayTexture(d.data as Uint8Array<ArrayBuffer>, d.S, d.S, d.layers);
   arr.colorSpace = THREE.SRGBColorSpace; arr.wrapS = arr.wrapT = THREE.RepeatWrapping;
@@ -98,6 +99,7 @@ export async function loadPackedTile(url: string, renderer: THREE.WebGPURenderer
     geo.setAttribute("_id", new THREE.BufferAttribute(g.id, 1));
     geo.setIndex(new THREE.BufferAttribute(g.idx, 1));
     geo.computeBoundingSphere();
+    if (g.bvh) (geo as THREE.BufferGeometry & { boundsTree?: MeshBVH }).boundsTree = MeshBVH.deserialize(g.bvh as Parameters<typeof MeshBVH.deserialize>[0], geo, { setIndex: false });
     let mesh_renderOrder = 0;
     const mat = new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide, name: `array ${kind}` });
     // El agua desplaza sus UV con el tiempo (en el juego es una animación de 14 texturas).

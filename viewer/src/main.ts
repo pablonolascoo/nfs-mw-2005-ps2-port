@@ -4,6 +4,7 @@ import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
+import { Driver, makeCollider } from "./drive";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
 //   map-data/<disco>/index.json  → recursos sueltos (coches, secciones)
@@ -383,11 +384,70 @@ $("export").onclick = () => {
   a.click();
 };
 
+// ---------- Conducción ----------
+const driver = new Driver();
+let driving = false;
+scene.add(driver.root);
+driver.root.visible = false;
+const pick = $<HTMLSelectElement>("car-pick");
+async function loadCarInto(name: string) {
+  const it = index?.items.find(i => i.id === `car:${name}`);
+  if (it) driver.setModel(await loadGlb(it.glb));
+}
+/** Busca suelo desde muy arriba (para aparecer). */
+function groundFromSky(x: number, y: number) {
+  const r = new THREE.Raycaster(new THREE.Vector3(x, y, 2000), new THREE.Vector3(0, 0, -1), 0, 4000);
+  r.firstHitOnly = true;
+  const hit = r.intersectObjects(driver.colliders, false)[0];
+  return hit ? hit.point.z : null;
+}
+const pendingBvh: THREE.Mesh[] = [];
+let lastColl = 0;
+/** Colisionadores: casillas con detalle cerca del coche; el BVH se construye de una en una (sin tirones). */
+function refreshColliders(now: number) {
+  const m = pendingBvh.shift(); if (m) makeCollider(m);
+  if (now - lastColl < 300) return; lastColl = now;
+  const p = driver.root.position, list: THREE.Mesh[] = [];
+  for (const s of tileState.values()) {
+    if (!s.near || !s.ready || s.box.distanceToPoint(p) > 260) continue;
+    s.near.traverse(o => { const mesh = o as THREE.Mesh; if (!mesh.isMesh || !/opaque|mask50/.test(String((mesh.material as THREE.Material).name))) return;
+      if ((mesh.geometry as THREE.BufferGeometry & { boundsTree?: unknown }).boundsTree) list.push(mesh); }); // el BVH llega hecho desde el hilo de carga
+  }
+  driver.colliders = list;
+}
+async function startDriving() {
+  if (!streaming) { btn.click(); await new Promise<void>(r => { const t = setInterval(() => { if (streaming) { clearInterval(t); r(); } }, 200); }); }
+  await loadCarInto(pick.value);
+  // Aparece junto al refugio 1 si no hay otra referencia; si la cámara mira a otro sitio, allí.
+  const t = controls.target.clone();
+  const zone = zones.find(z => z.collection.endsWith("safehouse_1"));
+  const start = t.distanceTo(new THREE.Vector3()) < 10 && zone?.respawn ? new THREE.Vector3(...zone.respawn.position) : t;
+  driver.root.position.copy(start);
+  controls.enabled = false; driving = true; driver.root.visible = true;
+  $("speedo").hidden = false; $("hint-drive").hidden = false; $("hint-fly").hidden = true;
+  camera.position.set(start.x - 8, start.y, start.z + 4);
+  // Espera a que haya suelo con colisión cargado y apoya el coche
+  for (let i = 0; i < 100; i++) { refreshColliders(performance.now() + i * 400); const z = groundFromSky(start.x, start.y); if (z !== null) { start.z = z; break; } await new Promise(r => setTimeout(r, 100)); }
+  driver.place(start, zone?.respawn ? THREE.MathUtils.degToRad(zone.respawn.rotation) : 0);
+}
+function stopDriving() {
+  driving = false; controls.enabled = true; driver.root.visible = false;
+  $("speedo").hidden = true; $("hint-drive").hidden = true; $("hint-fly").hidden = false;
+  controls.target.copy(driver.root.position); controls.update();
+}
+$("drive").onclick = () => (driving ? stopDriving() : startDriving());
+
 // ---------- Vuelo libre ----------
 const keys = new Set<string>();
 addEventListener("keydown", e => {
   if ((e.target as HTMLElement).tagName === "INPUT") return;
   keys.add(e.code);
+  if (driving) {
+    if (e.code === "Escape") stopDriving();
+    if (e.code === "KeyR") { const p = driver.root.position, z = groundFromSky(p.x, p.y); if (z !== null) driver.place(new THREE.Vector3(p.x, p.y, z), driver.yaw); }
+    if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
+    return;
+  }
   if (e.code === "KeyM") addMarker();
   if (e.code === "KeyF") { if (selected) frame(selected); else if (content.children.length) frame(content); else frameCity(); }
 });
@@ -422,12 +482,20 @@ renderer.setAnimationLoop(() => {
   const speed = (keys.has("ShiftLeft") ? 5 : 1) * dt * Math.max(8, camera.position.distanceTo(controls.target) * 0.8);
   const fwd = new THREE.Vector3().subVectors(controls.target, camera.position).setZ(0).normalize();
   const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
-  const mv = new THREE.Vector3();
-  if (keys.has("KeyW")) mv.add(fwd); if (keys.has("KeyS")) mv.sub(fwd);
-  if (keys.has("KeyD")) mv.add(right); if (keys.has("KeyA")) mv.sub(right);
-  if (keys.has("KeyE")) mv.z += 1; if (keys.has("KeyQ")) mv.z -= 1;
-  if (mv.lengthSq()) { mv.normalize().multiplyScalar(speed); camera.position.add(mv); controls.target.add(mv); }
-  controls.update();
+  if (driving) {
+    refreshColliders(performance.now());
+    const k = (a: string, b: string) => (keys.has(a) || keys.has(b) ? 1 : 0);
+    driver.update(dt, { throttle: k("KeyW", "ArrowUp"), brake: k("KeyS", "ArrowDown"), steer: k("KeyA", "ArrowLeft") - k("KeyD", "ArrowRight"), handbrake: keys.has("Space") });
+    driver.chase(camera, controls.target, dt);
+    $("kmh").textContent = String(Math.round(driver.kmh));
+  } else {
+    const mv = new THREE.Vector3();
+    if (keys.has("KeyW")) mv.add(fwd); if (keys.has("KeyS")) mv.sub(fwd);
+    if (keys.has("KeyD")) mv.add(right); if (keys.has("KeyA")) mv.sub(right);
+    if (keys.has("KeyE")) mv.z += 1; if (keys.has("KeyQ")) mv.z -= 1;
+    if (mv.lengthSq()) { mv.normalize().multiplyScalar(speed); camera.position.add(mv); controls.target.add(mv); }
+    controls.update();
+  }
   sky.position.copy(camera.position); sky.scale.setScalar(camera.far * 0.9);
   const tS = performance.now(); streamTiles(tS); const tStream = performance.now() - tS;
   // Niebla proporcional a la distancia: de lejos se ve la ciudad entera, de cerca hay profundidad.
@@ -456,6 +524,7 @@ try {
     for (const k of ["carrera", "candado", "puerta"] as const) $(`n-${k}`).textContent = String(groups.filter(g => g.kind === k).length);
     const zr = await fetch(`/${disc}/zones.json`); if (zr.ok) { zones = ((await zr.json()) as { zones: Zone[] }).zones; buildZones(); } buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
+  for (const it of index.items.filter(i => i.group === "Coches")) pick.append(new Option(it.label, it.label, it.label === "BMWM3GTRE46", it.label === "BMWM3GTRE46"));
   renderTree();
   const first = index.items.find(i => i.group === "Coches") ?? index.items[0];
   if (first) await open(first);
@@ -484,4 +553,4 @@ async function bench(n = 30, w = 1920, h = 1080, dpr = 1) {
   times.sort((a, b) => a - b);
   return { medianaMs: +times[n >> 1].toFixed(2), p95Ms: +times[Math.floor(n * 0.95)].toFixed(2), fpsEstimado: +(1000 / times[n >> 1]).toFixed(1), ...info };
 }
-(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city, bench, frameCity, idle: () => nearLoading === 0 && pendingAdd.length === 0, slow };
+(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city, bench, frameCity, idle: () => nearLoading === 0 && pendingAdd.length === 0, slow, driver, startDriving, keys };

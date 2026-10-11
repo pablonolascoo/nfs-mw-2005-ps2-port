@@ -25,6 +25,7 @@
         <div class="meter" aria-hidden="true"><span id="city-bar"></span></div>
         <p id="city-status" class="muted" aria-live="polite">—</p>
         <label class="toggle"><input type="checkbox" id="show-bounds" /> Límites de sección</label>
+        <div class="drive-row"><select id="car-pick" aria-label="Coche"></select><button id="drive" class="cta small"><i class="ph ph-steering-wheel"></i>Conducir</button></div>
       </div>
       <div class="panel-head"><i class="ph ph-traffic-cone"></i>Capas del juego</div>
       <div class="city">
@@ -50,7 +51,9 @@
     </aside>
     <footer class="bar foot">
       <span><i class="ph ph-navigation-arrow"></i>X <b id="cx">0</b> Y <b id="cy">0</b> Z <b id="cz">0</b></span>
-      <span class="hint"><kbd>WASD</kbd> volar · <kbd>Q</kbd>/<kbd>E</kbd> bajar/subir · <kbd>Mayús</kbd> rápido · clic seleccionar · <kbd>M</kbd> marcador · <kbd>F</kbd> encuadrar</span>
+      <span id="speedo" hidden><i class="ph ph-speedometer"></i><b id="kmh">0</b> km/h</span>
+      <span class="hint" id="hint-drive" hidden><kbd>W</kbd>/<kbd>S</kbd> acelerar/frenar · <kbd>A</kbd>/<kbd>D</kbd> girar · <kbd>Espacio</kbd> freno de mano · <kbd>R</kbd> a la carretera · <kbd>E</kbd> entrar al garaje · <kbd>Esc</kbd> salir</span>
+      <span class="hint" id="hint-fly"><kbd>WASD</kbd> volar · <kbd>Q</kbd>/<kbd>E</kbd> bajar/subir · <kbd>Mayús</kbd> rápido · clic seleccionar · <kbd>M</kbd> marcador · <kbd>F</kbd> encuadrar</span>
     </footer>
   </div>
   <script type="module" src="/src/main.ts"></script>

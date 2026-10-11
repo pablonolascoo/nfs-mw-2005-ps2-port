@@ -70,3 +70,8 @@ button.ghost:focus-visible { outline: 1px solid var(--amber); }
 .toggle small { color: var(--fog); margin-left: auto; }
 .zones { max-height: 180px; overflow: auto; }
 .zones .dot { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; }
+.drive-row { display: flex; gap: 6px; }
+.drive-row select { flex: 1; min-width: 0; background: var(--ink); color: var(--paper); border: 1px solid var(--line); font: inherit; padding: 6px; }
+.drive-row select:focus-visible { outline: 1px solid var(--amber); }
+.cta.small { font-size: 13px; padding: 7px 10px; flex: none; }
+#speedo b { font: 800 18px/1 var(--display); color: var(--amber); }

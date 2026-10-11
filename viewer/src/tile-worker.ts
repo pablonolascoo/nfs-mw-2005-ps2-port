@@ -1,3 +1,5 @@
+import { BufferGeometry, BufferAttribute } from "three";
+import { MeshBVH } from "three-mesh-bvh";
 // Hilo de carga: descarga y descodifica GLB de casillas e imágenes fuera del hilo principal.
 // Solo entiende el subconjunto de glTF que genera tools/src/lib/glb.ts (mallas indexadas, sin nodos anidados).
 interface Prim { material: number; attrs: Record<string, ArrayBufferView>; index: Uint32Array }
@@ -118,8 +120,16 @@ async function packTile(url: string) {
     for (let t = 0; t < p.index.length; t++) g.idx.push(base + p.index[t]);
   }
   const transfer: ArrayBuffer[] = [data.buffer, ...mips.map(m => m.buffer as ArrayBuffer)];
-  const pack = (g: typeof out.opaque) => { if (!g.idx.length) return null; const r = { pos: new Float32Array(g.pos), uv: new Float32Array(g.uv), col: new Float32Array(g.col), layer: new Float32Array(g.layer), id: new Float32Array(g.id), idx: new Uint32Array(g.idx) }; transfer.push(...Object.values(r).map(a => a.buffer as ArrayBuffer)); return r; };
-  return { result: { S, layers, data, mips, groups: { opaque: pack(out.opaque), mask50: pack(out.mask50), mask30: pack(out.mask30), additive: pack(out.additive), shadow: pack(out.shadow), water: pack(out.water) }, extras: result.extras, layerNames: ["(sin textura)", ...imgs.map(u => mats.find(m => m.image === u)!.name)] }, transfer };
+  // Colisionador (BVH) construido aquí, en modo indirecto (no reordena los índices) y serializado: el hilo principal no lo calcula.
+  const bvhOf = (pos: Float32Array, idx: Uint32Array) => {
+    const g = new BufferGeometry(); g.setAttribute("position", new BufferAttribute(pos, 3)); g.setIndex(new BufferAttribute(idx, 1));
+    const ser = MeshBVH.serialize(new MeshBVH(g, { indirect: true, maxLeafTris: 12 }), { cloneBuffers: true });
+    for (const r of ser.roots) transfer.push(r as ArrayBuffer);
+    if (ser.indirectBuffer) transfer.push(ser.indirectBuffer.buffer as ArrayBuffer);
+    return ser;
+  };
+  const pack = (g: typeof out.opaque, collide = false) => { if (!g.idx.length) return null; const r = { pos: new Float32Array(g.pos), uv: new Float32Array(g.uv), col: new Float32Array(g.col), layer: new Float32Array(g.layer), id: new Float32Array(g.id), idx: new Uint32Array(g.idx) }; const bvh = collide ? bvhOf(r.pos, r.idx) : null; transfer.push(...Object.values(r).map(a => a.buffer as ArrayBuffer)); return { ...r, bvh }; };
+  return { result: { S, layers, data, mips, groups: { opaque: pack(out.opaque, true), mask50: pack(out.mask50, true), mask30: pack(out.mask30), additive: pack(out.additive), shadow: pack(out.shadow), water: pack(out.water) }, extras: result.extras, layerNames: ["(sin textura)", ...imgs.map(u => mats.find(m => m.image === u)!.name)] }, transfer };
 }
 
 self.onmessage = async (e: MessageEvent<Req>) => {
