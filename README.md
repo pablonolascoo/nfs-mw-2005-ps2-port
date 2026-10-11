@@ -17,7 +17,10 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Cars with textures | ✅ (paint is generated at runtime by the game; placeholder colour) |
 | Web viewer (Three.js, WebGPU → Metal) | ✅ |
 | Decompilation (dbalatoni13/nfsmw) builds on Apple Silicon | ✅ with Rosetta 2 |
-| Road network, collisions, physics, events | 🔜 |
+| Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
+| Frontend interiors (garages, car lot, tuning shop) | ✅ exported |
+| Whole city at 60 fps (HLOD tiles, texture arrays, workers, dynamic resolution) | ✅ |
+| Road network, collisions, physics | 🔜 |
 
 ## Quick start
 ```bash
@@ -25,7 +28,9 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 mkdir -p original && ln -s /path/to/your.iso original/SLES-53559.iso
 cd tools && bun install
 bun src/cli/inventory.ts ../original/SLES-53559.iso SLES-53559
-bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 world         # all of Rockport (~1 min, ~600 MB)
+bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 tiles 400 3   # all of Rockport as 60-fps tiles (~1 min)
+bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 interior CAREER_SAFEHOUSE CAR_LOT CUSTOMIZATION_SHOP
+bun src/cli/vlt-dump.ts  ../original/SLES-53559.iso SLES-53559                # gameplay.json + zones.json
 bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 car BMWM3GTRE46
 bun src/cli/topdown.ts   ../original/SLES-53559.iso SLES-53559 4096          # top-down PNG map
 cd ../viewer && bun install && bunx vite                                    # http://localhost:5181
@@ -39,6 +44,8 @@ cd ../viewer && bun install && bunx vite                                    # ht
 | PS2 formats | [docs/en/02](docs/en/02-ps2-formats.md) | [docs/es/02](docs/es/02-formatos-ps2.md) |
 | Rockport world | [docs/en/03](docs/en/03-rockport-world-ps2.md) | [docs/es/03](docs/es/03-mundo-rockport-ps2.md) |
 | Porting architecture | [docs/en/04](docs/en/04-port-architecture.md) | [docs/es/04](docs/es/04-arquitectura-port.md) |
+| Gameplay database (VLT): zones, races, Blacklist | [docs/en/05](docs/en/05-vlt-attributes.md) | [docs/es/05](docs/es/05-vlt-atributos.md) |
+| Viewer performance | [docs/en/06](docs/en/06-performance.md) | [docs/es/06](docs/es/06-rendimiento.md) |
 
 Every claim is tagged **[V]** verified on real data, **[D]** from the decomp's debug types, **[I]** inferred, or **[H]** hypothesis.
 

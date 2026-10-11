@@ -14,3 +14,7 @@ viewer/dist/
 map-data/**/*.png
 tools/data/filenames-ekey.list
 .claude/
+!map-data/.metadata_never_index
+map-data/**/gameplay.json
+map-data/**/zones.json
+experiments/.metadata_never_index

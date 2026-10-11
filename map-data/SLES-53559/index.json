@@ -1,6 +1,6 @@
 {
  "disc": "SLES-53559",
- "generated": "2026-10-11T21:13:09.403Z",
+ "generated": "2026-10-11T21:31:38.198Z",
  "upAxis": "Z",
  "items": [
   {
@@ -38,6 +38,51 @@
    "tris": 22093,
    "verts": 32495,
    "source": "CARS\\GTO\\GEOMETRY.BIN"
+  },
+  {
+   "id": "int:CAR_LOT",
+   "group": "Interiores",
+   "label": "CAR_LOT",
+   "glb": "interiors/CAR_LOT.glb",
+   "tris": 9049,
+   "verts": 0,
+   "source": "FRONTEND\\PLATFORMS\\CAR_LOT.BIN"
+  },
+  {
+   "id": "int:CAREER_SAFEHOUSE",
+   "group": "Interiores",
+   "label": "CAREER_SAFEHOUSE",
+   "glb": "interiors/CAREER_SAFEHOUSE.glb",
+   "tris": 2097,
+   "verts": 0,
+   "source": "FRONTEND\\PLATFORMS\\CAREER_SAFEHOUSE.BIN"
+  },
+  {
+   "id": "int:CUSTOMIZATION_SHOP",
+   "group": "Interiores",
+   "label": "CUSTOMIZATION_SHOP",
+   "glb": "interiors/CUSTOMIZATION_SHOP.glb",
+   "tris": 6757,
+   "verts": 0,
+   "source": "FRONTEND\\PLATFORMS\\CUSTOMIZATION_SHOP.BIN"
+  },
+  {
+   "id": "int:CUSTOMIZATION_SHOP_BACKROOM",
+   "group": "Interiores",
+   "label": "CUSTOMIZATION_SHOP_BACKROOM",
+   "glb": "interiors/CUSTOMIZATION_SHOP_BACKROOM.glb",
+   "tris": 1094,
+   "verts": 0,
+   "source": "FRONTEND\\PLATFORMS\\CUSTOMIZATION_SHOP_BACKROOM.BIN"
+  },
+  {
+   "id": "int:PLATFORMCRIB",
+   "group": "Interiores",
+   "label": "PLATFORMCRIB",
+   "glb": "interiors/PLATFORMCRIB.glb",
+   "tris": 4843,
+   "verts": 0,
+   "source": "FRONTEND\\PLATFORMS\\PLATFORMCRIB.BIN"
   },
   {
    "id": "sec:A26",

@@ -3,6 +3,7 @@ import "./style.css";
 import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { loadTile, loadPackedTile } from "./tile-loader";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
 //   map-data/<disco>/index.json  → recursos sueltos (coches, secciones)
@@ -10,12 +11,13 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 interface Item { id: string; group: string; label: string; glb: string; tris: number; verts: number; source: string }
 interface Index { disc: string; generated: string; upAxis: "Z"; items: Item[] }
 interface WorldSection { name: string; number: number; centre: [number, number]; radius: number; glb: string; instances: number; tris: number }
+interface Tile { id: string; x: number; y: number; size: number; near: string; far: string; tris: number; farTris: number; objects: number; zMin: number; zMax: number }
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $("stage");
 
 const renderer = new THREE.WebGPURenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); // luego la ajusta la resolución dinámica
 stage.prepend(renderer.domElement);
 await renderer.init();
 $("backend").textContent = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? "WebGPU · Metal" : "WebGL 2";
@@ -46,6 +48,21 @@ scene.add(content, city, bounds);
 const loader = new GLTFLoader();
 let index: Index | null = null;
 let world: WorldSection[] = [];
+let tiles: Tile[] = [];
+// Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
+// (No usamos THREE.Cache: al liberar una casilla cerraría imágenes que otras siguen usando.)
+const sharedTex = new Map<string, THREE.Texture>();
+function shareTextures(o: THREE.Object3D) {
+  o.traverse(x => {
+    const m = x as THREE.Mesh;
+    if (!m.isMesh) return;
+    for (const mat of ([] as THREE.Material[]).concat(m.material) as THREE.MeshBasicMaterial[]) {
+      const t = mat.map; if (!t) continue;
+      const key = mat.name || t.uuid, hit = sharedTex.get(key);
+      if (hit && hit !== t) { mat.map = hit; t.dispose(); } else sharedTex.set(key, t);
+    }
+  });
+}
 let current: Item | null = null;
 let selected: THREE.Object3D | null = null;
 const selBox = new THREE.BoxHelper(new THREE.Object3D(), 0x4dff9a);
@@ -63,6 +80,7 @@ new ResizeObserver(resize).observe(stage);
 async function loadGlb(path: string) {
   const gltf = await loader.loadAsync(`/${index!.disc}/${path}`);
   gltf.scene.rotation.x = Math.PI / 2; // GLB Y-arriba (glTF) → coordenadas del juego Z-arriba
+  shareTextures(gltf.scene);
   return gltf.scene;
 }
 const countTris = (o: THREE.Object3D) => { let t = 0; o.traverse(x => { const m = x as THREE.Mesh; if (m.isMesh) t += (m.geometry.index?.count ?? m.geometry.attributes.position.count) / 3; }); return t; };
@@ -101,7 +119,7 @@ async function open(it: Item) {
   renderTree($<HTMLInputElement>("filter").value);
   select(null);
   const sec = it.id.startsWith("sec:") ? world.find(w => `sec:${w.name}` === it.id) : undefined;
-  if (sec && city.children.length) { flyTo(sec); return; } // con la ciudad cargada, solo volamos allí
+  if (sec && (streaming || !sec.glb)) { flyTo(sec); return; } // con la ciudad cargada, solo volamos allí
   content.clear();
   const obj = await loadGlb(it.glb);
   content.add(obj);
@@ -131,33 +149,93 @@ function flyTo(s: WorldSection) {
   camera.position.copy(c).add(new THREE.Vector3(s.radius * 1.2, -s.radius * 1.2, s.radius));
 }
 
-// ---------- Ciudad completa ----------
+// ---------- Ciudad completa: casillas con dos niveles de detalle (HLOD) ----------
+// Lejos: una malla por casilla con color por vértice (1 llamada de dibujo). Cerca: detalle con texturas, cargado bajo demanda.
+const NEAR = 650, KEEP = 1100, MAX_NEAR = 28;
+const packed = new URLSearchParams(location.search).get("packed") !== "0"; // arrays de texturas: 2 llamadas por casilla
+interface TileState { t: Tile; far?: THREE.Object3D; near?: THREE.Object3D; ready?: boolean; loading?: boolean; lastUsed: number; box: THREE.Box3 }
+const tileState = new Map<string, TileState>();
+let streaming = false;
 const btn = $<HTMLButtonElement>("load-city");
 btn.onclick = async () => {
-  if (!world.length) return;
+  if (!tiles.length && !world.length) return;
   btn.disabled = true;
-  content.clear();
-  current = null;
+  content.clear(); current = null;
   renderTree($<HTMLInputElement>("filter").value);
-  // Primero lo más cercano a la cámara, en lotes de 6 peticiones.
-  const t = controls.target;
-  const queue = [...world].sort((a, b) => Math.hypot(a.centre[0] - t.x, a.centre[1] - t.y) - Math.hypot(b.centre[0] - t.x, b.centre[1] - t.y));
-  let done = 0, tris = 0, failed = 0;
+  frameCity();
   const status = $("city-status"), bar = $("city-bar");
+  const queue = [...tiles];
+  let done = 0;
+  for (const t of tiles) tileState.set(t.id, { t, lastUsed: 0, box: new THREE.Box3(new THREE.Vector3(t.x, t.y, t.zMin), new THREE.Vector3(t.x + t.size, t.y + t.size, t.zMax)) });
   const worker = async () => {
-    for (let s = queue.shift(); s; s = queue.shift()) {
-      try { const o = await loadGlb(s.glb); o.name = s.name; city.add(o); tris += countTris(o); }
-      catch { failed++; }
-      done++;
-      bar.style.width = `${(done / world.length) * 100}%`;
-      status.textContent = `${done} / ${world.length} secciones · ${(tris / 1e6).toFixed(2)} M tris${failed ? ` · ${failed} con error` : ""}`;
-      $("tri-count").textContent = Math.round(tris).toLocaleString("es-ES");
+    for (let t = queue.shift(); t; t = queue.shift()) {
+      try { const o = await loadTile(`/${index!.disc}/${t.far}`, tileMaterials); o.name = `far ${t.id}`; city.add(o); tileState.get(t.id)!.far = o; } catch { /* casilla sin nivel lejano */ }
+      bar.style.width = `${(++done / tiles.length) * 100}%`;
+      status.textContent = `Ciudad lejana: ${done} / ${tiles.length} casillas`;
     }
   };
-  frameCity();
-  await Promise.all(Array.from({ length: 6 }, worker));
+  await Promise.all(Array.from({ length: 8 }, worker));
+  streaming = true;
   btn.innerHTML = `<i class="ph ph-check"></i>Ciudad cargada`;
 };
+
+const camPos = new THREE.Vector3();
+let lastStream = 0, nearLoading = 0;
+const pendingAdd: (() => void)[] = [];
+const tileMaterials = new Map<string, THREE.Material>(); // materiales compartidos entre casillas (mismo pipeline, menos estado)
+const reveal: { s: TileState; meshes: THREE.Object3D[] }[] = [];
+const REVEAL_PER_FRAME = +(new URLSearchParams(location.search).get("reveal") ?? 12) || 1e9; // el primer dibujo de cada malla prepara sus recursos: se reparte entre fotogramas
+function revealStep() {
+  let n = REVEAL_PER_FRAME;
+  while (reveal.length && n > 0) {
+    const r = reveal[0];
+    const m = r.meshes.shift();
+    if (m) { m.visible = true; n--; continue; }
+    reveal.shift(); r.s.ready = true;
+  }
+}
+function streamTiles(now: number) {
+  const add = pendingAdd.shift(); uploadFrame = !!add || reveal.length > 0; add?.(); // una casilla nueva por fotograma
+  revealStep();
+  if (!streaming || now - lastStream < 200) return;
+  lastStream = now;
+  camPos.copy(camera.position);
+  const states = [...tileState.values()].map(s => ({ s, d: s.box.distanceToPoint(camPos) })).sort((a, b) => a.d - b.d);
+  let nearCount = 0, visTris = 0;
+  for (const { s, d } of states) {
+    const wantNear = d < NEAR && nearCount < MAX_NEAR;
+    if (wantNear) {
+      nearCount++; s.lastUsed = now;
+      if (!s.near && !s.loading && nearLoading < 2) {
+        s.loading = true; nearLoading++;
+        // Se precompila (pipelines) fuera del fotograma y se añade a la escena en la cola: como mucho una casilla por fotograma.
+        (packed ? loadPackedTile(`/${index!.disc}/${s.t.near}`, renderer) : loadTile(`/${index!.disc}/${s.t.near}`, tileMaterials)).then(async o => {
+          o.name = `near ${s.t.id}`;
+          await renderer.compileAsync(o, camera, scene);
+          // Las mallas se revelan poco a poco (presupuesto por fotograma); hasta entonces se ve la versión lejana.
+          const meshes: THREE.Object3D[] = []; o.traverse(x => { if ((x as THREE.Mesh).isMesh) { x.visible = false; meshes.push(x); } });
+          pendingAdd.push(() => { s.near = o; s.ready = false; city.add(o); reveal.push({ s, meshes }); });
+        }).catch(() => {}).finally(() => { s.loading = false; nearLoading--; });
+      }
+    }
+    const showNear = wantNear && !!s.near && !!s.ready;
+    if (s.near) s.near.visible = showNear || (wantNear && !s.ready); // durante el revelado el grupo está visible, pero sus mallas se encienden poco a poco
+    if (s.far) s.far.visible = !showNear;
+    visTris += showNear ? s.t.tris : s.t.farTris;
+    // Liberar detalle lejano para no agotar la memoria de vídeo
+    if (s.near && s.ready && d > KEEP && now - s.lastUsed > 5000) { city.remove(s.near); dispose(s.near); s.near = undefined; s.ready = false; }
+  }
+  $("tri-count").textContent = Math.round(visTris).toLocaleString("es-ES");
+  $("city-status").textContent = `${nearCount} casillas con detalle · ${tiles.length - nearCount} lejanas${nearLoading ? ` · cargando ${nearLoading}` : ""}`;
+}
+function dispose(o: THREE.Object3D) {
+  o.traverse(x => {
+    const m = x as THREE.Mesh;
+    if (!m.isMesh) return;
+    m.geometry.dispose();
+    // materiales y texturas son compartidos entre casillas: solo se libera la geometría
+  });
+}
 
 function buildBounds() {
   bounds.clear();
@@ -247,9 +325,32 @@ addEventListener("keydown", e => {
 });
 addEventListener("keyup", e => keys.delete(e.code));
 const clock = new THREE.Clock();
+const slow: { t: number; stream: number; render: number; upload: boolean }[] = []; // fotogramas lentos (CPU), para depurar
 let frames = 0, acc = 0;
+// Resolución dinámica: mantiene 60 fps ajustando la densidad de píxeles según el tiempo de GPU de cada fotograma.
+// Con vsync el intervalo entre fotogramas siempre es 16,7 ms, así que se mide cuánto tarda la GPU en terminar lo enviado.
+const DPR_MAX = Math.min(devicePixelRatio, 2), DPR_MIN = 0.75;
+let dpr = DPR_MAX, gpuEma = 8, lastAdjust = 0, probing = false, uploadFrame = false;
+const gpuDevice = (renderer.backend as unknown as { device?: GPUDevice }).device;
+function probeGpu() {
+  if (!gpuDevice || probing) return;
+  probing = true;
+  const t0 = performance.now();
+  const skip = uploadFrame; // los fotogramas que suben una casilla nueva son picos puntuales: no deciden la resolución
+  gpuDevice.queue.onSubmittedWorkDone().then(() => { if (!skip) gpuEma = gpuEma * 0.85 + Math.min(performance.now() - t0, 30) * 0.15; probing = false; });
+}
+function adaptResolution(frameMs: number, now: number) {
+  if (now - lastAdjust < 400) return;
+  const cost = gpuEma;
+  let next = dpr;
+  if (cost > 14) next = Math.max(DPR_MIN, dpr - 0.1);
+  else if (cost < 9 && dpr < DPR_MAX) next = Math.min(DPR_MAX, dpr + 0.1);
+  if (next !== dpr) { dpr = +next.toFixed(2); renderer.setPixelRatio(dpr); resize(); lastAdjust = now; }
+  $("dpr").textContent = `${Math.round((dpr / DPR_MAX) * 100)}%`;
+}
 renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.1);
+  adaptResolution(dt * 1000, performance.now());
   const speed = (keys.has("ShiftLeft") ? 5 : 1) * dt * Math.max(8, camera.position.distanceTo(controls.target) * 0.8);
   const fwd = new THREE.Vector3().subVectors(controls.target, camera.position).setZ(0).normalize();
   const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
@@ -259,6 +360,7 @@ renderer.setAnimationLoop(() => {
   if (keys.has("KeyE")) mv.z += 1; if (keys.has("KeyQ")) mv.z -= 1;
   if (mv.lengthSq()) { mv.normalize().multiplyScalar(speed); camera.position.add(mv); controls.target.add(mv); }
   controls.update();
+  const tS = performance.now(); streamTiles(tS); const tStream = performance.now() - tS;
   // Niebla proporcional a la distancia: de lejos se ve la ciudad entera, de cerca hay profundidad.
   const dist = camera.position.distanceTo(controls.target);
   const fog = scene.fog as THREE.Fog;
@@ -267,7 +369,9 @@ renderer.setAnimationLoop(() => {
   $("cx").textContent = t.x.toFixed(1); $("cy").textContent = t.y.toFixed(1); $("cz").textContent = t.z.toFixed(1);
   frames++;
   if ((acc += dt) > 0.5) { $("fps").textContent = String(Math.round(frames / acc)); frames = 0; acc = 0; }
-  renderer.render(scene, camera);
+  const tR = performance.now(); renderer.render(scene, camera); const tRender = performance.now() - tR;
+  if (tStream + tRender > 12) slow.push({ t: +performance.now().toFixed(0), stream: +tStream.toFixed(1), render: +tRender.toFixed(1), upload: uploadFrame });
+  probeGpu();
 });
 
 // ---------- Arranque ----------
@@ -279,7 +383,7 @@ try {
   $("disc-tag").textContent = index.disc;
   $("empty").hidden = true;
   const w = await fetch(`/${disc}/world.json`);
-  if (w.ok) { world = ((await w.json()) as { sections: WorldSection[] }).sections; buildBounds(); $("city-status").textContent = `${world.length} secciones disponibles`; }
+  if (w.ok) { const wj = (await w.json()) as { sections: WorldSection[]; tiles?: Tile[] }; world = wj.sections; tiles = wj.tiles ?? []; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
   renderTree();
   const first = index.items.find(i => i.group === "Coches") ?? index.items[0];
@@ -290,4 +394,23 @@ try {
 resize();
 
 // Solo para depuración desde la consola (contadores de dibujo, escena).
-(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city };
+/** Banco de pruebas: dibuja n fotogramas esperando a la GPU en cada uno (funciona aunque la pestaña no se vea). */
+async function bench(n = 30, w = 1920, h = 1080, dpr = 1) {
+  const prevDpr = renderer.getPixelRatio(); renderer.setPixelRatio(dpr);
+  const prev = renderer.getSize(new THREE.Vector2());
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const device = (renderer.backend as unknown as { device?: GPUDevice }).device;
+  const times: number[] = [];
+  for (let i = 0; i < 6; i++) { renderer.render(scene, camera); if (device) await device.queue.onSubmittedWorkDone(); } // calentamiento tras cambiar resolución
+  for (let i = 0; i < n; i++) {
+    const t0 = performance.now();
+    renderer.render(scene, camera);
+    if (device) await device.queue.onSubmittedWorkDone();
+    times.push(performance.now() - t0);
+  }
+  const info = { drawCalls: renderer.info.render.drawCalls, triangulos: renderer.info.render.triangles, resolucion: `${w}x${h}@${renderer.getPixelRatio()}` };
+  renderer.setPixelRatio(prevDpr); renderer.setSize(prev.x, prev.y, false); camera.aspect = prev.x / Math.max(prev.y, 1); camera.updateProjectionMatrix();
+  times.sort((a, b) => a - b);
+  return { medianaMs: +times[n >> 1].toFixed(2), p95Ms: +times[Math.floor(n * 0.95)].toFixed(2), fpsEstimado: +(1000 / times[n >> 1]).toFixed(1), ...info };
+}
+(window as unknown as { __rockport: unknown }).__rockport = { renderer, scene, camera, controls, city, bench, frameCity, idle: () => nearLoading === 0 && pendingAdd.length === 0, slow };

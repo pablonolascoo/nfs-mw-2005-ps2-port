@@ -1,5 +1,6 @@
 // Conversor disco PS2 → map-data/<disco>/ (GLB + index.json) para el visor.
 // Uso: bun src/cli/convert.ts <iso> <ID> car <NOMBRE> [<NOMBRE>…]
+//      bun src/cli/convert.ts <iso> <ID> tiles [tamaño=400]   (casillas con dos niveles de detalle para ver la ciudad a 60 fps)
 //      bun src/cli/convert.ts <iso> <ID> world [SECCIÓN…]   (sin secciones = Rockport entero)
 import { GameDisc } from "../lib/zdir";
 import { readSolidList, type Solid } from "../lib/solid-ps2";
@@ -10,9 +11,10 @@ import { writeGlb } from "../lib/glb";
 import { hex8 } from "../lib/hash";
 import { parseChunks } from "../lib/bchunk";
 import { readSectionTable, readScenery, modelHash } from "../lib/world-ps2";
-import { readSolidListsDeep } from "../lib/solid-ps2";
+import { readSolidListsDeep, stripTriangles } from "../lib/solid-ps2";
 import type { GlbMesh, GlbNode } from "../lib/glb";
 import { flatten, type FlatInstance } from "../lib/flatten";
+import { clusterSimplify } from "../lib/simplify";
 import { mkdirSync, existsSync, readFileSync } from "node:fs";
 
 const [iso, disc, mode, ...names] = Bun.argv.slice(2);
@@ -117,6 +119,93 @@ if (mode === "world") {
   const merged = [...prev.filter(p => !manifest.some(m => m.name === p.name)), ...manifest].sort((a, b) => a.number - b.number);
   await Bun.write(`${outDir}/world.json`, JSON.stringify({ disc, upAxis: "Z", units: "metros (hipótesis)", sections: merged }, null, 1));
   console.log(`Exportadas ${manifest.length} secciones · ${totalInst} instancias · ${totalTris} triángulos · texturas PNG ${written.size} · instancias sin sólido ${missingSolids} · texturas no encontradas ${missingTex.size}`);
+}
+if (mode === "interior") {
+  // Interiores del frontend (garajes, concesionario, taller): FRONTEND\PLATFORMS\<NOMBRE>.BIN
+  mkdirSync(`${outDir}/interiors`, { recursive: true });
+  for (const name of names) {
+    const path = `FRONTEND\\PLATFORMS\\${name}.BIN`, e = d.find(path);
+    if (!e) { console.error(`No existe ${path}`); continue; }
+    const buf = await d.readEntry(e);
+    // Solo la estructura visible: fuera emisores de partículas, ayudantes de luz, mapas de sombra, la copia para reflejos y la variante "next-gen".
+    const all = readSolidList(buf);
+    const solids = all.filter(s => /^BACKDROP_(CRIB|CURRGEN)$|^OBJECT\d+$/.test(s.name));
+    console.log(`  ${name}: se omiten ${all.filter(s => !solids.includes(s)).map(s => s.name).join(", ")}`);
+    const pack = readTexturePack(buf);
+    const textures = await texturesFrom(["GLOBAL\\GLOBALA.BUN"]);
+    for (const t of pack.textures) textures.set(t.nameHash, t);
+    const mats = new MaterialTable(textures, { unlit: false });
+    const meshes = solids.map(s => solidToMesh(s, h => mats.get(h)));
+    await Bun.write(`${outDir}/interiors/${name}.glb`, writeGlb(meshes, mats.materials, mats.images, name));
+    const tris = meshes.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.indices.length / 3, 0), 0);
+    const bb = solids.reduce((a, s) => ({ min: a.min.map((v, i) => Math.min(v, s.aabbMin[i])), max: a.max.map((v, i) => Math.max(v, s.aabbMax[i])) }), { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] });
+    console.log(`${name}: ${solids.length} piezas (${solids.map(s => s.name).join(", ")}) · ${tris} tris · ${pack.textures.length} texturas propias · faltan ${mats.missing.size} · caja ${bb.min.map(v => v.toFixed(1))} → ${bb.max.map(v => v.toFixed(1))}`);
+    index.items = index.items.filter(i => i.id !== `int:${name}`);
+    index.items.push({ id: `int:${name}`, group: "Interiores", label: name, glb: `interiors/${name}.glb`, tris, verts: 0, source: path });
+  }
+}
+if (mode === "tiles") {
+  const TILE = +(names[0] ?? 400), FAR_MIN = 6, FAR_CELL = +(names[1] ?? 3); // objetos < 6 m fuera del nivel lejano; celdas de simplificación
+  mkdirSync(`${outDir}/tiles`, { recursive: true }); mkdirSync(`${outDir}/textures`, { recursive: true });
+  const sections = readSectionTable(await d.readEntry(d.find("TRACKS\\L2RA.BUN")!));
+  const stream = await d.readEntry(d.find("TRACKS\\STREAML2RA.BUN")!);
+  const solids = new Map<number, Solid>(), textures = new Map<number, Texture>();
+  const parsed = sections.map(s => { const buf = stream.subarray(s.offset, s.offset + s.size); return { s, buf, ch: parseChunks(buf) }; });
+  for (const p of parsed) {
+    for (const so of readSolidListsDeep(p.buf, p.ch)) if (!solids.has(so.nameHash)) solids.set(so.nameHash, so);
+    if (p.ch.some(c => c.id === 0xb3300000)) for (const t of readTexturePack(p.buf).textures) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
+  }
+  for (const t of (await texturesFrom(["TRACKS\\L2RA.BUN", "GLOBAL\\GLOBALA.BUN"])).values()) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
+  // Color medio de cada textura (para el nivel lejano, que no lleva texturas).
+  const avg = new Map<number, [number, number, number]>();
+  for (const t of textures.values()) { let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < t.rgba.length; i += 16) if (t.rgba[i + 3] > 64) { r += t.rgba[i]; g += t.rgba[i + 1]; b += t.rgba[i + 2]; n++; } if (n) avg.set(t.nameHash, [r / n / 255, g / n / 255, b / n / 255]); }
+  type Inst = { so: Solid; low: Solid; matrix: number[]; meta: Record<string, unknown>; size: number };
+  const tiles = new Map<string, Inst[]>();
+  for (const { s, buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const [k, inst] of sc.instances.entries()) {
+    const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
+    if (!so || !h) continue;
+    // Nivel lejano: el LOD más ligero que trae el propio juego (hashes 1..3 de SceneryInfo).
+    const lods = info.hashes.map(x => solids.get(x)).filter((x): x is Solid => !!x);
+    const low = lods.reduce((a, b) => (b.strips.reduce((t, st) => t + st.np, 0) < a.strips.reduce((t, st) => t + st.np, 0) ? b : a), so);
+    const cx = (inst.bbMin[0] + inst.bbMax[0]) / 2, cy = (inst.bbMin[1] + inst.bbMax[1]) / 2;
+    const key = `${Math.floor(cx / TILE)}_${Math.floor(cy / TILE)}`;
+    const r = inst.rotation, p = inst.position;
+    (tiles.get(key) ?? tiles.set(key, []).get(key)!).push({ so, low, matrix: [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, p[0], p[1], p[2], 1], size: Math.hypot(inst.bbMax[0] - inst.bbMin[0], inst.bbMax[1] - inst.bbMin[1], inst.bbMax[2] - inst.bbMin[2]), meta: { "Sección": s.name, "Modelo": info.name, "Hash modelo": hex8(h), "Instancia": k } });
+  }
+  const written = new Set<number>();
+  const out: { id: string; x: number; y: number; size: number; near: string; far: string; tris: number; farTris: number; objects: number; zMin: number; zMax: number }[] = [];
+  let nearTris = 0, farTrisAll = 0;
+  for (const [key, list] of tiles) {
+    const [tx, ty] = key.split("_").map(Number);
+    const mats = new MaterialTable(textures, { unlit: true, external: { dir: `${outDir}/textures`, uriPrefix: "../textures/", written } });
+    const meshCache = new Map<Solid, GlbMesh>();
+    const meshOf = (so: Solid) => meshCache.get(so) ?? meshCache.set(so, solidToMesh(so, t => mats.get(t))).get(so)!;
+    const near = flatten(list.map((it, id) => ({ mesh: meshOf(it.so), matrix: it.matrix, id })));
+    await Bun.write(`${outDir}/tiles/${key}.glb`, writeGlb([{ name: `tile ${key}`, primitives: near, extras: { Casilla: key, objetos: list.map(i => i.meta) } }], mats.materials, mats.images, `tile_${key}`));
+    // Nivel lejano: una sola malla con color por vértice = color medio de textura × luz horneada.
+    const farMats = new MaterialTable(new Map(), { unlit: true });
+    const farMat = farMats.get(undefined); farMats.materials[farMat] = { name: "lejano", color: [1, 1, 1, 1], unlit: true };
+    const farInst = list.filter(i => i.size >= FAR_MIN).map((it0, id) => {
+      const it = { ...it0, so: it0.low };
+      const m = solidToMesh(it.so, () => farMat);
+      // teñir los vértices con el color medio de la textura de cada tira
+      let v = 0; const cols: number[] = [];
+      for (const st of it.so.strips) { const c = (st.texture >= 0 && avg.get(it.so.textureHashes[st.texture])) || [0.6, 0.6, 0.6]; for (let k = 0; k < st.nv; k++) { const b = st.colors?.[k] ?? [1, 1, 1, 1]; cols.push(c[0] * b[0], c[1] * b[1], c[2] * b[2], 1); v++; } }
+      m.primitives = [{ ...m.primitives[0], positions: new Float32Array(it.so.strips.flatMap(st => st.positions.flat())), normals: undefined, uvs: undefined, colors: new Float32Array(cols), indices: new Uint32Array((() => { const idx: number[] = []; let base = 0; for (const st of it.so.strips) { for (const t of stripTriangles(st)) idx.push(base + t[0], base + t[1], base + t[2]); base += st.nv; } return idx; })()) }];
+      return { mesh: m, matrix: it.matrix, id };
+    });
+    const far = flatten(farInst).map(p => clusterSimplify({ ...p, normals: undefined, uvs: undefined, ids: undefined }, FAR_CELL));
+    await Bun.write(`${outDir}/tiles/${key}_far.glb`, writeGlb([{ name: `far ${key}`, primitives: far }], farMats.materials, [], `far_${key}`));
+    const tris = near.reduce((a, p) => a + p.indices.length / 3, 0), farTris = far.reduce((a, p) => a + p.indices.length / 3, 0);
+    let zMin = Infinity, zMax = -Infinity; for (const p of near) for (let i = 2; i < p.positions.length; i += 3) { zMin = Math.min(zMin, p.positions[i]); zMax = Math.max(zMax, p.positions[i]); }
+    out.push({ id: key, x: tx * TILE, y: ty * TILE, size: TILE, near: `tiles/${key}.glb`, far: `tiles/${key}_far.glb`, tris, farTris, objects: list.length, zMin, zMax });
+    nearTris += tris; farTrisAll += farTris;
+  }
+  const wj = existsSync(`${outDir}/world.json`) ? JSON.parse(readFileSync(`${outDir}/world.json`, "utf8")) : { disc, upAxis: "Z", sections: [] };
+  wj.tiles = out.sort((a, b) => a.id.localeCompare(b.id)); wj.tileSize = TILE;
+  if (!wj.sections?.length) wj.sections = sections.filter(s => s.radius > 0).map(s => ({ name: s.name, number: s.number, centre: s.centre, radius: s.radius, glb: "", instances: 0, tris: 0 }));
+  await Bun.write(`${outDir}/world.json`, JSON.stringify(wj, null, 1));
+  console.log(`Casillas ${out.length} de ${TILE} m · detalle ${(nearTris / 1e6).toFixed(2)} M tris · lejano ${(farTrisAll / 1e6).toFixed(2)} M tris`);
 }
 index.generated = new Date().toISOString();
 index.items.sort((a, b) => a.group.localeCompare(b.group) || a.label.localeCompare(b.label));
