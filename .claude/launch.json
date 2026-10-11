@@ -1,6 +1,0 @@
-{
-  "version": "0.0.1",
-  "configurations": [
-    { "name": "rockport-viewer", "runtimeExecutable": "viewer/node_modules/.bin/vite", "runtimeArgs": ["viewer", "--port", "5181", "--strictPort"], "port": 5181 }
-  ]
-}

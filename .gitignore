@@ -13,3 +13,4 @@ map-data/**/*.glb
 viewer/dist/
 map-data/**/*.png
 tools/data/filenames-ekey.list
+.claude/

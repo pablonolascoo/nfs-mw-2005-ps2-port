@@ -1,5 +1,5 @@
 // Mundo de NFS MW PS2: tabla de secciones (L2RA.BUN, chunk 0x00034110) y escenario (STREAML2RA.BUN, chunk 0x80034100).
-// Ver docs/03-mundo-rockport-ps2.md. Entradas de sección de 92 B [verificado en SLES-53559].
+// Ver docs/es/03-mundo-rockport-ps2.md. Entradas de sección de 92 B [verificado en SLES-53559].
 import { parseChunks, type Chunk } from "./bchunk";
 
 export interface Section { index: number; name: string; number: number; fileType: number; offset: number; size: number; priority: number; centre: [number, number]; radius: number; checksum: number }

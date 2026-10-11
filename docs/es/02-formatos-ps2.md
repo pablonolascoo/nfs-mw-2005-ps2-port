@@ -6,7 +6,7 @@ Código de referencia en `tools/src/lib/`.
 ## Contenedor del disco — `zdir.ts` [V]
 - `NFS/ZDIR.BIN`: entradas de 24 B LE `{hash, archivo, sectorLocal, sectorGlobal, tamaño, checksum}`.
 - Hash = `bStringHash` (`h = h*33 + c`, inicio `0xFFFFFFFF`) de la ruta en mayúsculas con `\`.
-- 1497 archivos (PAL) / 1447 (US). 95 % con nombre resuelto (lista de Ekey + cadenas del ELF).
+- 1497 archivos (PAL) / 1447 (US). 95 % con nombre resuelto con `tools/data/filenames-mw-ps2.list` (lista propia verificada por hash) y cadenas del ELF.
 
 ## bChunk — `bchunk.ts` [V][D]
 `{u32 id, u32 tamaño}`; bit `0x80000000` = contenedor. Relleno `0x11111111` dentro de los chunks. Alineaciones relativas al inicio de archivo/sección (16 para eSolid, 128 para píxeles).

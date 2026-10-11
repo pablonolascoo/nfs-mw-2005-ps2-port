@@ -1,11 +1,11 @@
-# Hito 1 · Estado inicial (2026-10-11)
+# Identificación de los discos (2026-10-11)
 
 Leyenda: **[V]** verificado en la copia PS2 del usuario · **[I]** inferido de otra versión · **[H]** hipótesis · **[D]** decisión de diseño.
 
-## 1. Disco del usuario
+## 1. Disco de referencia (SLES-53559)
 | Dato | Valor | Nivel |
 |---|---|---|
-| Archivo | `Need for Speed Most Wanted.iso` (4 094 197 760 B) | V |
+| Imagen | ISO de 4 094 197 760 B, volcada del disco original del autor | V |
 | SHA-256 | `5949a98565d6ccde0f0fe3176e66bd9595e3710349417719cf761382c9b2582e` | V |
 | MD5 | `06811fd45d653d00d301ad1e5ebbf3ad` | V |
 | ID (SYSTEM.CNF) | `BOOT2 = cdrom0:\SLES_535.59;1`, `VER = 1.00`, `VMODE = PAL` | V |
