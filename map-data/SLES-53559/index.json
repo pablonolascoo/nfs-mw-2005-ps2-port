@@ -1,0 +1,25 @@
+{
+ "disc": "SLES-53559",
+ "generated": "2026-10-11T20:50:07.032Z",
+ "upAxis": "Z",
+ "items": [
+  {
+   "id": "car:BMWM3GTRE46",
+   "group": "Coches",
+   "label": "BMWM3GTRE46",
+   "glb": "cars/BMWM3GTRE46.glb",
+   "tris": 6614,
+   "verts": 9502,
+   "source": "CARS\\BMWM3GTRE46\\GEOMETRY.BIN"
+  },
+  {
+   "id": "car:COPMIDSIZE",
+   "group": "Coches",
+   "label": "COPMIDSIZE",
+   "glb": "cars/COPMIDSIZE.glb",
+   "tris": 530,
+   "verts": 838,
+   "source": "CARS\\COPMIDSIZE\\GEOMETRY.BIN"
+  }
+ ]
+}

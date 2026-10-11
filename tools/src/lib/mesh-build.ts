@@ -1,0 +1,23 @@
+// Convierte sólidos PS2 en mallas GLB agrupando las tiras por textura.
+import type { Solid } from "./solid-ps2";
+import { stripTriangles } from "./solid-ps2";
+import type { GlbMesh, GlbPrimitive } from "./glb";
+import { hex8 } from "./hash";
+
+export function solidToMesh(s: Solid, materialFor: (textureHash: number | undefined) => number, transform?: number[]): GlbMesh {
+  const groups = new Map<number, { pos: number[]; nor: number[]; uv: number[]; idx: number[] }>();
+  for (const st of s.strips) {
+    const texHash = st.texture >= 0 ? s.textureHashes[st.texture] : undefined;
+    const mat = materialFor(texHash);
+    const g = groups.get(mat) ?? groups.set(mat, { pos: [], nor: [], uv: [], idx: [] }).get(mat)!;
+    const base = g.pos.length / 3;
+    for (let k = 0; k < st.nv; k++) {
+      g.pos.push(...st.positions[k]);
+      g.nor.push(...(st.normals[k] ?? [0, 0, 1]));
+      g.uv.push(...(st.uvs[k] ?? [0, 0]));
+    }
+    for (const t of stripTriangles(st)) g.idx.push(base + t[0], base + t[1], base + t[2]);
+  }
+  const primitives: GlbPrimitive[] = [...groups].map(([material, g]) => ({ material, positions: new Float32Array(g.pos), normals: new Float32Array(g.nor), uvs: new Float32Array(g.uv), indices: new Uint32Array(g.idx) }));
+  return { name: s.name || hex8(s.nameHash), primitives, matrix: transform, extras: { "Hash": hex8(s.nameHash), "Tiras": s.strips.length, "Polígonos (cabecera)": s.numPolys, "Texturas": s.textureHashes.map(hex8).join(" ") } };
+}

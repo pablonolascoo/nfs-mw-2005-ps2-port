@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rockport Dispatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=block" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <header class="bar">
+      <div class="brand"><span class="brand-mark">MW</span><span class="brand-name">Rockport Dispatch</span><span class="brand-tag" id="disc-tag">—</span></div>
+      <div class="bar-stats">
+        <span><i class="ph ph-cpu"></i><b id="backend">…</b></span>
+        <span><i class="ph ph-polygon"></i><b id="tri-count">0</b> tris</span>
+        <span><i class="ph ph-gauge"></i><b id="fps">0</b> fps</span>
+      </div>
+    </header>
+    <aside class="panel left">
+      <div class="panel-head"><i class="ph ph-stack"></i>Recursos</div>
+      <label class="search"><i class="ph ph-magnifying-glass"></i><input id="filter" placeholder="Filtrar por nombre o hash" autocomplete="off" /></label>
+      <ul id="tree" class="tree" aria-label="Recursos recuperados"></ul>
+    </aside>
+    <main id="stage" class="stage">
+      <div id="empty" class="empty"><div class="empty-big">Sin datos</div><p>Ejecuta el conversor para generar <code>map-data/</code>.</p></div>
+      <div class="reticle" aria-hidden="true"></div>
+    </main>
+    <aside class="panel right">
+      <div class="panel-head"><i class="ph ph-crosshair"></i>Inspector</div>
+      <dl id="inspector" class="inspector"><dt>Selección</dt><dd class="muted">Haz clic en una pieza</dd></dl>
+      <div class="panel-head"><i class="ph ph-map-pin"></i>Marcadores <button id="export" class="ghost" title="Exportar marcadores (JSON)"><i class="ph ph-download-simple"></i></button></div>
+      <ol id="markers" class="markers"></ol>
+    </aside>
+    <footer class="bar foot">
+      <span><i class="ph ph-navigation-arrow"></i>X <b id="cx">0</b> Y <b id="cy">0</b> Z <b id="cz">0</b></span>
+      <span class="hint"><kbd>WASD</kbd> volar · <kbd>Q</kbd>/<kbd>E</kbd> bajar/subir · <kbd>Mayús</kbd> rápido · clic seleccionar · <kbd>M</kbd> marcador · <kbd>F</kbd> encuadrar</span>
+    </footer>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

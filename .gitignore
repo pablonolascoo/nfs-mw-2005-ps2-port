@@ -9,3 +9,5 @@ build/
 assets/cache/
 experiments/decomp/
 experiments/elf/S*
+map-data/**/*.glb
+viewer/dist/
