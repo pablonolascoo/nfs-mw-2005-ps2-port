@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "inventory": "bun src/cli/inventory.ts",
-    "extract": "bun src/cli/extract.ts"
+    "extract": "bun src/cli/extract.ts",
+    "build-all": "bun src/cli/build-all.ts"
   },
   "devDependencies": {
     "@types/bun": "1.3.4",

@@ -20,12 +20,21 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
 | Frontend interiors (garages, car lot, tuning shop) | ✅ exported |
 | Whole city at 60 fps (HLOD tiles, texture arrays, workers, dynamic resolution) | ✅ |
-| Road network, collisions, physics | 🔜 |
+| Drivable car on the real city (arcade prototype, 60 fps) | ✅ |
+| Garages without loading screens: real door opens, interior already loaded, park, showcase, drive out | ✅ |
+| Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
+| Road network, game physics, races, audio | 🔜 |
 
 ## Quick start
+**One PAL ISO (SLES-53559) is enough for the whole project** (SLUS-21351 also works).
 ```bash
-# requirements: Bun, your own ISO (SLES-53559 / SLUS-21351 tested)
-mkdir -p original && ln -s /path/to/your.iso original/SLES-53559.iso
+# requirements: Bun and your own ISO
+cd tools && bun install
+bun run build-all /path/to/your.iso        # everything in ~6 min → map-data/<disc>/
+cd ../viewer && bun install && bunx vite    # http://localhost:5181 → «Cargar ciudad completa» → «Conducir»
+```
+Step by step:
+```bash
 cd tools && bun install
 bun src/cli/inventory.ts ../original/SLES-53559.iso SLES-53559
 bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 tiles 400 3   # all of Rockport as 60-fps tiles (~1 min)
@@ -44,6 +53,8 @@ cd ../viewer && bun install && bunx vite                                    # ht
 | PS2 formats | [docs/en/02](docs/en/02-ps2-formats.md) | [docs/es/02](docs/es/02-formatos-ps2.md) |
 | Rockport world | [docs/en/03](docs/en/03-rockport-world-ps2.md) | [docs/es/03](docs/es/03-mundo-rockport-ps2.md) |
 | Porting architecture | [docs/en/04](docs/en/04-port-architecture.md) | [docs/es/04](docs/es/04-arquitectura-port.md) |
+| Driving and garages | [docs/en/07](docs/en/07-driving-and-garages.md) | [docs/es/07](docs/es/07-conduccion-y-garajes.md) |
+| Mods and expansions | [docs/en/08](docs/en/08-mods.md) | [docs/es/08](docs/es/08-mods.md) |
 | Gameplay database (VLT): zones, races, Blacklist | [docs/en/05](docs/en/05-vlt-attributes.md) | [docs/es/05](docs/es/05-vlt-atributos.md) |
 | Viewer performance | [docs/en/06](docs/en/06-performance.md) | [docs/es/06](docs/es/06-rendimiento.md) |
 

@@ -20,12 +20,21 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Base de datos del juego (VLT): 6.287 colecciones, 255 eventos, Blacklist, 15 zonas de garaje/tienda | ✅ |
 | Interiores del menú (garajes, concesionario, taller) | ✅ exportados |
 | Ciudad entera a 60 fps (casillas HLOD, arrays de texturas, workers, resolución dinámica) | ✅ |
-| Carreteras, colisiones, física | 🔜 |
+| Coche conducible sobre la ciudad real (prototipo arcade, 60 fps) | ✅ |
+| Garajes sin pantallas de carga: se abre la puerta real, interior ya cargado, aparcas, vista de exposición, sales conduciendo | ✅ |
+| Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
+| Red de carreteras, física del juego, carreras, audio | 🔜 |
 
 ## Inicio rápido
+**Con una sola ISO PAL (SLES-53559) basta para todo el proyecto** (también vale SLUS-21351).
 ```bash
-# requisitos: Bun y tu propia ISO (probadas SLES-53559 / SLUS-21351)
-mkdir -p original && ln -s /ruta/a/tu.iso original/SLES-53559.iso
+# requisitos: Bun y tu propia ISO
+cd tools && bun install
+bun run build-all /ruta/a/tu.iso          # todo en ~6 min → map-data/<disco>/
+cd ../viewer && bun install && bunx vite   # http://localhost:5181 → «Cargar ciudad completa» → «Conducir»
+```
+Paso a paso:
+```bash
 cd tools && bun install
 bun src/cli/inventory.ts ../original/SLES-53559.iso SLES-53559
 bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 tiles 400 3   # Rockport entero en casillas a 60 fps (~1 min)
