@@ -12,3 +12,4 @@ experiments/elf/S*
 map-data/**/*.glb
 viewer/dist/
 map-data/**/*.png
+tools/data/filenames-ekey.list

@@ -10,7 +10,7 @@ if (!isoPath || !id) { console.error("Uso: bun src/cli/inventory.ts <iso> <ID>")
 const root = new URL("../../../", import.meta.url).pathname;
 
 const disc = await GameDisc.open(isoPath);
-const cands = await loadCandidates(disc, [`${root}tools/data/filenames-ekey.list`, `${root}tools/data/filenames-extra.list`]);
+const cands = await loadCandidates(disc, [`${root}tools/data/filenames-mw-ps2.list`, `${root}tools/data/filenames-extra.list`]);
 const resolved = disc.resolveNames(cands);
 console.log(`${id}: ${disc.entries.length} archivos en ZDIR, ${resolved} con nombre (${cands.size} candidatos)`);
 

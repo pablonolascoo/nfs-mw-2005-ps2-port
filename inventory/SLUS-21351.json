@@ -1,7 +1,7 @@
 {
  "disc": "SLUS-21351",
  "iso": "SLUS-21351.iso",
- "generated": "2026-10-11T20:31:40.454Z",
+ "generated": "2026-10-11T21:17:58.583Z",
  "isoFiles": [
   {
    "path": "SYSTEM.CNF",
@@ -89,18 +89,6 @@
   }
  ],
  "entries": [
-  {
-   "path": "_UNKNOWN\\05592894.BIN",
-   "named": false,
-   "hash": "05592894",
-   "archive": 3,
-   "sector": 400483,
-   "size": 191013780,
-   "sha256": "633834bced66483da48375d27f17e4083521432c298aafd7bbdc15c222ab2e86",
-   "head": "000000000000000000401380e001000000000000080000000000000000000000",
-   "format": "desconocido",
-   "confidence": "baja"
-  },
   {
    "path": "_UNKNOWN\\29ee288f.BIN",
    "named": false,
@@ -387,18 +375,6 @@
    "sha256": "31cf82883d293549db04e1900ad0baf6c4a804b3a48c5b9c0161e9998a0c4389",
    "head": "5650414b100100008015000032130000000000007005000080100000c0280000",
    "format": "bChunk? id 0x4b415056",
-   "confidence": "baja"
-  },
-  {
-   "path": "_UNKNOWN\\5cd935a8.BIN",
-   "named": false,
-   "hash": "5cd935a8",
-   "archive": 2,
-   "sector": 320972,
-   "size": 55238,
-   "sha256": "cae18aff5ba3ec09bc3c3bc168e987de10ac2885254488cecd805aa581211969",
-   "head": "00000100010000000e0000000000803f32040000a2db5ad4e500000447facdf2",
-   "format": "bChunk? id 0x00010000",
    "confidence": "baja"
   },
   {
@@ -5918,6 +5894,18 @@
    "size": 31044,
    "sha256": "7e3a354ba5a115639d83042e6972948c36c7e8936d606929540e8349bf9f934f",
    "head": "00000100010000000e0000000000803f320400008027f3c2a1ff00040af9c7f2",
+   "format": "bChunk? id 0x00010000",
+   "confidence": "baja"
+  },
+  {
+   "path": "MEMCARD\\SLIME1.ICO",
+   "named": true,
+   "hash": "5cd935a8",
+   "archive": 2,
+   "sector": 320972,
+   "size": 55238,
+   "sha256": "cae18aff5ba3ec09bc3c3bc168e987de10ac2885254488cecd805aa581211969",
+   "head": "00000100010000000e0000000000803f32040000a2db5ad4e500000447facdf2",
    "format": "bChunk? id 0x00010000",
    "confidence": "baja"
   },
@@ -17439,6 +17427,18 @@
    "sha256": "98f2070ba48b3b60a904a9f412584322d22eac14c7e713e5647785b49dd0d90d",
    "head": "2f2f0d0a2f2f20576f726c645c476c6f62616c5c536372697074735c5c507265",
    "format": "bChunk? id 0x0a0d2f2f",
+   "confidence": "baja"
+  },
+  {
+   "path": "TRACKS\\STREAML2RA_SUNSET.BUN",
+   "named": true,
+   "hash": "05592894",
+   "archive": 3,
+   "sector": 400483,
+   "size": 191013780,
+   "sha256": "633834bced66483da48375d27f17e4083521432c298aafd7bbdc15c222ab2e86",
+   "head": "000000000000000000401380e001000000000000080000000000000000000000",
+   "format": "desconocido",
    "confidence": "baja"
   },
   {
