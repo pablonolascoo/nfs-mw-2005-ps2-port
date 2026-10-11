@@ -1,0 +1,9 @@
+{
+  "name": "nfsmw-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "inventory": "bun src/cli/inventory.ts",
+    "extract": "bun src/cli/extract.ts"
+  }
+}

@@ -1,0 +1,11 @@
+*.iso
+original/
+extracted/
+.DS_Store
+node_modules/
+dist/
+build/
+*.glb
+assets/cache/
+experiments/decomp/
+experiments/elf/S*
