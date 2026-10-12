@@ -18,7 +18,7 @@ Etiquetas: [V] verificado en bytes o medido · [D] sacado de la decomp · [I] in
 - Repetición o recorte al borde por textura y por eje (TilableUV del juego) [V].
 - Cielo con degradado y plano de mar, como el visor web [H: el juego pinta un plano de mar].
 - **Tono PS2**: pasada final cálida, amarillenta, con negros levantados. Se ajusta con un solo número.
-- Cámara libre (WASD + ratón) y **conducción** del BMW M3 GTR con cámara de persecución.
+- Cámara libre (WASD + ratón) y **conducción** del BMW M3 GTR con la **física del juego**, mando y cámaras de persecución del juego.
 - El coche se monta como el juego: una pieza por ranura, ruedas y frenos con las medidas de `cars.json` [D].
 - El coche pisa la **colisión real** del juego (`collision/*.bin`) y choca con sus muros [V].
 - Modo sin ventana para sacar capturas y medir rendimiento (`--screenshot`, `--bench`).
@@ -64,11 +64,12 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 |---|---|
 | Ratón | Mirar |
 | W A S D / flechas | Moverse (o acelerar, frenar y girar en el coche) |
-| E / Espacio, Q / Ctrl | Subir y bajar (cámara libre). Espacio = freno de mano en el coche |
-| Mayús | Rápido (×5) |
+| E / Espacio, Q / Ctrl | Subir y bajar (cámara libre). En el coche: E/Q cambio de marcha, Espacio freno de mano |
+| Mayús | Rápido (×5). En el coche: nitro (también N) |
+| X · V | Coche: mirar atrás · cambiar de cámara (parachoques, capó, cerca, lejos) |
 | C | Cambiar entre cámara libre y coche |
-| R | Recolocar el coche sobre el suelo |
-| G | Tono PS2 sí / no |
+| R | Recolocar el coche (parado, sobre el suelo) |
+| Mando | Xbox, PS3/PS4/PS5, adaptadores de PS2 y HID genéricos: ver [doc 15](../docs/es/15-mandos.md) |
 | Tab | Soltar o capturar el ratón |
 | Esc o ⌘Q | Salir |
 
@@ -77,7 +78,7 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | Opción | Para qué |
 |---|---|
 | `--data <carpeta>` / `--disc <ID>` | Elegir datos y disco |
-| `--grade <n>` | Fuerza del tono PS2 (0 = neutro, 1 = por defecto). También `ROCKPORT_GRADE` |
+| `--grade <n>` | Solo desarrollo: fuerza del tono PS2. En el juego va **siempre** a 1 y no se puede quitar. También `ROCKPORT_GRADE` |
 | `--cam x,y,z,rumbo,inclinación` | Cámara inicial (metros y grados) |
 | `--drive` / `--car` | Empezar conduciendo / con el coche aparcado |
 | `--scale <f>` | Fija la escala de resolución (sin resolución dinámica) |
@@ -88,6 +89,7 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--near <m>` | Depuración: radio del nivel cercano (`--near -1`: solo nivel lejano) |
 | `--carcam ox,oy,oz,tx,ty,tz` | Cámara fija respecto al coche (X adelante, Y izquierda, Z arriba) |
 | `--audit` | Carga todas las casillas y comprueba geometría y texturas |
+| `--physics-test [COCHE] [--physics-trace]` | Sin ventana: física del juego en un plano: 0–100, punta, frenada, curva, freno de mano, NOS |
 
 ## Estructura de carpetas
 
@@ -109,7 +111,10 @@ native-engine/
 │  ├─ Renderer.swift        pasadas Metal y orden de dibujo
 │  ├─ Shaders.swift         shaders Metal (se compilan al arrancar)
 │  ├─ Collision.swift       colisión NFSC v1: suelo y muros
-│  ├─ Car.swift             coche: ruedas, pintura, conducción arcade
+│  ├─ Car.swift             coche: ruedas, pintura, pose de la física interpolada
+│  ├─ Physics/              física del juego (doc 13): RigidBody, Tire, SuspensionRacer, EngineRacer, PVehicle, prueba
+│  ├─ Input/                teclado y mandos (doc 15): GameController, IOKit HID, luz, gatillos, vibración
+│  ├─ Camera/               cámara de persecución con las vistas camerainfo del juego
 │  └─ MathUtil.swift        matrices, cajas, frustum
 └─ .build/                  salida de compilación y capturas (ignorado por git)
 ```
@@ -198,7 +203,7 @@ Trabaja en espacio de pantalla (gamma), en tres pasos:
 
 Un solo número lo controla todo: `Config.ps2GradeStrength` (por defecto 1).
 0 = imagen neutra. 1 = tono por defecto. Más de 1 = exagerado.
-Se cambia sin compilar con `--grade <n>` o `ROCKPORT_GRADE`, y con la tecla G en marcha.
+Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` o `ROCKPORT_GRADE`.
 
 ### 6. Resolución dinámica y vsync (`App.swift`)
 - La salida siempre es la resolución real de la pantalla (píxeles Retina).
@@ -222,8 +227,36 @@ Se cambia sin compilar con `--grade <n>` o `ROCKPORT_GRADE`, y con la tecla G en
 - Las tarjetas de llanta ya se dibujan: el conversor arregló su orientación.
 - `BMWM3` toma los atributos de `bmwm3gtr` (no tiene colección propia) [V: cars.json].
 - Luz: la del visor (`HemisphereLight` + `DirectionalLight`, `MeshStandardMaterial`). Pintura: metal 0,45, rugosidad 0,32.
-- Conducción arcade igual que `viewer/src/drive.ts`. **No es la física del juego.**
+- Conducción: **la física del juego** portada de la decomp (ver «Física del juego» abajo y el doc 13). Sin `physics.json`, el prototipo arcade de antes.
 - Suelo: triángulos de colisión en celdas de 8 m. Muros: segmentos verticales.
+
+## Física del juego, mandos y cámara (2026-10-12)
+
+- **Física**: `SuspensionRacer`, `EngineRacer`, `Chassis` y `RigidBody` del juego, en Swift (`Physics/`), a **60 Hz fijos** como el juego
+  (`Scheduler::Init(1/60)` [V]) e interpolada al dibujar. Valores de `physics.json` (paso `physics-attribs` de `tools/`).
+  Agarre con círculo de fricción, transferencia de pesos por suspensión, derrape con freno de mano, NOS, caja automática. Detalle: [doc 13](../docs/es/13-fisica-conduccion.md).
+- **Medidas** (`--physics-test`, BMW M3 GTR, plano) [V]: 0–60 mph 3,03 s · 0–100 km/h 3,12 s · punta 390 km/h (corte en 6.ª) · frenada 100→0 en 14,5 m.
+  Referencia del juego: 0–60 mph ≈ 3,9 s [H].
+- **Mandos**: Xbox One/Series, DualShock 4, DualSense y MFi por GameController; DualShock 3 (USB), adaptadores de PS2 y HID genéricos por IOKit; aviso para el Xbox 360 (necesita 360Controller).
+  Barra de luz, panel táctil, gatillos adaptativos y vibración. Detalle: [doc 15](../docs/es/15-mandos.md).
+- **Cámara**: vistas `camerainfo` del coche (parachoques, capó, cerca, lejos); movimiento propio [H] (el del juego no está decompilado).
+- **Tono PS2 siempre activo**: se quitó la tecla G.
+- Capturas: `.build/shots/drive-physics.png` (curva con balanceo y ruedas giradas) y `.build/shots/drive-cameras.png` (las 4 vistas).
+
+## Tráfico y policía (2026-10-12)
+
+- **Tráfico** como `AITrafficManager` del juego: patrón de coches por barrio (zonas `TRAFFIC_PATTERN` de `L2RA.BUN`), ritmo, máximos y porcentajes de
+  `trafficpattern`, aparición a 200 ± 50 m por delante, carriles de tipo 1 a la derecha del sentido de marcha, sentido único, sin tráfico, cruces al azar,
+  35/55 mph en calle/autopista, frenada tras el de delante, accidente al golpearlo. 20 coches a la vez (el PS2: 10 vehículos en total) [D][V].
+- **Policía** como `AICopManager` + `AIPursuit`: patrullas, detección con línea de visión, calor 1–5 (`pursuitlevels` heat_01…05), refuerzos,
+  formaciones (BOX_IN, PIT, ROLLING_BLOCK, HERD, FOLLOW, STAGGER), embestidas, arresto (5 s bajo `BustSpeed` con un policía a 15 m),
+  enfriamiento y evasión, controles de carretera con la tabla de montajes de la decomp y pinchos. Barra de luces roja y azul con la fórmula de `CarRender`.
+- **HUD** de MW, mínima: calor, barra EVADE/BUSTED, COOLDOWN, BUSTED/EVADED. Sin menús. El mando se pone rojo y azul en la persecución.
+- Datos: `ai.json` (nuevo paso `ai-attribs` de `tools/`) + `roads.json` + `collision/`. Coches con su librea real del disco, dibujados con instancias.
+- Prueba sin ventana: `--traffic-test N [--heat H] [--test-plan busted|run|flee] [--screenshot x.png]` → capturas y estadísticas (`x.json`).
+  Opciones: `--traffic-max N`, `--no-traffic`, `--no-police`.
+- Medido [V]: 19 de tráfico + 12 policías a 2940×1912: GPU 4,3 ms, CPU 1,0 ms; 100 % de los coches sobre el suelo, 0 saltos de carril.
+- Detalle, tablas VLT y fuentes: [doc 14](../docs/es/14-trafico-y-policia.md). Capturas: `.build/shots/traffic-*.png`, `heat5-control.png`.
 
 ## Cambios con los datos nuevos (2026-10-12)
 
@@ -273,15 +306,16 @@ Notas:
 - La luz del coche es la del visor, no la del juego: el juego usa mapas de entorno [D].
 - Llantas, alerones y tomas de techo de tuneo (packs `WHEELS`, `SPOILER`, `ROOF`) aún no se montan: el coche va de serie.
 - El conductor del BMW (`4e8cf857`) no tiene textura en el disco: sale gris oscuro, como en el visor [V].
-- No hay mando, sonido, tráfico, policía, carreras ni menús.
-- La conducción es un prototipo arcade, no la física de la decomp.
+- No hay sonido, carreras ni menús. Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
+- Choques con muros: impulsos propios, no `RigidBody::DoBarrierCollision` del juego (doc 13).
+- Mandos sin probar aún con hardware real (doc 15).
 
 ## Camino al DMG jugable (siguientes pasos)
 
 1. ✅ **Instalador de primer arranque** y `scripts/make-dmg.sh` (ver arriba).
 2. **Firma Developer ID y notarización**: necesita una cuenta de Apple Developer (de pago). Sin ella, el `.dmg` funciona pero macOS avisa la primera vez (clic derecho → Abrir).
-3. **Mando** (GameController) y volante; ajustes de vídeo (tono PS2, escala, FOV).
-4. **Física real** desde la decomp (`zPhysics`, `zDynamics`) y atributos VLT de cada coche.
+3. ✅ **Mando** (GameController + IOKit HID) — falta volante y ajustes de vídeo (escala, FOV).
+4. ✅ **Física del juego** desde la decomp y atributos VLT de cada coche (doc 13) — faltan choques del juego, daño y reglajes.
 5. **Audio** (EA SCHl/MPC) y música.
 6. **Garajes sin carga** (ya hechos en el visor) y selección de coche.
 7. **Carreras y Lista Negra** con `gameplay.json` + `roads.json`.

@@ -65,6 +65,8 @@ final class Renderer {
     private var sceneColor: MTLTexture?
     private var sceneDepth: MTLTexture?
     var gradeStrength: Float = Config.ps2GradeStrength
+    /// Capas extra (tráfico y policía de AIRender.swift, HUD de persecución): se dibujan dentro de las pasadas.
+    var overlays: [RenderOverlay] = []
 
     // Estadísticas del último fotograma
     private(set) var lastDrawCalls = 0
@@ -251,6 +253,8 @@ final class Renderer {
             enc.setRenderPipelineState(pipelines["car"]!)
             drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, pbr: Renderer.carPBR)
         }
+        for o in overlays { o.encodeOpaque(enc, frame: frame) }   // coches de la IA (instanciados)
+        enc.setDepthStencilState(depthWrite)
 
         // Transparentes: no escriben profundidad
         enc.setDepthStencilState(depthRead)
@@ -284,6 +288,7 @@ final class Renderer {
             enc.setRenderPipelineState(pipelines["carBlend"]!)
             drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, pbr: Renderer.carPBR)
         }
+        for o in overlays { o.encodeTransparent(enc, frame: frame); draws += o.drawCalls }
         enc.endEncoding()
         lastDrawCalls = draws; lastTriangles = tris
 
@@ -301,5 +306,6 @@ final class Renderer {
         post.setFragmentSamplerState(postSampler, index: 0)
         post.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         post.endEncoding()
+        for o in overlays { o.encodeScreen(cb, target: target) }   // HUD sobre la imagen final
     }
 }

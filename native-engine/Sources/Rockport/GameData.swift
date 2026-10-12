@@ -13,6 +13,16 @@ enum DataLocator {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Rockport", isDirectory: true)
     }
 
+    /// Si `u` es una instalación hecha con un formato de datos anterior a `Config.dataFormat`, devuelve la ISO
+    /// con la que se hizo (si sigue existiendo) para reconvertir sin volver a preguntar. nil si está al día o no es instalación.
+    static func staleInstall(_ u: URL) -> URL? {
+        let ok = u.appendingPathComponent("install.ok")
+        guard let d = try? Data(contentsOf: ok), let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any] else { return nil }
+        if (j["formatVersion"] as? Int ?? 1) >= Config.dataFormat { return nil }
+        if let iso = j["iso"] as? String, FileManager.default.fileExists(atPath: iso) { return URL(fileURLWithPath: iso) }
+        return URL(fileURLWithPath: "/")   // datos viejos y la ISO ya no está: el instalador la pedirá
+    }
+
     static func isDataFolder(_ u: URL) -> Bool {
         let fm = FileManager.default
         // Una instalación a medias (hay install.log pero no install.ok) no cuenta: se vuelve a instalar.

@@ -11,6 +11,9 @@
 import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { compiled } from "../lib/paths";
 
+/** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
+export const DATA_FORMAT = 2; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json)
+
 const [mode, ...rest] = Bun.argv.slice(2);
 
 if (mode === "step") {
@@ -23,6 +26,8 @@ if (mode === "step") {
     case "convert": await import("./convert"); break;
     case "garages": await import("./garages"); break;
     case "car-attribs": await import("./car-attribs"); break;
+    case "physics-attribs": await import("./physics-attribs"); break;
+    case "ai-attribs": await import("./ai-attribs"); break;
     case "roads": await import("./roads"); break;
     case "collision": await import("./collision"); break;
     case "topdown": await import("./topdown"); break;
@@ -45,6 +50,8 @@ if (mode === "step") {
     ["Coches", "convert", [iso, id, "car"]],      // la lista de coches se añade tras el inventario
     ["Puertas de garajes", "garages", [iso, id]],
     ["Ruedas de los coches", "car-attribs", [iso, id]],
+    ["Física de los coches", "physics-attribs", [iso, id]],
+    ["Tráfico y policía", "ai-attribs", [iso, id]],
     ["Red de carreteras", "roads", [iso, id]],
     ["Colisión", "collision", [iso, id]],
     ["Plano de la ciudad", "topdown", [iso, id, "2048"]],
@@ -67,7 +74,7 @@ if (mode === "step") {
       steps.find(s => s[0] === "Coches")![2].push(...cars);
     }
   }
-  writeFileSync(`${dest}/install.ok`, JSON.stringify({ disc: id, iso, finished: new Date().toISOString(), seconds: Math.round((performance.now() - t0) / 1000) }));
+  writeFileSync(`${dest}/install.ok`, JSON.stringify({ formatVersion: DATA_FORMAT, disc: id, iso, finished: new Date().toISOString(), seconds: Math.round((performance.now() - t0) / 1000) }));
   console.log("OK");
 } else {
   console.error("Uso: rockport-convert install <iso> <ID> <carpeta destino>");

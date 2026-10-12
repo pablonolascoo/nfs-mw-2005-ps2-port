@@ -57,7 +57,7 @@ struct Options {
                 Rockport — motor nativo macOS para los datos de NFS Most Wanted (PS2) convertidos desde tu ISO.
                   --data <carpeta>     carpeta map-data/<ID> (o su carpeta padre). También ROCKPORT_DATA.
                   --disc <ID>          disco a usar si hay varios (p. ej. SLES-53559)
-                  --grade <n>          fuerza del tono PS2 (0 = neutro, 1 = por defecto). También ROCKPORT_GRADE.
+                  --grade <n>          (desarrollo) fuerza del tono PS2; en el juego va siempre a 1. También ROCKPORT_GRADE.
                   --cam x,y,z,r,i      cámara inicial (metros; rumbo e inclinación en grados)
                   --drive              empezar conduciendo el BMW M3 GTR
                   --carcam ox,oy,oz,tx,ty,tz  cámara fija respecto al coche (X adelante, Y izquierda, Z arriba)
@@ -67,9 +67,16 @@ struct Options {
                   --size AxB           tamaño del modo sin ventana (1920x1080)
                   --bench              sin ventana: vuelo a 250 km/h durante --seconds y mide tiempos
                   --audit              carga todas las casillas y comprueba geometría y texturas
+                  --physics-test [COCHE]  prueba de la física del juego en un plano: 0–100, punta, frenada, curva, NOS
+                  --traffic-test N     sin ventana: N s de tráfico y policía con un coche de prueba; captura (--screenshot) y estadísticas
+                  --traffic-max N      máximo de coches de tráfico (20) · --heat H calor inicial · --no-traffic · --no-police
                 """)
                 exit(0)
             case "--audit": break   // se atiende en el arranque (runAudit)
+            case "--physics-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }   // runPhysicsTest
+            case "--physics-trace": break
+            case "--traffic-test", "--traffic-max", "--heat", "--test-plan": i += 1   // AIEngine.swift (AIOptions)
+            case "--no-traffic", "--no-police": break
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
             i += 1
@@ -234,7 +241,12 @@ if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.
     print("no es una ISO de PS2 reconocible"); exit(2)
 }
 let options = Options.parse(CommandLine.arguments)
-if CommandLine.arguments.contains("--audit") {
+if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
+    let a = CommandLine.arguments
+    runPhysicsTest(options, carName: i + 1 < a.count && !a[i + 1].hasPrefix("-") ? a[i + 1] : Config.playerCar)
+} else if let secs = AIOptions.trafficTest {
+    runTrafficTest(options, seconds: secs)
+} else if CommandLine.arguments.contains("--audit") {
     runAudit(options)
 } else if options.screenshot != nil || options.bench {
     runHeadless(options)

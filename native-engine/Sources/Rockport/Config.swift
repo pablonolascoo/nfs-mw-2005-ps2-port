@@ -7,6 +7,8 @@ enum Config {
     /// Un único número controla el tinte cálido amarillo/ámbar, el negro levantado y el ajuste de saturación.
     /// Se puede cambiar al arrancar con `--grade <n>` o la variable `ROCKPORT_GRADE`.
     static let ps2GradeStrength: Float = 1.0
+    /// Formato de datos que espera esta versión (tools/src/cli/install.ts DATA_FORMAT). Si la instalación es anterior, se reconvierte.
+    static let dataFormat = 2
 
     // MARK: Streaming de casillas (igual que viewer/src/main.ts)
     /// Distancia (m, de la cámara a la caja de la casilla) por debajo de la cual se carga el nivel con textura.

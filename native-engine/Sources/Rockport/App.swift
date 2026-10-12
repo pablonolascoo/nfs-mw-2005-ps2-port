@@ -32,9 +32,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard let device = MTLCreateSystemDefaultDevice() else { fatal("Este Mac no tiene GPU compatible con Metal.") }
         let (found, tried) = DataLocator.locate(arg: options.data, disc: options.disc)
-        if found == nil, let conv = Bundle.main.url(forResource: "rockport-convert", withExtension: nil) {
-            // Primer arranque de la app instalada: pedir la ISO y convertirla (Installer.swift)
-            installer = InstallerController(converter: conv, destRoot: DataLocator.appSupport) { [weak self] dest in
+        // Datos de una versión anterior de la app (install.ok con formatVersion menor): se reconvierten con la misma ISO.
+        let stale = found.flatMap { DataLocator.staleInstall($0) }
+        if (found == nil || stale != nil), let conv = Bundle.main.url(forResource: "rockport-convert", withExtension: nil) {
+            // Primer arranque (pedir la ISO) o actualización de datos (Installer.swift)
+            installer = InstallerController(converter: conv, destRoot: DataLocator.appSupport, autoISO: stale) { [weak self] dest in
                 self?.installer = nil
                 self?.startGame(device: device, root: dest)
             }
@@ -81,7 +83,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         NSApp.activate(ignoringOtherApps: true)
         captureMouse(true)
         installInput()
-        print("Controles: ratón mira · WASD mover · E/Espacio subir · Q/Ctrl bajar · Mayús rápido · C coche/libre · G tono PS2 · Tab soltar ratón · Esc salir")
+        print("Controles: ratón mira · WASD mover · E/Espacio subir · Q/Ctrl bajar · Mayús rápido · C coche/libre · Tab soltar ratón · Esc salir")
+        print("Coche: W/S gas y freno · A/D girar · Espacio freno de mano · N o Mayús nitro · X mirar atrás · V cámara · E/Q cambio · R recolocar · mandos: ver doc 15")
     }
 
     func captureMouse(_ on: Bool) {
@@ -99,7 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
                 if e.keyCode == Key.escape.rawValue { NSApp.terminate(nil) }
                 if !e.isARepeat {
                     if e.keyCode == Key.c.rawValue { self.engine.toggleMode() }
-                    if e.keyCode == Key.g.rawValue { self.engine.renderer.gradeStrength = self.engine.renderer.gradeStrength > 0 ? 0 : (self.options.grade ?? Config.ps2GradeStrength) }
+                    // El tono PS2 va siempre activo (sin tecla para quitarlo); solo --grade de desarrollo lo cambia
                     if e.keyCode == 48 { self.captureMouse(!self.mouseCaptured) }   // Tab
                 }
                 self.engine.keys.insert(e.keyCode)

@@ -1,6 +1,6 @@
 // Coche del jugador: modelo del juego (cars/<NOMBRE>.glb) con una pieza por ranura, ruedas y frenos montados como el juego
-// (cars.json), pintura sobre los materiales con role "pintura", y una conducción arcade sobre la colisión real.
-// Igual que viewer/src/drive.ts (applyCarConfig, mountWheels, paintCar, carHolder). No es la física del juego.
+// (cars.json), pintura sobre los materiales con role "pintura", y la física del juego (Physics/) sobre la colisión real.
+// Montaje igual que viewer/src/drive.ts (applyCarConfig, mountWheels, paintCar). Conducción: PVehicle (doc 13).
 import Foundation
 import Metal
 import simd
@@ -36,6 +36,20 @@ final class Car {
     var pitch: Float = 0, roll: Float = 0
     var steer: Float = 0
     var spin: Float = 0
+
+    // Física del juego (Physics/*.swift). nil si falta physics.json: entonces conduce el prototipo arcade.
+    let specs: VehicleSpecs?
+    private(set) var vehicle: PVehicle?
+    /// Medias medidas de la caja del modelo (X largo, Y ancho, Z alto) y punto medio de los ejes (X, espacio `local`).
+    let bodyHalf: float3
+    let modelAxleMid: Float
+    private var accumulator: Float = 0
+    private var prevPos = SIMD3<Float>(0, 0, 0), prevRot = simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
+    private var renderPos = SIMD3<Float>(0, 0, 0), renderRot = simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
+    private var wheelSpin = [Float](repeating: 0, count: 4)
+    private(set) var lastDriver = DriverInput()
+    /// Cámara de persecución con las vistas camerainfo del coche (Camera/ChaseCamera.swift).
+    lazy var camera = ChaseCamera(specs: specs)
 
     /// Qué primitivas se ven con esta configuración: una pieza por ranura, como RideInfo + CarRenderInfo
     /// [D: CarInfo.cpp SetStockParts, CarRender.cpp UpdateCarParts]. Copia de applyCarConfig (viewer/src/drive.ts).
@@ -168,6 +182,10 @@ final class Car {
         local = float4x4(rotationZ: frontSign > 0 ? 0 : .pi) * float4x4(translation: float3(-c.x, -c.y, -box.min.z))
         halfLength = max(box.size.x, box.size.y) / 2
         halfWidth = min(box.size.x, box.size.y) / 2
+        bodyHalf = float3(box.size.x / 2, box.size.y / 2, box.size.z / 2)
+        modelAxleMid = axles.isEmpty ? 0 : axles.map { fs * ($0.x - c.x) }.reduce(0, +) / Float(axles.count)
+        specs = Car.physicsFile(data)?.specs(model: name)
+        if specs == nil { fputs("coche: sin physics.json para \(name): conducción arcade\n", stderr) }
 
         // GPUMesh.build agrupa por (pieza, material): la pieza sale de un índice paralelo
         let tagged = zip(prims, parts).map { p, part -> GLBPrimitive in var q = p; q.nodeName = "\(part)|" + p.nodeName; return q }
@@ -181,9 +199,173 @@ final class Car {
         }
     }
 
+    // MARK: - Física del juego
+
+    private static var physicsCache: (String, PhysicsFile?)?
+    static func physicsFile(_ data: GameData) -> PhysicsFile? {
+        if let c = physicsCache, c.0 == data.root.path { return c.1 }
+        let f = PhysicsFile.load(data)
+        physicsCache = (data.root.path, f)
+        return f
+    }
+
+    /// Altura del brazo de rueda en reposo (media de los ejes): RIDE_HEIGHT − compresión estática.
+    private var armRest: Float {
+        guard let v = vehicle else { return 0 }
+        return (v.susp.rideHeight(0) - v.staticCompression[0] + v.susp.rideHeight(1) - v.staticCompression[1]) * 0.5
+    }
+    /// Punto medio de los ejes de la física, en z local (FRONT_AXLE − WHEEL_BASE/2).
+    private var physicsAxleMid: Float { specs.map { $0.chassis.FRONT_AXLE - $0.chassis.WHEEL_BASE * 0.5 } ?? 0 }
+
+    /// Rotación del mundo del motor (columnas: adelante, izquierda, arriba) a partir de la orientación de la física.
+    private static func worldRotation(_ q: simd_quatf) -> float4x4 {
+        let f = PM.toWorld(q.act(V3(0, 0, 1))), l = PM.toWorld(-q.act(V3(1, 0, 0))), u = PM.toWorld(q.act(V3(0, 1, 0)))
+        return float4x4(columns: (SIMD4(f, 0), SIMD4(l, 0), SIMD4(u, 0), SIMD4(0, 0, 0, 1)))
+    }
+    /// Matriz del suelo bajo el coche en el mundo (origen del modelo; sin `local`).
+    private var bodyWorld: float4x4 {
+        guard let v = vehicle else { return float4x4(translation: position) * float4x4(rotationZ: yaw) }
+        let o = PM.toWorld(renderPos + renderRot.act(V3(0, -(v.rb.dimension.y + armRest), physicsAxleMid)))
+        return float4x4(translation: o) * Car.worldRotation(renderRot) * float4x4(translation: float3(-modelAxleMid, 0, 0))
+    }
+
     /// Matrices de las piezas (0 = carrocería, 1…4 = ruedas, 5…8 = frenos) para este fotograma.
-    /// Rueda: eje · dirección (Z) · caída (X) · giro (Y). El freno no gira con la rueda.
+    /// Rueda: eje (+ recorrido de la suspensión) · dirección (Z) · caída (X) · giro (Y). El freno no gira con la rueda.
     var partMatrices: [float4x4] {
+        guard let v = vehicle else { return arcadePartMatrices }
+        let world = bodyWorld * local
+        var out = [float4x4](repeating: world, count: Car.partCount)
+        // TireOffsets: 0 del. izq., 1 del. dcha., 2 tras. dcha., 3 tras. izq. → ruedas de la física 0 FL, 1 FR, 2 RL, 3 RR
+        let map = [0, 1, 3, 2]
+        for (i, a) in wheelAxles.enumerated() where i < 4 {
+            let t = v.susp.tires[map[i]]
+            let dz = t.compression - v.staticCompression[map[i] / 2]
+            let ang: Float = map[i] < 2 ? v.susp.steerWheels[map[i]] : 0     // rad, + = derecha
+            let hub = world * float4x4(translation: a + float3(0, 0, dz)) * float4x4(rotationZ: -ang * frontSign) * float4x4(rotationX: wheelCamber[i])
+            out[1 + i] = hub * float4x4(rotationY: wheelSpin[map[i]] * frontSign)
+            out[5 + i] = hub
+        }
+        return out
+    }
+
+    /// Cuadrado unidad escalado al tamaño del coche, apoyado en el suelo (para la sombra de contacto).
+    var shadowMatrix: float4x4 {
+        if vehicle == nil {
+            return float4x4(translation: position + float3(0, 0, 0.12)) * float4x4(rotationZ: yaw) * float4x4(rotationX: roll) * float4x4(rotationY: -pitch)
+                * float4x4(scale: float3(halfLength * 1.2, halfWidth * 1.5, 1))
+        }
+        return float4x4(translation: float3(0, 0, 0.12)) * bodyWorld * float4x4(translation: float3(modelAxleMid, 0, 0)) * float4x4(scale: float3(halfLength * 1.2, halfWidth * 1.5, 1))
+    }
+
+    var kmh: Float { abs(speed) * 3.6 }
+    var forward: float3 { float3(cos(yaw), sin(yaw), 0) }
+    /// Datos para el HUD y la cámara.
+    var rpm: Float { vehicle?.engine.rpm ?? 0 }
+    var gear: Int { vehicle?.engine.gear ?? Gear.first }
+    var nosCapacity: Float { vehicle?.engine.nosCapacity ?? 0 }
+    var isNOSEngaged: Bool { vehicle?.engine.isNOSEngaged ?? false }
+    var lateralSlip: Float { vehicle.map { abs($0.susp.tires[2].lateralSpeed + $0.susp.tires[3].lateralSpeed) * 0.5 } ?? 0 }
+    /// Velocidad del coche en el mundo del motor (m/s).
+    var velocity: float3 { vehicle.map { PM.toWorld($0.rb.linearVel) } ?? forward * speed }
+
+    /// Para la vibración, los gatillos y la luz del mando.
+    var padFeedback: PadFeedback {
+        var f = PadFeedback()
+        guard let v = vehicle else { return f }
+        f.speed = v.speed
+        f.rpmRatio = v.engine.rpm / v.specs.engine.RED_LINE
+        f.onLimiter = v.engine.rpm > v.specs.engine.RED_LINE - 150 && v.controls.gas > 0.5
+        f.slip = v.susp.tires.reduce(0) { $0 + abs($1.slip) + abs($1.lateralSpeed) } * 0.25
+        f.brakeLocked = v.susp.tires.contains { $0.brakeLocked && $0.isOnGround } && v.speed > 3
+        f.nos = v.engine.isNOSEngaged
+        f.impact = v.takeImpact()
+        f.grounded = v.susp.numWheelsOnGround > 0
+        return f
+    }
+
+    func place(_ p: float3, yaw: Float, collision: CollisionWorld) { place(p, yaw: yaw, ground: collision) }
+
+    func place(_ p: float3, yaw: Float, ground: PhysicsGround) {
+        if vehicle == nil, let s = specs {
+            // Caja del cuerpo de la física = caja del modelo (x ancho, y alto, z largo) [I: PVehicle.cpp sin decompilar]
+            vehicle = PVehicle(specs: s, dimension: V3(bodyHalf.y, bodyHalf.z, bodyHalf.x), ground: ground)
+        }
+        position = p; self.yaw = yaw; speed = 0; vz = 0
+        if let v = vehicle {
+            v.place(world: p, yaw: yaw)
+            prevPos = v.rb.position; prevRot = v.rb.orientation; renderPos = prevPos; renderRot = prevRot
+            accumulator = 0
+            syncFromPhysics()
+        } else if let g = ground.ground(x: p.x, y: p.y, z: p.z + 50, step: 0) { position.z = g.z }
+    }
+
+    /// Recoloca el coche parado donde está, mirando hacia donde mira (tecla R / botón del mando).
+    func reset() {
+        guard let v = vehicle else { return }
+        let gp = PM.toWorld(v.rb.position)
+        place(float3(gp.x, gp.y, gp.z + 2), yaw: yaw, ground: v.ground)
+    }
+
+    struct Input {
+        var throttle: Float = 0, brake: Float = 0, steer: Float = 0, handbrake = false
+        /// Entrada completa (mando analógico, NOS, cambios). Si está, manda sobre los campos anteriores.
+        var driver: DriverInput? = nil
+    }
+
+    private func driverInput(_ input: Input) -> DriverInput {
+        if let d = input.driver { return d }
+        var d = DriverInput()
+        d.gas = input.throttle; d.brake = input.brake
+        d.steerLeft = max(input.steer, 0); d.steerRight = max(-input.steer, 0)   // Car.Input.steer: + = izquierda
+        d.handBrake = input.handbrake ? 1 : 0
+        return d
+    }
+
+    /// Avanza `dt` s: la física va a paso fijo de 1/60 s y la pose dibujada se interpola entre los dos últimos pasos.
+    func update(dt: Float, input: Input, collision: PhysicsGround) {
+        guard let v = vehicle else {
+            if let c = collision as? CollisionWorld { updateArcade(dt: dt, input: input, collision: c) }
+            return
+        }
+        let d = driverInput(input)
+        lastDriver = d
+        accumulator += min(dt, 0.25)
+        var steps = 0
+        while accumulator >= PVehicle.timeStep && steps < 15 {
+            prevPos = v.rb.position; prevRot = v.rb.orientation
+            v.step(d)
+            for i in 0..<4 { wheelSpin[i] += v.susp.wheelAngularVelocity(i) * PVehicle.timeStep }
+            accumulator -= PVehicle.timeStep; steps += 1
+        }
+        if steps == 15 { accumulator = 0 }
+        let a = PM.clamp(accumulator / PVehicle.timeStep, 0, 1)
+        renderPos = prevPos + (v.rb.position - prevPos) * a
+        renderRot = simd_slerp(prevRot, v.rb.orientation, a)
+        syncFromPhysics()
+        // Caída fuera del mapa: volver a la última posición válida no existe aún → recolocar sobre el suelo más alto
+        if PM.toWorld(v.rb.position).z < -60 { reset() }
+    }
+
+    /// Propiedades públicas de siempre (posición en el suelo, rumbo, velocidad…) desde la física.
+    private func syncFromPhysics() {
+        guard let v = vehicle else { return }
+        let f = PM.toWorld(renderRot.act(V3(0, 0, 1)))
+        yaw = atan2(f.y, f.x)
+        pitch = asin(PM.clamp(f.z, -1, 1))
+        let l = PM.toWorld(-renderRot.act(V3(1, 0, 0)))
+        roll = asin(PM.clamp(l.z, -1, 1))
+        let b = bodyWorld * float4x4(translation: float3(modelAxleMid, 0, 0))
+        position = float3(b.columns.3.x, b.columns.3.y, b.columns.3.z)
+        speed = v.forwardSpeed
+        vz = PM.toWorld(v.rb.linearVel).z
+        grounded = v.susp.numWheelsOnGround > 0
+        steer = (v.susp.steerWheels[0] + v.susp.steerWheels[1]) * 0.5
+        spin = wheelSpin[2]
+    }
+
+    // MARK: - Prototipo arcade (solo si falta physics.json). Igual que viewer/src/drive.ts.
+
+    private var arcadePartMatrices: [float4x4] {
         let world = float4x4(translation: position) * float4x4(rotationZ: yaw) * float4x4(rotationX: roll) * float4x4(rotationY: -pitch) * local
         var out = [float4x4](repeating: world, count: Car.partCount)
         for (i, a) in wheelAxles.enumerated() {
@@ -195,24 +377,9 @@ final class Car {
         return out
     }
 
-    /// Cuadrado unidad escalado al tamaño del coche, apoyado en el suelo (para la sombra de contacto).
-    var shadowMatrix: float4x4 {
-        float4x4(translation: position + float3(0, 0, 0.12)) * float4x4(rotationZ: yaw) * float4x4(rotationX: roll) * float4x4(rotationY: -pitch)
-            * float4x4(scale: float3(halfLength * 1.2, halfWidth * 1.5, 1))
-    }
-
-    var kmh: Float { abs(speed) * 3.6 }
-    var forward: float3 { float3(cos(yaw), sin(yaw), 0) }
-
-    func place(_ p: float3, yaw: Float, collision: CollisionWorld) {
-        position = p; self.yaw = yaw; speed = 0; vz = 0
-        if let g = collision.ground(x: p.x, y: p.y, z: p.z + 50, step: 0) { position.z = g.z }
-    }
-
-    struct Input { var throttle: Float = 0, brake: Float = 0, steer: Float = 0, handbrake = false }
 
     /// Paso de conducción arcade (valores de prueba del visor: 0-100 en ~5 s, 270 km/h de punta).
-    func update(dt: Float, input: Input, collision: CollisionWorld) {
+    private func updateArcade(dt: Float, input: Input, collision: CollisionWorld) {
         let MAX: Float = 75, ACC: Float = 9.5, BRAKE: Float = 26, DRAG: Float = 0.0009, ROLL: Float = 0.6
         if input.throttle > 0 { speed += ACC * input.throttle * (1 - max(0, speed) / MAX) * dt }
         if input.brake > 0 { speed -= (speed > 0.5 ? BRAKE : ACC * 0.6) * input.brake * dt }

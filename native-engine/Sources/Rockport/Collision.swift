@@ -107,3 +107,28 @@ final class CollisionWorld {
         return false
     }
 }
+
+// MARK: - Suelo y muros para la física del juego (Physics/PVehicle.swift)
+extension CollisionWorld: PhysicsGround {
+    /// Muros de las casillas que tocan el círculo (centro p, radio) en planta.
+    func walls(near p: SIMD2<Float>, radius: Float) -> [(a: SIMD2<Float>, b: SIMD2<Float>, zMin: Float, zMax: Float)] {
+        var out: [(a: SIMD2<Float>, b: SIMD2<Float>, zMin: Float, zMax: Float)] = []
+        let tx0 = Int(((p.x - radius) / size).rounded(.down)), tx1 = Int(((p.x + radius) / size).rounded(.down))
+        let ty0 = Int(((p.y - radius) / size).rounded(.down)), ty1 = Int(((p.y + radius) / size).rounded(.down))
+        let r2 = radius * radius
+        for ty in ty0...ty1 { for tx in tx0...tx1 {
+            guard let t = tile(tx: tx, ty: ty) else { continue }
+            let w = t.walls
+            var i = 0
+            while i + 5 < w.count {
+                let a = SIMD2(w[i], w[i + 1]), b = SIMD2(w[i + 2], w[i + 3])
+                // Distancia del punto al segmento en planta
+                let ab = b - a, l2 = simd_length_squared(ab)
+                let u = l2 > 0 ? max(0, min(1, simd_dot(p - a, ab) / l2)) : 0
+                if simd_length_squared(a + ab * u - p) <= r2 { out.append((a, b, min(w[i + 4], w[i + 5]), max(w[i + 4], w[i + 5]))) }
+                i += 6
+            }
+        } }
+        return out
+    }
+}

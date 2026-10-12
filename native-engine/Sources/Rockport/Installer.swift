@@ -62,12 +62,13 @@ final class InstallerController: NSObject {
     private let converter: URL
     private let destRoot: URL
     private let done: (URL) -> Void
+    private let autoISO: URL?
 
     static let amber = NSColor(srgbRed: 1, green: 0.698, blue: 0.102, alpha: 1)
     static let fog = NSColor(srgbRed: 0.553, green: 0.58, blue: 0.514, alpha: 1)
 
-    init(converter: URL, destRoot: URL, done: @escaping (URL) -> Void) {
-        self.converter = converter; self.destRoot = destRoot; self.done = done
+    init(converter: URL, destRoot: URL, autoISO: URL? = nil, done: @escaping (URL) -> Void) {
+        self.converter = converter; self.destRoot = destRoot; self.done = done; self.autoISO = autoISO
         let screen = NSScreen.main ?? NSScreen.screens[0]
         window = NSWindow(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false, screen: screen)
         super.init()
@@ -119,6 +120,13 @@ final class InstallerController: NSObject {
         window.makeKeyAndOrderFront(nil)
         NSApp.presentationOptions = [.hideDock, .hideMenuBar]
         NSApp.activate(ignoringOtherApps: true)
+        // Actualización de una versión anterior: misma ISO, sin preguntar
+        if let iso = autoISO, iso.path != "/" {
+            status.stringValue = Lang.es ? "Actualizando los datos a esta versión…" : "Updating data to this version…"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { self.start(iso: iso) }
+        } else if autoISO != nil {
+            status.stringValue = Lang.es ? "Esta versión necesita volver a convertir tu ISO." : "This version needs to convert your ISO again."
+        }
     }
 
     @objc private func chooseISO() {

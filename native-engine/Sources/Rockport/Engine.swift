@@ -24,6 +24,9 @@ final class Engine {
     let collision: CollisionWorld
     var car: Car?
     var mode: Mode = .fly
+    /// Tráfico y policía (AIEngine.swift). nil si faltan roads.json / ai.json.
+    var ai: AIWorld?
+    var aiRenderer: AIRenderer?
 
     // Cámara libre
     var camPos = float3(1700, 2300, 260)
@@ -51,6 +54,7 @@ final class Engine {
         streamer = TileStreamer(data: data, device: device, textures: textures)
         collision = CollisionWorld(root: data.root)
         streamer.loadFarTiles()
+        setupAI(outputFormat: outputFormat)
         // Punto de partida: refugio 1 (respawn de zones.json) si existe
         if let z = data.zones.first(where: { $0.zoneType == "safehouse" }), let r = z.respawn, r.position.count == 3 {
             let p = float3(r.position[0], r.position[1], r.position[2])
@@ -95,6 +99,7 @@ final class Engine {
     /// Avanza la simulación `dt` segundos.
     func update(dt: Float) {
         time += Double(dt)
+        if GameInput.shared.takeToggleRequest(polling: mode == .fly) { toggleMode() }   // Start / dos dedos: modo foto
         switch mode {
         case .fly:
             yaw -= mouseDelta.x * 0.0022
@@ -112,21 +117,15 @@ final class Engine {
             if simd_length_squared(mv) > 0 { camPos += simd_normalize(mv) * (fast ? 220 : 40) * dt }
         case .drive:
             guard let car else { mode = .fly; return }
-            var inp = Car.Input()
-            inp.throttle = (down(.w) || down(.up)) ? 1 : 0
-            inp.brake = (down(.s) || down(.down)) ? 1 : 0
-            inp.steer = ((down(.a) || down(.left)) ? 1 : 0) - ((down(.d) || down(.right)) ? 1 : 0)
-            inp.handbrake = down(.space)
-            car.update(dt: dt, input: inp, collision: collision)
-            if down(.r), let g = collision.ground(x: car.position.x, y: car.position.y, z: car.position.z + 30) {
-                car.position.z = g.z; car.vz = 0; car.speed = 0
-            }
-            // Cámara de persecución suave (como Driver.chase en el visor)
-            let back = 6.5 + car.kmh / 60, high = 2.3 + car.kmh / 160
-            let want = car.position - car.forward * back + float3(0, 0, high)
-            chasePos += (want - chasePos) * min(1, dt * 6)
-            let tgt = car.position + car.forward * 3 + float3(0, 0, 1.1)
-            chaseTarget += (tgt - chaseTarget) * min(1, dt * 10)
+            // Teclado + mandos (Input/), física del juego a 60 Hz (Physics/) y cámara camerainfo (Camera/)
+            let pad = GameInput.shared.poll(keys: keys)
+            car.update(dt: dt, input: Car.Input(driver: pad.driver), collision: collision)
+            if pad.reset { car.reset() }
+            if pad.nextCamera { car.camera.next(1) }
+            if pad.prevCamera { car.camera.next(-1) }
+            car.camera.update(dt: dt, car: car, lookBack: pad.driver.lookBack, aspect: aspect)
+            chasePos = car.camera.eye; chaseTarget = car.camera.target
+            Controllers.shared.update(feedback: car.padFeedback)
         }
         mouseDelta = .zero
     }
@@ -147,12 +146,13 @@ final class Engine {
         if let cc = carCam, let car {
             view = .lookAt(eye: carPoint(car, cc.eye), target: carPoint(car, cc.target), up: float3(0, 0, 1))
         } else if mode == .drive {
-            view = .lookAt(eye: chasePos, target: chaseTarget, up: float3(0, 0, 1))
+            view = .lookAt(eye: chasePos, target: chaseTarget, up: car?.camera.up ?? float3(0, 0, 1))
         } else {
             let fwd = float3(cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), sin(pitch))
             view = .lookAt(eye: camPos, target: camPos + fwd, up: float3(0, 0, 1))
         }
-        let proj = float4x4.perspectiveReversedInfinite(fovY: Config.fovYDegrees * .pi / 180, aspect: aspect, near: Config.nearPlane)
+        let fov = mode == .drive && carCam == nil ? (car?.camera.fovY ?? Config.fovYDegrees) : Config.fovYDegrees
+        let proj = float4x4.perspectiveReversedInfinite(fovY: fov * .pi / 180, aspect: aspect, near: Config.nearPlane)
         let meshes = streamer.tiles.compactMap { $0.drawMesh }
         var carDraw: (GPUMesh, [float4x4])? = nil
         if let car { carDraw = (car.mesh, car.partMatrices) }   // aparcado también en modo libre
@@ -163,6 +163,8 @@ final class Engine {
     func frame(cb: MTLCommandBuffer, target: MTLTexture, dt: Float, scale: Float, now: Double) {
         update(dt: dt)
         streamer.update(camera: eye, now: now)
-        renderer.encode(cb, frame: makeFrame(), target: target, scale: scale)
+        let f = makeFrame()
+        updateAI(dt: dt, frame: f)
+        renderer.encode(cb, frame: f, target: target, scale: scale)
     }
 }

@@ -23,6 +23,8 @@ const steps: [string, string[]][] = [
   ["Interiores", ["src/cli/convert.ts", iso, id, "interior", "CAREER_SAFEHOUSE", "PLATFORMCRIB", "CAR_LOT", "CUSTOMIZATION_SHOP", "CUSTOMIZATION_SHOP_BACKROOM"]],
   ["Garajes y puertas", ["src/cli/garages.ts", iso, id]],
   ["Atributos de coches (ruedas)", ["src/cli/car-attribs.ts", iso, id]],
+  ["Física de los coches", ["src/cli/physics-attribs.ts", iso, id]],
+  ["Tablas de IA (tráfico, policía, calor)", ["src/cli/ai-attribs.ts", iso, id]],
   ["Red de carreteras", ["src/cli/roads.ts", iso, id]],
   ["Colisión por casillas", ["src/cli/collision.ts", iso, id]],
   ["Plano cenital", ["src/cli/topdown.ts", iso, id, "4096"]],

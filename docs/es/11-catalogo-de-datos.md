@@ -17,6 +17,8 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Por dónde van las calles y carriles? | `roads.json` | `roads.ts` | 09 |
 | ¿Dónde hay suelo y muros (colisión)? | `roads.json` → `collisionPacks[390]` (resumen) | `roads.ts` | 09 |
 | ¿Cómo son los coches y sus ruedas? | `cars/*.glb` (91), `cars.json` (92) | `convert.ts car`, `car-attribs.ts` | 10 |
+| ¿Cómo conduce cada coche (física, cámaras, zonas muertas del mando)? | `physics.json` (113 `pvehicle`) | `physics-attribs.ts` | 13, 15 |
+| ¿Qué tráfico sale en cada barrio y cómo actúa la policía según el calor? | `ai.json` (10 patrones, 21 niveles de persecución, 59 zonas) | `ai-attribs.ts` | 14 |
 | ¿Cómo son los interiores de garaje? | `interiors/*.glb` (5) | `convert.ts interior` | 07 |
 | ¿Vista cenital del mapa? | `rockport-plano.png` + `.json` (escala) | `topdown.ts` | 03 |
 | ¿Qué se puede abrir en el visor? | `index.json` → `items[814]` | todos | 04 |
@@ -44,6 +46,7 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 - `garages.json.garages[]`: `collection`, `zoneType`, `zone`, `radius`, `building` (caja del edificio), `out` (dirección de salida), `door` (centro, normal, tamaño).
 - `roads.json`: `nodes[] {pos, profile, segments}`, `segments[] {nodes, length, road, flagNames, startControl, endControl}` (Bézier cúbica), `profiles[] {lanes[] {type, width, offset}}`, `roads[]`, `grid`.
 - `cars.json.cars[nombre]`: `tires` = 4 × `[x, y, z, radio]`, `className`, `spokes`, `skidWidth`, `kitWidthScale`, `kitOffsetFront/Rear`, `camber`, `feCompression`, `rimSize` (ver doc 10).
+- `ai.json`: `trafficPatterns`, `heatTable` (heat_01…10), `pursuitLevels`, `pursuitSupport`, `aiVehicle`, `vehicles` (pvehicle → modelo), `infractions`, `zones` (escondites, patrón por barrio, sin policía, inicio de persecución) (ver doc 14).
 - `cars/*.glb`: cada nodo lleva `extras.pieza` (ranura, kit, estilo, de serie) y, si tiene, `extras.marcadores`.
 
 ## 5. Cómo regenerar una sola parte
@@ -52,5 +55,7 @@ cd tools
 bun src/cli/vlt-dump.ts   ../original/SLES-53559.iso SLES-53559   # zones.json + gameplay.json
 bun src/cli/roads.ts      ../original/SLES-53559.iso SLES-53559   # roads.json
 bun src/cli/car-attribs.ts ../original/SLES-53559.iso SLES-53559  # cars.json
+bun src/cli/physics-attribs.ts ../original/SLES-53559.iso SLES-53559  # physics.json
+bun src/cli/ai-attribs.ts ../original/SLES-53559.iso SLES-53559   # ai.json (tráfico y policía)
 bun src/cli/garages.ts    ../original/SLES-53559.iso SLES-53559   # garages.json
 ```
