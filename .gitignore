@@ -22,3 +22,6 @@ map-data/**/roads.json
 map-data/**/collision/
 .vercel/
 site/.vercel/
+map-data/**/physics.json
+map-data/**/ai.json
+map-data/**/audio/
