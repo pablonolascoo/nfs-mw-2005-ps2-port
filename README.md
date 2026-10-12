@@ -2,6 +2,14 @@
 
 [Español](README.es.md) · English
 
+<a href="https://rockport-native.vercel.app"><img src="site/img/coche.jpg" alt="BMW M3 GTR rendered from the PS2 disc data" width="100%"></a>
+
+**🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
+
+| Road network over the city | Garage without loading screens |
+|---|---|
+| <img src="site/img/carreteras.jpg" alt="Decoded road network"> | <img src="site/img/garaje.jpg" alt="Car lot interior"> |
+
 Open research and tools to turn your own **PlayStation 2** copy of *Need for Speed: Most Wanted* (2005) into open formats (glTF/PNG/JSON), as a base for **native ports to any platform**, macOS first.
 
 > **No game data is included.** You need your own disc. Everything here reads your ISO and writes derived files locally. This project is not affiliated with Electronic Arts.
