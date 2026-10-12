@@ -44,6 +44,10 @@
 | 10 | Coches: texturas, pintura, ruedas | [es](docs/es/10-coches.md) | [en](docs/en/10-cars.md) |
 | 11 | Catálogo de datos generados | [es](docs/es/11-catalogo-de-datos.md) | [en](docs/en/11-data-catalog.md) |
 | 12 | Expansión «Rust Belt»: plano, bocetos, historia | [es](docs/es/12-expansion-rust-belt.md) | [en](docs/en/12-rust-belt-expansion.md) |
+| 13 | Física de conducción (decomp) | [es](docs/es/13-fisica-conduccion.md) | [en](docs/en/13-driving-physics.md) |
+| 14 | Tráfico, policía y persecuciones | [es](docs/es/14-trafico-y-policia.md) | [en](docs/en/14-traffic-and-police.md) |
+| 15 | Mandos | [es](docs/es/15-mandos.md) | [en](docs/en/15-controllers.md) |
+| 16 | Audio y voces | [es](docs/es/16-audio-y-voces.md) | [en](docs/en/16-audio-and-voices.md) |
 
 ## 3b. Producto final (lo que queremos entregar)
 - Un `Rockport.dmg` en *Releases* de GitHub. Al abrirlo pide la ISO, detecta PAL (SLES-53559) o NTSC-U (SLUS-21351) por `SYSTEM.CNF` y convierte los datos en `~/Library/Application Support/Rockport/<ID>/`.
@@ -83,14 +87,16 @@ Hecho:
 - **Motor nativo macOS** (Swift + Metal) a pantalla completa, 60 fps, tono PS2, coche conducible con colisión real.
 - **Instalador**: la app pide la ISO, detecta PAL/NTSC-U y convierte en ~4,6 min, sin repo ni decomp [V con las dos ISOs]. `native-engine/scripts/make-dmg.sh` monta el `.dmg`.
 
+- **v0.2**: física de conducción del juego (decomp), 4 cámaras, mandos con barra de luz/táctil/gatillos, tráfico y policía con persecuciones, controles y HUD; tono PS2 fijo; datos versionados (`DATA_FORMAT` en `tools/src/cli/install.ts` = `Config.dataFormat`): si la app es más nueva que los datos, reconvierte con la misma ISO.
+- Audio del disco extraído (doc 16). Las voces de la historia solo existen en inglés; la radio de la policía, en castellano/inglés/italiano. No se clonan voces sin permiso de los actores.
+
 Siguiente, por orden:
-1. Publicar `Rockport.dmg` en *Releases* (versión 0.1).
-2. Física real del juego desde la decomp (`zPhysics`, `zDynamics`) y mando.
-3. Tráfico y policía sobre la red de carreteras; persecuciones con la IA original.
-4. Carreras, Lista Negra e hitos jugables (rutas: `TrackPathManager` + datos de evento).
-5. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
-6. Audio.
-7. Expansión «Rust Belt» como mod ([ROADMAP.md](ROADMAP.md)).
+1. Carreras y Lista Negra jugables (rutas: `TrackPathManager` + eventos de `gameplay.json`), menús mínimos al estilo MW.
+2. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
+3. Audio dentro del juego: motores, sirenas, radio de la policía (descifrar `.IDX/.CSI/.EVT`), películas.
+4. Choques del juego original (coche contra coche y muros), daños, pinchos; helicóptero.
+5. Probar mandos con hardware real; firma Developer ID (necesita cuenta de pago: decisión del dueño).
+6. Expansión «Rust Belt» como mod ([ROADMAP.md](ROADMAP.md), doc 12).
 
 Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, 8 hashes de textura de coche y 5 del mundo sin nombre o fuera del disco (doc 03 y 10).
 

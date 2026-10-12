@@ -33,7 +33,10 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Garajes sin pantallas de carga: se abre la puerta real, interior ya cargado, aparcas, vista de exposición, sales conduciendo | ✅ |
 | Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
 | Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
-| Física del juego, carreras jugables, audio | 🔜 |
+| **Física de conducción del juego original** (decomp), 4 cámaras, mandos (Xbox, PS3/PS4/PS5, PS2 por USB) con barra de luz y táctil — [doc 13](docs/es/13-fisica-conduccion.md), [doc 15](docs/es/15-mandos.md) | ✅ v0.2 |
+| **Tráfico, policía y persecuciones** con las tablas del juego: notoriedad, refuerzos, formaciones, controles, HUD de MW — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ v0.2 |
+| Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
+| Carreras y Lista Negra jugables, garajes en el motor nativo, audio dentro del juego | 🔜 |
 
 ## Jugar en tu Mac
 1. Descarga `Rockport-<versión>.dmg` de [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) y arrastra **Rockport** a Aplicaciones.

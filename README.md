@@ -33,7 +33,10 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Garages without loading screens: real door opens, interior already loaded, park, showcase, drive out | ✅ |
 | Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
 | Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
-| Game physics, playable races, audio | 🔜 |
+| **Game's own driving physics** (decomp), 4 cameras, controllers (Xbox, PS3/PS4/PS5, PS2 via USB) with light bar and touchpad — [doc 13](docs/en/13-driving-physics.md), [doc 15](docs/en/15-controllers.md) | ✅ v0.2 |
+| **Traffic, police and pursuits** with the game's tables: heat, backup, formations, roadblocks, MW-style HUD — [doc 14](docs/en/14-traffic-and-police.md) | ✅ v0.2 |
+| Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
+| Playable races and Blacklist, garages in the native engine, in-game audio | 🔜 |
 
 ## Play on your Mac
 1. Download `Rockport-<version>.dmg` from [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) and drag **Rockport** to Applications.
