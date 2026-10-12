@@ -12,7 +12,10 @@ Tags: [V] verified on SLES-53559 / SLUS-21351 · [D] decomp · [I] inferred · [
 | In-engine cut-scene audio | `SOUND\STREAMS\NISAUDIO.BIG` | EA R2 ADPCM, 32 kHz stereo, 27 min in one block [V] | — |
 | Engine, turbo, skid sounds… | `SOUND\ENGINE`, `TURBO`, `SKIDS`… (`.ABK`, `.BIN`) | EA banks | — |
 
-- Spanish police radio: **9854 clips** on SLES-53559 [V]. They are sentence fragments the game chains (unit, direction, street name…) [D].
+- Radio clips on SLES-53559 [V]: **Spanish 9854**, English 13,562, Italian 9986. From 0.1 s to ~22 s long.
+- Radio codec: EA MicroTalk. vgmstream only opens a clip saved as `.asf` [V].
+- `NISAUDIO.BIG`: 140 SCHl tracks back to back (EA-XA v2) [V].
+- Extracted FLAC size: movies 161 MB, scenes 108 MB, radio 706 MB (es) + 1 GB (en) + 762 MB (it). About 22 min on an M4. They are sentence fragments the game chains (unit, direction, street name…) [D].
 - Which clip plays when is driven by `.IDX`, `.CSI` (`MOIR`) and `.EVT`. Not decoded yet [H].
 
 ## 2. Extract everything (local use)
@@ -30,7 +33,7 @@ audio/
 ├─ radio-policia-castellano/NNNNN.flac
 ├─ radio-policia-ingles/NNNNN.flac
 ├─ radio-policia-italiano/NNNNN.flac
-├─ escenas-NISAUDIO.flac
+├─ escenas/NNN.flac                140 NIS scene tracks
 └─ indice.json                      what each file is and who speaks [I]
 ```
 

@@ -45,8 +45,10 @@ mkdirSync(`${out}/peliculas`, { recursive: true });
 for (const name of files.filter(n => /^MOVIES\\.*\.MPC$/i.test(n)).sort()) {
   const base = name.split("\\").pop()!.replace(/\.MPC$/i, "");
   const src = `${tmp}/${base}.MPC`;
-  await Bun.write(src, await disc.readEntry(disc.find(name)!));
+  const dst0 = `${out}/peliculas/${base}.flac`;
+  if (!(await Bun.file(dst0).exists())) await Bun.write(src, await disc.readEntry(disc.find(name)!));
   const dst = `${out}/peliculas/${base}.flac`;
+  if (await Bun.file(dst).exists()) { rmSync(src, { force: true }); (manifest.peliculas as object[]).push({ archivo: `peliculas/${base}.flac`, origen: name, escena: STORY[Object.keys(STORY).find(k => base.startsWith(k)) ?? ""] ?? null, idioma: "inglés (voces originales)" }); continue; }
   run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-c:a", "flac", dst]);
   rmSync(src);
   const key = Object.keys(STORY).find(k => base.startsWith(k));
@@ -70,7 +72,7 @@ for (const lang of ["SP", "EN", "IT"]) {
   for (let k = 0; k < offs.length; k++) {
     const clip = big.subarray(offs[k], k + 1 < offs.length ? offs[k + 1] : big.length);
     const n = String(k).padStart(5, "0");
-    const src = `${tmp}/${lang}_${n}.sch`;
+    const src = `${tmp}/${lang}_${n}.asf`; // vgmstream reconoce los SCHl por la extensión .asf
     writeFileSync(src, clip);
     jobs.push((async () => {
       const wav = `${tmp}/${lang}_${n}.wav`;
@@ -88,15 +90,21 @@ for (const lang of ["SP", "EN", "IT"]) {
   console.log(`radio ${lang}: ${ok}/${offs.length} clips`);
 }
 
-// 3) Audio de las escenas con el motor
+// 3) Audio de las escenas con el motor: 140 pistas SCHl seguidas [V]
 const nis = disc.find("SOUND\\STREAMS\\NISAUDIO.BIG");
 if (nis) {
-  const src = `${tmp}/NISAUDIO.BIG`;
-  await Bun.write(src, await disc.readEntry(nis));
-  run(["vgmstream-cli", "-o", `${tmp}/nis.wav`, src]);
-  run(["ffmpeg", "-v", "error", "-y", "-i", `${tmp}/nis.wav`, "-c:a", "flac", `${out}/escenas-NISAUDIO.flac`]);
-  manifest.escenas = { archivo: "escenas-NISAUDIO.flac", nota: "Audio de las escenas hechas con el motor, en un solo bloque." };
-  console.log("escenas NISAUDIO");
+  const big = await disc.readEntry(nis);
+  const offs: number[] = [];
+  for (let i = 0; i + 4 <= big.length; i += 4) if (big[i] === 0x53 && big[i + 1] === 0x43 && big[i + 2] === 0x48 && big[i + 3] === 0x6c) offs.push(i);
+  mkdirSync(`${out}/escenas`, { recursive: true });
+  let ok = 0;
+  for (let k = 0; k < offs.length; k++) {
+    const n = String(k).padStart(3, "0"), src = `${tmp}/nis_${n}.asf`, wav = `${tmp}/nis_${n}.wav`;
+    writeFileSync(src, big.subarray(offs[k], k + 1 < offs.length ? offs[k + 1] : big.length));
+    try { run(["vgmstream-cli", "-o", wav, src]); run(["ffmpeg", "-v", "error", "-y", "-i", wav, "-c:a", "flac", `${out}/escenas/${n}.flac`]); ok++; } catch { /* pista vacía */ }
+  }
+  manifest.escenas = { carpeta: "escenas", pistas: offs.length, decodificadas: ok, nota: "Audio de las escenas hechas con el motor (NIS)." };
+  console.log(`escenas: ${ok}/${offs.length}`);
 }
 rmSync(tmp, { recursive: true, force: true });
 await Bun.write(`${out}/indice.json`, JSON.stringify(manifest, null, 1));

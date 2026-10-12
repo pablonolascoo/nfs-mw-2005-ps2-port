@@ -12,7 +12,10 @@ Etiquetas: [V] verificado con SLES-53559 / SLUS-21351 · [D] decomp · [I] infer
 | Audio de escenas con el motor | `SOUND\STREAMS\NISAUDIO.BIG` | ADPCM EA R2, 32 kHz estéreo, 27 min seguidos [V] | — |
 | Sonidos de motor, turbo, derrapes… | `SOUND\ENGINE`, `TURBO`, `SKIDS`… (`.ABK`, `.BIN`) | Bancos EA | — |
 
-- Radio en castellano: **9854 clips** en SLES-53559 [V]. Son trozos de frase que el juego encadena (unidad, dirección, nombre de calle…) [D].
+- Clips de radio en SLES-53559 [V]: **castellano 9854**, inglés 13 562, italiano 9986. Duran de 0,1 s a ~22 s.
+- Codec de la radio: EA MicroTalk. vgmstream solo lo abre si el clip se guarda como `.asf` [V].
+- `NISAUDIO.BIG`: 140 pistas SCHl seguidas (EA-XA v2) [V].
+- Tamaño extraído en FLAC: películas 161 MB, escenas 108 MB, radio 706 MB (es) + 1 GB (en) + 762 MB (it). Unos 22 min en un M4. Son trozos de frase que el juego encadena (unidad, dirección, nombre de calle…) [D].
 - Qué clip suena en cada momento lo deciden `.IDX`, `.CSI` (`MOIR`) y `.EVT`. Aún no están decodificados [H].
 
 ## 2. Extraer todo (uso local)
@@ -30,7 +33,7 @@ audio/
 ├─ radio-policia-castellano/NNNNN.flac
 ├─ radio-policia-ingles/NNNNN.flac
 ├─ radio-policia-italiano/NNNNN.flac
-├─ escenas-NISAUDIO.flac
+├─ escenas/NNN.flac                140 pistas de escenas NIS
 └─ indice.json                      qué es cada archivo y qué personajes salen [I]
 ```
 
