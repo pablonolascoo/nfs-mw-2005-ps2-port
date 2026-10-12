@@ -17,7 +17,10 @@
 | `tools/src/lib/` | Lectores de formatos (TypeScript/Bun, sin dependencias de plataforma) |
 | `tools/src/cli/` | Conversores; `build-all.ts` lo hace todo desde la ISO |
 | `tools/data/` | Listas de nombres propias (rutas, atributos) verificadas por hash |
-| `viewer/` | Visor y prototipo jugable: Three.js WebGPU (Metal), Vite |
+| `native-engine/` | **El juego**: app nativa de macOS en Swift + Metal (en construcción) |
+| `viewer/` | Visor web de **investigación** (Three.js): inspeccionar el mapa y probar ideas. No es el juego |
+| `site/` | Página pública estática: https://rockport-native.vercel.app (`vercel deploy --prod` desde `site/`) |
+| `.github/` | Plantillas de issues y PR, `CODEOWNERS`: todo PR necesita la aprobación de @pablonolascoo |
 | `mods/` | Mods de solo datos que se aplican sobre tu ISO |
 | `docs/es`, `docs/en` | Investigación: 00–11, ver índice abajo |
 | `inventory/` | Inventario por disco (hashes y tamaños) |
@@ -40,6 +43,12 @@
 | 09 | Red de carreteras y colisión | [es](docs/es/09-red-de-carreteras.md) | [en](docs/en/09-road-network.md) |
 | 10 | Coches: texturas, pintura, ruedas | [es](docs/es/10-coches.md) | [en](docs/en/10-cars.md) |
 | 11 | Catálogo de datos generados | [es](docs/es/11-catalogo-de-datos.md) | [en](docs/en/11-data-catalog.md) |
+
+## 3b. Producto final (lo que queremos entregar)
+- Un `Rockport.dmg` en *Releases* de GitHub. Al abrirlo pide la ISO, detecta PAL (SLES-53559) o NTSC-U (SLUS-21351) por `SYSTEM.CNF` y convierte los datos en `~/Library/Application Support/Rockport/<ID>/`.
+- El conversor va dentro de la app como un solo binario (`bun build --compile`).
+- El juego arranca a pantalla completa, sin menús alrededor, a la resolución de la pantalla y con el tono cálido de PS2.
+- Plan completo y expansión: [ROADMAP.md](ROADMAP.md). Cómo colaborar: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 4. Comandos
 ```bash
