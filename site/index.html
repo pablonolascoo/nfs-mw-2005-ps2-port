@@ -117,6 +117,12 @@
   .cars { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .cars span { border: 1px solid var(--line); padding: 5px 9px; font-size: 12px; }
 
+  .plan { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 36px; }
+  .plan figure { margin: 0; position: relative; border: 1px solid var(--line); background: var(--ink-2); overflow: hidden; }
+  .plan img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .plan figcaption { position: absolute; left: 0; bottom: 0; background: rgba(10,11,9,.86); padding: 5px 9px; font-size: 12px; border-left: 3px solid var(--amber); }
+  .sketches { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .sketches img { aspect-ratio: 16/9; }
   /* Reglas y legal */
   .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
   .rule { border-left: 3px solid var(--amber); padding: 6px 14px; }
@@ -137,6 +143,7 @@
     .steps, .exp, .gal { grid-template-columns: 1fr; }
     .step:nth-child(n) { transform: none; }
     .gal figure:first-child { grid-row: auto; }
+    .plan, .sketches { grid-template-columns: 1fr; }
     .bl li { grid-template-columns: 48px 1fr; }
     .bl .tag { grid-column: 2; justify-self: start; }
     .hud span:last-child { display: none; }
@@ -248,12 +255,23 @@
           <div class="cars"><span>Lamborghini Countach</span><span>Ferrari Testarossa</span><span>Porsche 959</span><span>BMW M1</span><span>Dodge Charger '69</span><span>Toyota AE86</span><span>Skyline R34</span></div>
         </div>
         <ul class="districts">
-          <li><i class="ph ph-factory"></i><div><b data-es>Acerías del río</b><b data-en>River steelworks</b><div class="muted" data-es>Altos hornos, vías de tren, naves oxidadas.</div><div class="muted" data-en>Blast furnaces, rail yards, rusty sheds.</div></div></li>
-          <li><i class="ph ph-boat"></i><div><b data-es>Puerto de mercancías</b><b data-en>Freight port</b><div class="muted" data-es>Grúas y contenedores para persecuciones.</div><div class="muted" data-en>Cranes and containers for pursuits.</div></div></li>
-          <li><i class="ph ph-mountains"></i><div><b>Sierra Alta</b><div class="muted" data-es>Puerto de montaña, presa y túneles.</div><div class="muted" data-en>Mountain pass, dam and tunnels.</div></div></li>
-          <li><i class="ph ph-road-horizon"></i><div><b data-es>Interestatal</b><b data-en>Interstate</b><div class="muted" data-es>Peajes, áreas de servicio y controles.</div><div class="muted" data-en>Toll booths, rest stops and roadblocks.</div></div></li>
+          <li><i class="ph ph-house-line"></i><div><b>1 · Millbrook</b><div class="muted" data-es>Pueblo obrero de ladrillo. Nuevo refugio. Lista Negra 2 #15–#11.</div><div class="muted" data-en>Brick working-class town. New safehouse. Blacklist 2 #15–#11.</div></div></li>
+          <li><i class="ph ph-factory"></i><div><b data-es>2 · Acerías del Río</b><b data-en>2 · River Steelworks</b><div class="muted" data-es>Altos hornos y vías de tren. #10–#6.</div><div class="muted" data-en>Blast furnaces and rail yards. #10–#6.</div></div></li>
+          <li><i class="ph ph-boat"></i><div><b data-es>3 · Puerto de Mercancías</b><b data-en>3 · Freight Harbor</b><div class="muted" data-es>Grúas y contenedores para persecuciones. #5–#2.</div><div class="muted" data-en>Cranes and containers for pursuits. #5–#2.</div></div></li>
+          <li><i class="ph ph-mountains"></i><div><b data-es>4 · Sierra Alta</b><b data-en>4 · High Ridge</b><div class="muted" data-es>Puerto de montaña, presa y túneles. El #1.</div><div class="muted" data-en>Mountain pass, dam and tunnels. The #1.</div></div></li>
         </ul>
       </div>
+      <div class="plan">
+        <figure class="map"><img src="img/mapa-expansion.svg" loading="lazy" alt="Plano de Rockport con las cuatro zonas nuevas" /><figcaption data-es>Rockport con su red de carreteras real y las 4 zonas propuestas</figcaption><figcaption data-en>Rockport with its real road network and the 4 proposed zones</figcaption></figure>
+        <div class="sketches">
+          <figure><img src="img/acerias.jpg" loading="lazy" alt="Boceto de las acerías" /><figcaption data-es>Acerías del Río</figcaption><figcaption data-en>River Steelworks</figcaption></figure>
+          <figure><img src="img/puerto.jpg" loading="lazy" alt="Boceto del puerto" /><figcaption data-es>Puerto de Mercancías</figcaption><figcaption data-en>Freight Harbor</figcaption></figure>
+          <figure><img src="img/sierra-alta.jpg" loading="lazy" alt="Boceto de la sierra" /><figcaption data-es>Sierra Alta</figcaption><figcaption data-en>High Ridge</figcaption></figure>
+          <figure><img src="img/puente-interestatal.jpg" loading="lazy" alt="Boceto del puente" /><figcaption data-es>Puente e interestatal I-99</figcaption><figcaption data-en>Bridge and I-99</figcaption></figure>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:12px" data-es>Bocetos de ambiente hechos con IA (Higgsfield). Son referencia para modelar, no recursos del juego.</p>
+      <p class="muted" style="margin-top:14px;font-size:12px" data-en>AI mood sketches (Higgsfield). Modelling references, not game assets.</p>
     </div>
   </section>
 

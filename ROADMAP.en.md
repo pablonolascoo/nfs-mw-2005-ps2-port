@@ -27,6 +27,10 @@ Everything that enters the project must look like **it belongs to the original g
 | 1.9 | GitHub release: signed `Rockport.dmg` | 🔜 |
 
 ## Phase 2 · "Most Wanted: Rust Belt" expansion (proposal)
+
+**Full design with map and sketches: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md).** 4 districts unlocked after the original Blacklist: Millbrook, River Steelworks, Freight Harbor and High Ridge.
+
+![Expansion map](docs/expansion/mapa-expansion.svg)
 Meant as a period-correct DLC, built as a **data mod** on top of the original game (`mods/`).
 
 ### Story (proposal, open for discussion)

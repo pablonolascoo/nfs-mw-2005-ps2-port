@@ -27,6 +27,10 @@ Todo lo que entre al proyecto tiene que parecer **del juego original**. Si no pa
 | 1.9 | Release en GitHub: `Rockport.dmg` firmado | 🔜 |
 
 ## Fase 2 · Expansión «Most Wanted: Rust Belt» (propuesta)
+
+**Diseño completo con plano y bocetos: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md).** 4 distritos que se desbloquean tras la Lista Negra original: Millbrook, Acerías del Río, Puerto de Mercancías y Sierra Alta.
+
+![Plano de la expansión](docs/expansion/mapa-expansion.svg)
 Pensada como un DLC de la época. Se monta como **mod de datos** sobre el juego original (`mods/`).
 
 ### Historia (propuesta para debatir)
