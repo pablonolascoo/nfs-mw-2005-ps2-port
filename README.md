@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
 
-**🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
+**[⬇️ Download for Mac (v0.1)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
 
 | Road network over the city | Garage without loading screens |
 |---|---|
