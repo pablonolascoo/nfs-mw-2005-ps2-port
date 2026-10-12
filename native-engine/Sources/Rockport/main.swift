@@ -183,6 +183,12 @@ func writePNG(_ tex: MTLTexture, device: MTLDevice, queue: MTLCommandQueue, path
 
 // MARK: - Arranque
 
+// `--probe <iso>`: solo detecta el disco (lo mismo que hace el instalador) y sale.
+if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.arguments.count {
+    let url = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+    if let r = DiscProbe.probe(url) { print("\(r.id) · \(r.known?.label ?? "desconocido")"); exit(0) }
+    print("no es una ISO de PS2 reconocible"); exit(2)
+}
 let options = Options.parse(CommandLine.arguments)
 if options.screenshot != nil || options.bench {
     runHeadless(options)

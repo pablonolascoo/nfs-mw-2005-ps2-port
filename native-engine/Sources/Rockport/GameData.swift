@@ -14,7 +14,10 @@ enum DataLocator {
     }
 
     static func isDataFolder(_ u: URL) -> Bool {
-        FileManager.default.fileExists(atPath: u.appendingPathComponent("world.json").path)
+        let fm = FileManager.default
+        // Una instalación a medias (hay install.log pero no install.ok) no cuenta: se vuelve a instalar.
+        if fm.fileExists(atPath: u.appendingPathComponent("install.log").path) && !fm.fileExists(atPath: u.appendingPathComponent("install.ok").path) { return false }
+        return fm.fileExists(atPath: u.appendingPathComponent("world.json").path)
     }
 
     /// Busca una carpeta <ID> válida dentro de `parent` (la del disco pedido o la primera que haya).

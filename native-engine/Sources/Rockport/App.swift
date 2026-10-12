@@ -31,11 +31,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard let device = MTLCreateSystemDefaultDevice() else { fatal("Este Mac no tiene GPU compatible con Metal.") }
-        let (root, tried) = DataLocator.locate(arg: options.data, disc: options.disc)
-        guard let root else {
+        let (found, tried) = DataLocator.locate(arg: options.data, disc: options.disc)
+        if found == nil, let conv = Bundle.main.url(forResource: "rockport-convert", withExtension: nil) {
+            // Primer arranque de la app instalada: pedir la ISO y convertirla (Installer.swift)
+            installer = InstallerController(converter: conv, destRoot: DataLocator.appSupport) { [weak self] dest in
+                self?.installer = nil
+                self?.startGame(device: device, root: dest)
+            }
+            installer?.show()
+            return
+        }
+        guard let root = found else {
             fatal("No encuentro los datos convertidos de tu disco.\n\nBuscado en:\n" + tried.joined(separator: "\n") +
                   "\n\nGenera map-data con tools/ (bun run build-all <tu ISO>) y arranca con --data <carpeta>.")
         }
+        startGame(device: device, root: root)
+    }
+
+    var installer: InstallerController?
+
+    func startGame(device: MTLDevice, root: URL) {
         let data: GameData
         do { data = try GameData(root: root) } catch { fatal("No se pudo leer \(root.path)/world.json: \(error)") }
         print("Rockport · datos: \(root.path) · \(data.world.tiles.count) casillas · GPU: \(device.name)")

@@ -120,18 +120,28 @@ La app nunca escribe dentro de sí misma. Los datos convertidos viven fuera:
    ├─ tiles/  textures/  cars/  interiors/  groups/  collision/
 ```
 
-El plan para el DMG [D: decisión de diseño, aún sin hacer]:
+### Instalador de primer arranque (`Installer.swift` + `tools/src/cli/install.ts`)
 
 ```
 Rockport.app/Contents/
-├─ MacOS/Rockport           este motor
-├─ Resources/rockport-convert   `bun build --compile tools/src/cli/build-all.ts` (un solo binario)
+├─ MacOS/Rockport                 este motor
+├─ Resources/rockport-convert     tools/src/cli/install.ts compilado con `bun build --compile` (~60 MB, firmado)
 └─ Info.plist
 ```
 
-Primer arranque sin datos → la app pide tu ISO → lanza `rockport-convert <iso>` →
-escribe en `Application Support/Rockport/<ID>/` → arranca el juego.
-Hoy, si no hay datos, la app muestra un aviso con las rutas buscadas.
+1. La app no encuentra datos y lleva `rockport-convert` dentro → muestra la pantalla del instalador (negro y ámbar, sin menús).
+2. «Elegir mi ISO de PS2» → `NSOpenPanel`.
+3. **Detección del disco** (`DiscProbe`): lee el ISO9660, busca `SYSTEM.CNF` y saca el ID de `BOOT2` [V con las dos ISOs]:
+   PAL `SLES-53559` o NTSC-U `SLUS-21351`. Otro disco → aviso «no probado». Algo que no es ISO de PS2 → error.
+4. Lanza `rockport-convert install <iso> <ID> <destino>`. Cada paso corre en un proceso nuevo del mismo binario.
+   La barra avanza con las líneas `PASO i/n · nombre`.
+5. Todo se escribe en `~/Library/Application Support/Rockport/<ID>/` (también el inventario). La ISO no se copia ni se toca.
+6. Al terminar escribe `install.ok`. Una instalación a medias (hay `install.log` sin `install.ok`) se repite en el siguiente arranque.
+7. Arranca el juego directamente.
+
+Para probar la detección sin abrir la app: `.build/release/Rockport --probe ruta/a/tu.iso`.
+Para montar el `.dmg`: `scripts/make-dmg.sh` → `.build/Rockport-<versión>.dmg`.
+Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las rutas buscadas.
 
 ## Cómo funciona
 
@@ -225,8 +235,8 @@ Notas:
 
 ## Camino al DMG jugable (siguientes pasos)
 
-1. **Instalador de primer arranque**: diálogo "elige tu ISO" → `rockport-convert` (`bun build --compile` de `tools/src/cli/build-all.ts`) dentro de `Resources/` → barra de progreso → `Application Support/Rockport/<ID>/`.
-2. **Firma Developer ID y notarización**, y `create-dmg` (o `hdiutil`) con el `.app`.
+1. ✅ **Instalador de primer arranque** y `scripts/make-dmg.sh` (ver arriba).
+2. **Firma Developer ID y notarización**: necesita una cuenta de Apple Developer (de pago). Sin ella, el `.dmg` funciona pero macOS avisa la primera vez (clic derecho → Abrir).
 3. **Mando** (GameController) y volante; ajustes de vídeo (tono PS2, escala, FOV).
 4. **Física real** desde la decomp (`zPhysics`, `zDynamics`) y atributos VLT de cada coche.
 5. **Audio** (EA SCHl/MPC) y música.
