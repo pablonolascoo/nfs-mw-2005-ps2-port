@@ -1,0 +1,6 @@
+# Salida de compilación (swift build / scripts/make-app.sh). Nunca datos del juego aquí.
+.build/
+*.app
+*.png
+*.glb
+.swiftpm/

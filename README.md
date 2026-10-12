@@ -2,7 +2,7 @@
 
 [Español](README.es.md) · English
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/coche.jpg" alt="BMW M3 GTR rendered from the PS2 disc data" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
 
 **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
 
@@ -23,7 +23,8 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | PS2 textures PSMT8 / PSMT4 (GS swizzle) | ✅ |
 | Whole Rockport: 718 sections, 106,714 objects, 5.8 M triangles | ✅ exported to glTF |
 | Cars with textures, paint, glass, lights and 4 wheels (TireOffsets) | ✅ |
-| Web viewer (Three.js, WebGPU → Metal) | ✅ |
+| **Native macOS engine (Swift + Metal)**: full screen, screen resolution, 60 fps, PS2 tone, drivable car — [native-engine/](native-engine/README.en.md) | ✅ first version |
+| Research web viewer (Three.js) | ✅ |
 | Decompilation (dbalatoni13/nfsmw) builds on Apple Silicon | ✅ with Rosetta 2 |
 | Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
 | Frontend interiors (garages, car lot, tuning shop) | ✅ exported |

@@ -2,7 +2,7 @@
 
 Español · [English](README.md)
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/coche.jpg" alt="BMW M3 GTR renderizado con los datos del disco de PS2" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport en el motor nativo de macOS (Metal)" width="100%"></a>
 
 **🌐 Página del proyecto: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Hoja de ruta y expansión](ROADMAP.md) · [Colaborar](CONTRIBUTING.md) · [Contexto del proyecto](CONTEXT.md)
 
@@ -23,7 +23,8 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Texturas PS2 PSMT8 / PSMT4 (swizzle del GS) | ✅ |
 | Rockport entero: 718 secciones, 106.714 objetos, 5,8 M triángulos | ✅ exportado a glTF |
 | Coches con texturas, pintura, cristales, pilotos y 4 ruedas (TireOffsets) | ✅ |
-| Visor web (Three.js, WebGPU → Metal) | ✅ |
+| **Motor nativo de macOS (Swift + Metal)**: pantalla completa, resolución de la pantalla, 60 fps, tono PS2, coche conducible — [native-engine/](native-engine/README.md) | ✅ primera versión |
+| Visor web de investigación (Three.js) | ✅ |
 | Descompilación (dbalatoni13/nfsmw) en Apple Silicon | ✅ con Rosetta 2 |
 | Base de datos del juego (VLT): 6.287 colecciones, 255 eventos, Blacklist, 15 zonas de garaje/tienda | ✅ |
 | Interiores del menú (garajes, concesionario, taller) | ✅ exportados |
