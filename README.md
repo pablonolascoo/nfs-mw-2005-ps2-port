@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
 
-**[⬇️ Download for Mac (v0.1)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
+**[⬇️ Download for Mac (v0.1)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [User guide](#user-guide) · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
 
 | Road network over the city | Garage without loading screens |
 |---|---|
@@ -45,6 +45,70 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 4. The game starts full screen at your screen's resolution. Converted data stays in `~/Library/Application Support/Rockport/`.
 
 Build the `.dmg` yourself: `native-engine/scripts/make-dmg.sh` (needs Xcode tools and Bun). Details: [native-engine/README.en.md](native-engine/README.en.md).
+
+## User guide
+
+### First launch
+1. Open **Rockport** from Applications. First time: right-click → **Open** (the app is not signed by Apple yet).
+2. Click **CHOOSE MY PS2 ISO** and pick your copy. It detects PAL **SLES-53559** or NTSC-U **SLUS-21351** on its own.
+3. Wait for the bar (a few minutes). When it finishes, the game starts full screen at your screen's resolution.
+4. Press **C** (or **Menu / Options** on a pad) to switch from the free camera to the car.
+
+### Controls
+
+| Action | Xbox | PlayStation | Keyboard |
+|---|---|---|---|
+| Throttle (analog) | RT | R2 | W / ↑ |
+| Brake and reverse (analog) | LT | L2 | S / ↓ |
+| Steer | left stick | left stick | A D / ← → |
+| Handbrake | A or RB | ✕ or R1 | Space |
+| Nitrous | B | ○ | N or Shift |
+| Look back (hold) | LB or L3 | L1 or L3 | X |
+| Change camera (4 game views) | Y · d-pad → / ← | △ · d-pad → / ← | V |
+| Reset the car onto the road | X or View | □ or Share / Create | R |
+| Shift up / down | d-pad ↑ / ↓ | d-pad ↑ / ↓ | E / Q |
+| Free camera / photo mode | Menu | Options / Start | C |
+| Release mouse · Quit | — | — | Tab · Esc |
+
+- Gears are automatic, as in the game. Use the d-pad to shift by hand whenever you want.
+- The right stick can also throttle (↑) and brake (↓).
+- The warm, yellowish PS2 tone is **always** on: it is part of the game.
+
+### PS4 (DualShock 4) and PS5 (DualSense) extras
+
+| Extra | What it does |
+|---|---|
+| Light bar | Takes your car's colour. During a pursuit it flashes red and blue |
+| Swipe → / ← on the touchpad | Next / previous camera |
+| Press the touchpad (hold) | Look back while held |
+| Short tap on the touchpad | 1-second glance back |
+| Two fingers on the touchpad | Free camera (photo mode) and back to the car |
+| Adaptive triggers (PS5 only) | L2 resists when braking and buzzes when the wheels lock. R2 is almost free, shakes at the rev limiter and goes loose with nitrous |
+| Rumble | Follows tyre grip, the rev limiter, nitrous and hits |
+
+### Pursuits
+- **Top left**: heat level (HEAT, 1 to 5) and number of cops.
+- **Bottom**: the **EVADE ← → BUSTED** bar.
+  - Going slowly with a cop on you fills it towards **BUSTED**: you get arrested.
+  - Once they lose sight of you, **COOLDOWN** starts. Stay hidden until **EVADED** appears.
+- **To escape**: break line of sight (corners, tunnels, alleys) and use the game's hiding spots (under bridges, car parks). Cops can't see you there.
+- **From heat 2** there are roadblocks, some with spike strips. Find the gap or take another street.
+- **Cops chase you if** you speed past them, hit traffic or ram a patrol car.
+
+### Supported controllers
+- **No install needed**, wired or Bluetooth: Xbox One and Series, PS4, PS5, Switch Pro and MFi pads.
+- **Wired only**: PS3 (DualShock 3) and PS2 pads through a USB adapter.
+- **Xbox 360**: macOS needs the free [360Controller](https://github.com/360Controller/360Controller) driver. The game tells you if it is missing.
+- Plug and unplug at any time. Full details: [docs/en/15-controllers.md](docs/en/15-controllers.md).
+
+### Troubleshooting
+| Problem | Fix |
+|---|---|
+| "Cannot be opened because the developer cannot be verified" | Right-click the app → **Open** → **Open** |
+| A PS3, PS2 or generic pad does nothing | System Settings › Privacy & Security › **Input Monitoring** → enable Rockport |
+| I want to convert my ISO again | Delete `~/Library/Application Support/Rockport/<ID>/` and open the app |
+| I updated the app | If the data is from an older version, it is reconverted automatically from the same ISO |
+| Uninstall | Delete **Rockport** from Applications and the `~/Library/Application Support/Rockport/` folder |
 
 ## Quick start (research tools)
 **One PAL ISO (SLES-53559) is enough for the whole project** (SLUS-21351 also works).
