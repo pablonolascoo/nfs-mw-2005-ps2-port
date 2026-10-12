@@ -75,18 +75,23 @@ Carreteras: `L2RA.BUN` chunk `0x0003B800` (RNgp). Colisión: `STREAML2RA.BUN` ch
 - Carreteras en espacio "Bond": X = z, Y = −x, Z = y. Tramos = Bézier cúbicas.
 
 ## 7. Estado y pendientes (2026-10-12)
-Hecho: todo el mapa a 60 fps, garajes sin pantalla de carga (15), 91 coches con pintura, llantas de serie y ruedas, capa de carreteras en el visor, base de datos completa, red de carreteras y colisión decodificadas, mods.
+Hecho:
+- Todo el mapa a 60 fps. Texturas revisadas: paredes y edificios completos, transparencias y repetición como el juego (doc 03, «Auditoría de texturas»).
+- 91 coches completos: una pieza por ranura, ruedas y frenos de la decomp, llantas de tuneo, alerones, pintura (doc 10).
+- Garajes sin pantalla de carga (15), base de datos, red de carreteras, colisión, mods.
+- **Motor nativo macOS** (Swift + Metal) a pantalla completa, 60 fps, tono PS2, coche conducible con colisión real.
+- **Instalador**: la app pide la ISO, detecta PAL/NTSC-U y convierte en ~4,6 min, sin repo ni decomp [V con las dos ISOs]. `native-engine/scripts/make-dmg.sh` monta el `.dmg`.
 
 Siguiente, por orden:
-1. Usar la colisión real en la conducción: ya exportada a `map-data/<ID>/collision/*.bin` (`tools/src/cli/collision.ts`); falta cargarla en `viewer/src/drive.ts`.
-2. Garajes de los refugios sin edificio (2, 4, 5).
-3. Llantas de tuneo, escalado de ruedas y caída.
-4. Explorar carreras y Lista Negra en el visor; carreras jugables (rutas: `TrackPathManager` + datos de evento).
-5. Física del juego desde la decomp; audio.
-6. Motor nativo macOS (Metal) usando `tools/src/lib` como referencia de formatos.
-7. Editor de carreteras/distritos nuevos; historia y secuela como mods.
+1. Publicar `Rockport.dmg` en *Releases* (versión 0.1).
+2. Física real del juego desde la decomp (`zPhysics`, `zDynamics`) y mando.
+3. Tráfico y policía sobre la red de carreteras; persecuciones con la IA original.
+4. Carreras, Lista Negra e hitos jugables (rutas: `TrackPathManager` + datos de evento).
+5. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
+6. Audio.
+7. Expansión «Rust Belt» como mod ([ROADMAP.md](ROADMAP.md)).
 
-Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, hashes de textura de coche sin nombre.
+Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, 8 hashes de textura de coche y 5 del mundo sin nombre o fuera del disco (doc 03 y 10).
 
 ---
 

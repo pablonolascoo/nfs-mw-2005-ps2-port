@@ -35,7 +35,15 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
 | Física del juego, carreras jugables, audio | 🔜 |
 
-## Inicio rápido
+## Jugar en tu Mac
+1. Descarga `Rockport-<versión>.dmg` de [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) y arrastra **Rockport** a Aplicaciones.
+2. Ábrelo (la primera vez: clic derecho → Abrir; aún no está notarizado).
+3. Elige tu ISO de PS2. Detecta **PAL SLES-53559** o **NTSC-U SLUS-21351** y convierte el juego en unos 5 minutos.
+4. El juego arranca a pantalla completa y a la resolución de tu pantalla. Los datos convertidos quedan en `~/Library/Application Support/Rockport/`.
+
+Montar el `.dmg` tú mismo: `native-engine/scripts/make-dmg.sh` (necesita las herramientas de Xcode y Bun). Detalle: [native-engine/README.md](native-engine/README.md).
+
+## Inicio rápido (herramientas de investigación)
 **Con una sola ISO PAL (SLES-53559) basta para todo el proyecto** (también vale SLUS-21351).
 ```bash
 # requisitos: Bun y tu propia ISO

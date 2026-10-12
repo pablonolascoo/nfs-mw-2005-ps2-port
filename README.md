@@ -35,7 +35,15 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
 | Game physics, playable races, audio | 🔜 |
 
-## Quick start
+## Play on your Mac
+1. Download `Rockport-<version>.dmg` from [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) and drag **Rockport** to Applications.
+2. Open it (first time: right-click → Open, it is not notarised yet).
+3. Choose your PS2 ISO. It detects **PAL SLES-53559** or **NTSC-U SLUS-21351** and converts the game in about 5 minutes.
+4. The game starts full screen at your screen's resolution. Converted data stays in `~/Library/Application Support/Rockport/`.
+
+Build the `.dmg` yourself: `native-engine/scripts/make-dmg.sh` (needs Xcode tools and Bun). Details: [native-engine/README.en.md](native-engine/README.en.md).
+
+## Quick start (research tools)
 **One PAL ISO (SLES-53559) is enough for the whole project** (SLUS-21351 also works).
 ```bash
 # requirements: Bun and your own ISO
