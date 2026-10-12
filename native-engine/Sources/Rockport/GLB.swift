@@ -1,7 +1,7 @@
 // Lector GLB mínimo y rápido. Solo entiende lo que escribe tools/src/lib/glb.ts:
 // mallas indexadas (POSITION, NORMAL?, TEXCOORD_0?, COLOR_0?, _ID?), materiales con baseColorFactor,
-// baseColorTexture → images (uri externa o bufferView embebido), alphaMode/alphaCutoff, extras (blend, role),
-// nodos con matriz opcional y un nodo raíz con rotación -90° en X (glTF Y-arriba).
+// baseColorTexture → images (uri externa o bufferView embebido) con su muestreador (TilableUV), alphaMode/alphaCutoff,
+// extras del material (blend, role) y del nodo (pieza, marcadores: coches), nodos con matriz opcional y un nodo raíz con rotación -90° en X (glTF Y-arriba).
 // Devolvemos todo en coordenadas del juego (Z arriba): se ignora la rotación del nodo raíz.
 import Foundation
 import simd
@@ -35,11 +35,26 @@ struct GLBImage {
     var name: String
 }
 
+/// Pieza de coche (`extras.pieza` del nodo, tools/src/lib/car-parts.ts carPartInfo): ranura, kit, estilo y si va de serie.
+struct CarPiece {
+    var slot: String
+    var kit: Int?
+    var style: Int?
+    var stock: Bool
+    /// pieza, kit, capo, calcomania, dano, llanta, aleron, techo, freno
+    var kind: String
+    /// "DAMAGE0" en paneles intactos de policía y tráfico; nombre de la variante en los packs de tuneo.
+    var variant: String?
+}
+
 struct GLBPrimitive {
     var nodeName: String
     var material: Int
     var vertices: [Vertex]
     var indices: [UInt32]
+    /// Solo coches: qué pieza es y sus marcadores (`extras.marcadores`: nombre → matriz del juego, traslación en la columna 3).
+    var piece: CarPiece? = nil
+    var markers: [String: float4x4] = [:]
 }
 
 struct GLBFile {
@@ -172,6 +187,19 @@ enum GLB {
                 let n = nodes[ni]
                 let world = isRoot ? parent : parent * localMatrix(n)
                 let name = n["name"] as? String ?? ""
+                let extras = n["extras"] as? [String: Any]
+                var piece: CarPiece? = nil
+                if let p = extras?["pieza"] as? [String: Any], let slot = p["slot"] as? String {
+                    piece = CarPiece(slot: slot, kit: p["kit"] as? Int, style: p["style"] as? Int, stock: p["stock"] as? Bool ?? false,
+                                     kind: p["kind"] as? String ?? "pieza", variant: p["variant"] as? String)
+                }
+                var markers: [String: float4x4] = [:]
+                for m in extras?["marcadores"] as? [[String: Any]] ?? [] {
+                    guard let nombre = m["nombre"] as? String, let a = m["matriz"] as? [Double], a.count == 16 else { continue }
+                    let f = a.map { Float($0) }
+                    markers[nombre] = float4x4(columns: (float4(f[0], f[1], f[2], f[3]), float4(f[4], f[5], f[6], f[7]),
+                                                         float4(f[8], f[9], f[10], f[11]), float4(f[12], f[13], f[14], f[15])))
+                }
                 if let mi = n["mesh"] as? Int {
                     let normalM = simd_float3x3(float3(world.columns.0.x, world.columns.0.y, world.columns.0.z),
                                                 float3(world.columns.1.x, world.columns.1.y, world.columns.1.z),
@@ -221,7 +249,8 @@ enum GLB {
                             default: for i in 0..<ix.count { ib[i] = UInt32((ix.ptr + i * ix.stride).load(as: UInt8.self)) }
                             }
                         }
-                        prims.append(GLBPrimitive(nodeName: name, material: p["material"] as? Int ?? 0, vertices: verts, indices: indices))
+                        prims.append(GLBPrimitive(nodeName: name, material: p["material"] as? Int ?? 0, vertices: verts, indices: indices,
+                                                  piece: piece, markers: markers))
                     }
                 }
                 for c in n["children"] as? [Int] ?? [] { try visit(c, world, isRoot: false) }

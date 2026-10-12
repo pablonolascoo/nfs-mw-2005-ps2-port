@@ -2,6 +2,8 @@
 // - PNG descodificado con ImageIO SIN premultiplicar el alfa: muchas texturas del juego son "moduladas"
 //   (alfa ≈ 0 pero opacas) y premultiplicar destruiría su color (ver viewer/src/tile-worker.ts).
 // - Mipmaps con filtro de caja en CPU (en el hilo de carga), subida a una textura privada de GPU con un blit.
+// - Texturas con alfa útil (recorte, mezcla, sombras…): el RGB de los texeles vacíos se rellena con el de sus vecinos y
+//   los mipmaps ponderan el RGB por el alfa. Sin esto salen bordes negros en hojas, vallas y pintadas (como tile-worker.ts).
 // - Formato sRGB: la GPU convierte a lineal al muestrear.
 // - Una entrada por ruta; si dos casillas piden la misma textura a la vez, la segunda espera a la primera.
 import Foundation
@@ -38,12 +40,14 @@ final class TextureCache {
     var count: Int { lock.lock(); defer { lock.unlock() }; return entries.count }
 
     /// Textura de un archivo PNG (casillas). Bloquea el hilo que llama mientras carga: usar fuera del hilo principal.
-    func texture(url: URL) -> MTLTexture? {
-        texture(key: url.path) { try? Data(contentsOf: url) }
+    /// `alpha`: la usa algún material con transparencia (no opaco).
+    func texture(url: URL, alpha: Bool = false) -> MTLTexture? {
+        texture(key: url.path, alpha: alpha) { try? Data(contentsOf: url) }
     }
 
     /// Textura de un PNG en memoria (coches con imágenes embebidas). `key` debe ser único.
-    func texture(key: String, data: @escaping () -> Data?) -> MTLTexture? {
+    func texture(key baseKey: String, alpha: Bool = false, data: @escaping () -> Data?) -> MTLTexture? {
+        let key = alpha ? baseKey + "|alfa" : baseKey
         lock.lock()
         if let e = entries[key] {
             lock.unlock()
@@ -55,8 +59,9 @@ final class TextureCache {
         entries[key] = e
         lock.unlock()
         defer { e.group.leave() }
-        guard let bytes = data(), let img = decodePNG(bytes) else { return nil }
-        e.texture = upload(img, label: key)
+        guard let bytes = data(), var img = decodePNG(bytes) else { return nil }
+        if alpha { TextureCache.dilate(&img) }
+        e.texture = upload(img, label: key, alphaWeighted: alpha)
         return e.texture
     }
 
@@ -96,8 +101,37 @@ final class TextureCache {
         return Image(width: w, height: h, rgba: out)
     }
 
+    /// Rellena el RGB de los texeles transparentes (alfa ≤ 8) con la media de sus vecinos conocidos, 4 pasadas.
+    /// No cambia el alfa. Copia de dilate() en viewer/src/tile-worker.ts.
+    static func dilate(_ img: inout Image, passes: Int = 4) {
+        let w = img.width, h = img.height
+        img.rgba.withUnsafeMutableBufferPointer { px in
+            var known = [Bool](repeating: false, count: w * h)
+            var unknown = 0
+            for i in 0..<(w * h) { known[i] = px[i * 4 + 3] > 8; if !known[i] { unknown += 1 } }
+            if unknown == 0 || unknown == w * h { return }
+            for _ in 0..<passes {
+                var next = known
+                var changed = 0
+                for y in 0..<h { for x in 0..<w {
+                    let i = y * w + x
+                    if known[i] { continue }
+                    var r = 0, g = 0, b = 0, n = 0
+                    for dy in -1...1 { for dx in -1...1 {
+                        let j = ((y + dy + h) % h) * w + ((x + dx + w) % w)
+                        if known[j] { r += Int(px[j * 4]); g += Int(px[j * 4 + 1]); b += Int(px[j * 4 + 2]); n += 1 }
+                    } }
+                    if n > 0 { px[i * 4] = UInt8(r / n); px[i * 4 + 1] = UInt8(g / n); px[i * 4 + 2] = UInt8(b / n); next[i] = true; changed += 1 }
+                } }
+                known = next
+                if changed == 0 { break }
+            }
+        }
+    }
+
     /// Crea la textura privada con todos sus mipmaps (calculados aquí) y la sube con un blit.
-    func upload(_ img: Image, label: String) -> MTLTexture? {
+    /// `alphaWeighted`: el RGB de cada mipmap se pondera por el alfa (sin halos oscuros en recortes y mezclas).
+    func upload(_ img: Image, label: String, alphaWeighted: Bool = false) -> MTLTexture? {
         var levels: [(w: Int, h: Int, px: [UInt8])] = [(img.width, img.height, img.rgba)]
         while levels.last!.w > 1 || levels.last!.h > 1 {
             let p = levels.last!
@@ -110,7 +144,16 @@ final class TextureCache {
                         for x in 0..<w {
                             let x0 = min(x * 2, p.w - 1), x1 = min(x * 2 + 1, p.w - 1)
                             let a = (y0 + x0) * 4, b = (y0 + x1) * 4, c = (y1 + x0) * 4, e = (y1 + x1) * 4, o = (y * w + x) * 4
-                            for k in 0..<4 { d[o + k] = UInt8((UInt16(s[a + k]) + UInt16(s[b + k]) + UInt16(s[c + k]) + UInt16(s[e + k]) + 2) >> 2) }
+                            let sa = Int(s[a + 3]) + Int(s[b + 3]) + Int(s[c + 3]) + Int(s[e + 3])
+                            if alphaWeighted && sa > 0 {
+                                for k in 0..<3 {
+                                    let num = Int(s[a + k]) * Int(s[a + 3]) + Int(s[b + k]) * Int(s[b + 3]) + Int(s[c + k]) * Int(s[c + 3]) + Int(s[e + k]) * Int(s[e + 3])
+                                    d[o + k] = UInt8((num + sa / 2) / sa)
+                                }
+                            } else {
+                                for k in 0..<3 { d[o + k] = UInt8((UInt16(s[a + k]) + UInt16(s[b + k]) + UInt16(s[c + k]) + UInt16(s[e + k]) + 2) >> 2) }
+                            }
+                            d[o + 3] = UInt8((sa + 2) >> 2)
                         }
                     }
                 }

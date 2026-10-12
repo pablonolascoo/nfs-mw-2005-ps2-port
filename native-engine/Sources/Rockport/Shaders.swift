@@ -14,12 +14,15 @@ struct FrameUniforms {
     float4   skyHaze;
     float4   skyZenith;
     float4   sunDir;      // xyz hacia el sol
+    float4   lightSky;    // luces del coche: cielo y suelo de la hemisférica, sol (lineal × intensidad)
+    float4   lightGround;
+    float4   lightSun;
 };
 
 struct DrawUniforms {
     float4x4 model;
     float4   color;       // baseColorFactor (o pintura)
-    float4   params;      // x = alphaCutoff, y = lit (coche), z = especular, w = -
+    float4   params;      // x = alphaCutoff (solo recorte), y = metalicidad, z = rugosidad (coche), w = -
 };
 
 struct VertexIn {
@@ -64,11 +67,11 @@ fragment float4 fs_opaque(VOut in [[stage_in]], constant FrameUniforms& F [[buff
     return float4(applyFog(F, t.rgb * in.color.rgb, in.world), 1);
 }
 
-// Recorte alfa (vallas, árboles, rejas): se descarta por debajo del umbral del material.
+// Recorte alfa (vallas, árboles, rejas): pasa si alfa > alphaCutoff del material (0x28/255 en el juego, `_alphaRef`).
 fragment float4 fs_mask(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant DrawUniforms& D [[buffer(2)]],
                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
     float4 t = tex.sample(s, in.uv);
-    if (t.a < D.params.x) discard_fragment();
+    if (t.a <= D.params.x) discard_fragment();
     return float4(applyFog(F, t.rgb * in.color.rgb, in.world), 1);
 }
 
@@ -106,24 +109,33 @@ fragment float4 fs_water(VOut in [[stage_in]], constant FrameUniforms& F [[buffe
     return float4(applyFog(F, t.rgb * in.color.rgb, in.world), a);
 }
 
-// Coche: iluminación simple (hemisférica + sol + brillo en la pintura). Los coches del juego no traen luz horneada.
+// Coche: el mismo modelo de luz que el visor (MeshStandardMaterial de three.js sin mapa de entorno):
+// difusa Lambert con luz hemisférica + sol, y especular GGX del sol (Smith correlado, Fresnel de Schlick).
+// Los coches del juego no traen luz horneada; el juego usa mapas de entorno (pendiente).
 fragment float4 fs_car(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant DrawUniforms& D [[buffer(2)]],
-                       texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], bool front [[front_facing]]) {
+                       texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
     float4 t = tex.sample(s, in.uv);
     float4 base = t * in.color;
-    if (base.a < D.params.x) discard_fragment();
+    if (D.params.x > 0 && base.a <= D.params.x) discard_fragment();   // recorte (discos de freno, rejillas)
+    float metal = D.params.y, rough = max(D.params.z, 0.0525);
     float3 n = normalize(in.normal);
     float3 v = normalize(F.camPos.xyz - in.world);
-    if (dot(n, v) < 0) n = -n;
+    if (dot(n, v) < 0) n = -n;                                         // doble cara
     float3 L = normalize(F.sunDir.xyz);
-    float diff = max(dot(n, L), 0.0);
-    float hemi = 0.5 + 0.5 * n.z;
-    float3 amb = mix(float3(0.22, 0.21, 0.19), float3(0.42, 0.46, 0.50), hemi);
-    float3 c = base.rgb * (amb + diff * float3(1.0, 0.95, 0.85) * 0.70);
+    float3 albedo = base.rgb * (1.0 - metal);
+    float3 f0 = mix(float3(0.04), base.rgb, metal);
+    float3 hemi = mix(F.lightGround.rgb, F.lightSky.rgb, 0.5 * n.z + 0.5);
+    float NL = saturate(dot(n, L)), NV = saturate(dot(n, v));
     float3 h = normalize(L + v);
-    float spec = pow(max(dot(n, h), 0.0), 48.0) * D.params.z;
-    float fres = pow(1.0 - max(dot(n, v), 0.0), 4.0) * D.params.z * 0.6;
-    c += spec * float3(1.0, 0.97, 0.9) + fres * F.skyHorizon.rgb;
+    float NH = saturate(dot(n, h)), VH = saturate(dot(v, h));
+    float a2 = rough * rough; a2 *= a2;
+    float fr = exp2((-5.55473 * VH - 6.98316) * VH);
+    float3 Fs = f0 * (1.0 - fr) + fr;
+    float gv = NL * sqrt(a2 + (1.0 - a2) * NV * NV), gl = NV * sqrt(a2 + (1.0 - a2) * NL * NL);
+    float vis = 0.5 / max(gv + gl, 1e-6);
+    float dd = NH * NH * (a2 - 1.0) + 1.0;
+    float Dg = a2 / (M_PI_F * dd * dd);
+    float3 c = albedo * (hemi + F.lightSun.rgb * NL) / M_PI_F + F.lightSun.rgb * NL * Fs * (vis * Dg);
     return float4(applyFog(F, c, in.world), base.a);
 }
 

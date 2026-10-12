@@ -64,6 +64,9 @@ final class GPUMesh {
         var bounds = AABB.empty
         var draws: [DrawRange] = []
         var texOf: [Int: MTLTexture?] = [:]
+        // Imágenes con alfa útil: las que usa algún material no opaco (relleno de bordes y mipmaps ponderados por alfa).
+        var alphaImage = Set<Int>()
+        for m in file.materials where m.kind != .opaque { if let im = m.image { alphaImage.insert(im) } }
         for key in order {
             let mi = key % 100_000, part = key / 100_000
             let m = file.materials[mi]
@@ -82,14 +85,13 @@ final class GPUMesh {
             if let im = m.image, im < file.images.count {
                 if let cached = texOf[im] { tex = cached } else {
                     let img = file.images[im]
-                    if let u = img.uri { tex = textures.texture(url: u) }
-                    else if let d = img.data { tex = textures.texture(key: "\(keyPrefix)#\(im)") { d } }
+                    let a = alphaImage.contains(im)
+                    if let u = img.uri { tex = textures.texture(url: u, alpha: a) }
+                    else if let d = img.data { tex = textures.texture(key: "\(keyPrefix)#\(im)", alpha: a) { d } }
                     texOf[im] = tex
                 }
             }
-            var color = m.color
-            if m.name == "lejano" { color = float4(color.x * Config.farColorScale, color.y * Config.farColorScale, color.z * Config.farColorScale, color.w) }
-            draws.append(DrawRange(kind: m.kind, indexStart: start, indexCount: io - start, texture: tex, color: color,
+            draws.append(DrawRange(kind: m.kind, indexStart: start, indexCount: io - start, texture: tex, color: m.color,
                                    cutoff: m.cutoff, role: m.role, name: m.name, wrap: m.wrap, part: part))
         }
         return GPUMesh(vertexBuffer: vb, indexBuffer: ib, draws: draws, bounds: bounds, triangles: icount / 3)

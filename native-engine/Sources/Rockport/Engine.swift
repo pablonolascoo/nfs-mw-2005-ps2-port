@@ -33,6 +33,9 @@ final class Engine {
     var chasePos = float3(0, 0, 0)
     var chaseTarget = float3(0, 0, 0)
 
+    /// Pruebas: cámara fija relativa al coche (ojo y objetivo en metros; X adelante, Y izquierda, Z arriba desde el suelo).
+    var carCam: (eye: float3, target: float3)?
+
     var keys = Set<UInt16>()
     var mouseDelta = float2(0, 0)
     var time: Double = 0
@@ -128,11 +131,22 @@ final class Engine {
         mouseDelta = .zero
     }
 
-    var eye: float3 { mode == .drive ? chasePos : camPos }
+    /// Punto en coordenadas del coche → mundo (sin inclinación).
+    private func carPoint(_ car: Car, _ p: float3) -> float3 {
+        let f = car.forward, l = float3(-f.y, f.x, 0)
+        return car.position + f * p.x + l * p.y + float3(0, 0, p.z)
+    }
+
+    var eye: float3 {
+        if let cc = carCam, let car { return carPoint(car, cc.eye) }
+        return mode == .drive ? chasePos : camPos
+    }
 
     func makeFrame() -> SceneFrame {
         let view: float4x4
-        if mode == .drive {
+        if let cc = carCam, let car {
+            view = .lookAt(eye: carPoint(car, cc.eye), target: carPoint(car, cc.target), up: float3(0, 0, 1))
+        } else if mode == .drive {
             view = .lookAt(eye: chasePos, target: chaseTarget, up: float3(0, 0, 1))
         } else {
             let fwd = float3(cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), sin(pitch))

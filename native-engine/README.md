@@ -14,10 +14,12 @@ Etiquetas: [V] verificado en bytes o medido · [D] sacado de la decomp · [I] in
 
 - Abre Rockport entero a pantalla completa, a 60 fps con vsync [V].
 - Carga las casillas de 400 m alrededor de la cámara en hilos de fondo, sin tirones [V].
-- Texturas, transparencias con recorte, sombras horneadas, carteles con mezcla, aditivos y agua [V].
+- Texturas, recorte alfa con el umbral del juego (`0x28`), pintadas y cristales con mezcla, sombras horneadas, aditivos y agua [V][D].
+- Repetición o recorte al borde por textura y por eje (TilableUV del juego) [V].
 - Cielo con degradado y plano de mar, como el visor web [H: el juego pinta un plano de mar].
 - **Tono PS2**: pasada final cálida, amarillenta, con negros levantados. Se ajusta con un solo número.
 - Cámara libre (WASD + ratón) y **conducción** del BMW M3 GTR con cámara de persecución.
+- El coche se monta como el juego: una pieza por ranura, ruedas y frenos con las medidas de `cars.json` [D].
 - El coche pisa la **colisión real** del juego (`collision/*.bin`) y choca con sus muros [V].
 - Modo sin ventana para sacar capturas y medir rendimiento (`--screenshot`, `--bench`).
 
@@ -32,7 +34,8 @@ Se generan en `native-engine/.build/shots/` (no se suben a git):
 | `drive.png` | Conduciendo el BMW M3 GTR, cámara de persecución |
 | `drive-grade0.png` | Lo mismo sin tono PS2 (`--grade 0`), para comparar |
 | `drive-moving.png` | Tras 6 s de conducción automática (`--autodrive 6`) |
-| `carside.png`, `cartop.png` | El coche con sus 4 ruedas y la sombra de contacto |
+| `carside.png`, `car34.png` | El coche de lado y de tres cuartos (`--carcam`) |
+| `carwheel.png` | Rueda delantera de cerca: llanta, disco y pinza |
 | `aerial.png` | Toda la ciudad desde 900 m (nivel lejano) |
 
 ## Cómo se compila y se arranca
@@ -82,7 +85,9 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--screenshot <png> [--size AxB] [--frames N]` | Sin ventana: carga, dibuja y guarda una captura |
 | `--bench [--seconds N] [--size AxB]` | Sin ventana: vuelo a 250 km/h y tiempos por fotograma |
 | `--autodrive <s>` | Con `--drive` y `--screenshot`: acelera s segundos sobre la colisión real y lo resume |
-| `--near <m>` / `--far-scale <f>` | Depuración: radio del nivel cercano / brillo del lejano |
+| `--near <m>` | Depuración: radio del nivel cercano (`--near -1`: solo nivel lejano) |
+| `--carcam ox,oy,oz,tx,ty,tz` | Cámara fija respecto al coche (X adelante, Y izquierda, Z arriba) |
+| `--audit` | Carga todas las casillas y comprueba geometría y texturas |
 
 ## Estructura de carpetas
 
@@ -149,6 +154,7 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 - Solo entiende lo que genera `tools/src/lib/glb.ts`. Por eso es corto y rápido.
 - Lee posiciones, normales, UV, `COLOR_0` (puede pasar de 1: luz horneada del PS2 [V]) e índices.
 - Materiales: `baseColorFactor`, textura, `alphaMode`, `alphaCutoff`, `extras.blend`, `extras.role`.
+- Nodos de coche: `extras.pieza` (ranura, kit, estilo, de serie) y `extras.marcadores` (matrices del juego).
 - Muestreador por textura: repetir o recortar al borde, por eje (TilableUV del juego).
 - Imágenes por URI (casillas) o embebidas (coches).
 - Ignora la rotación −90° en X del nodo raíz: todo queda en coordenadas del juego, Z arriba.
@@ -157,6 +163,7 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 ### 2. Texturas (`TextureCache.swift`)
 - PNG con ImageIO **sin premultiplicar** el alfa. Muchas texturas son "moduladas": alfa ≈ 0 pero opacas.
 - Mipmaps con filtro de caja en el hilo de carga. Subida a memoria privada de GPU con un blit.
+- Texturas con alfa útil: el color de los texeles vacíos se rellena con el de sus vecinos y los mipmaps se ponderan por el alfa. Así no salen bordes negros en hojas, vallas y pintadas.
 - Formato sRGB: la GPU pasa a lineal al leer.
 - Cola de subida propia: el hilo principal nunca espera a una subida [V: sin ella había parones de 38 ms].
 - Caché por ruta: cada textura se carga una vez.
@@ -172,7 +179,7 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 ### 4. Pasadas de dibujo (`Renderer.swift`)
 1. Cielo: degradado según la altura de la mirada (colores del visor).
 2. Opacos y recorte alfa (vallas, árboles): escriben profundidad.
-3. Coche opaco: luz simple (hemisférica + sol + brillo en la pintura).
+3. Coche opaco: la misma luz que el visor (hemisférica + sol, difusa Lambert y especular GGX).
 4. Mar: plano a z = −0,2 con olas suaves.
 5. Sombras horneadas (`sombra`, texturas `SHD_*`) con sesgo de profundidad; sombra de contacto del coche.
 6. Mezcla normal (`mezcla`, `recorte_mezcla`: carteles, pintadas, ramas).
@@ -180,7 +187,7 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 
 - Profundidad invertida con plano lejano infinito: precisión para 6 km de ciudad.
 - Niebla lineal hacia el color del horizonte (1200–9000 m).
-- El nivel lejano se oscurece ×0,45 para casar con el cercano [V: medido en la misma vista].
+- El nivel lejano ya no se oscurece: su color sale del conversor igual que el cercano [V: medido en la misma vista].
 
 ### 5. Tono PS2 (pasada final, `fs_post` en `Shaders.swift`)
 La escena se dibuja en una textura HDR. La pasada final la escala a la pantalla y aplica el tono.
@@ -199,12 +206,42 @@ Se cambia sin compilar con `--grade <n>` o `ROCKPORT_GRADE`, y con la tecla G en
 - Objetivo: 13,5 ms de GPU, por debajo de los 16,7 ms de 60 Hz. Vsync activado.
 
 ### 7. Coche (`Car.swift`, `Collision.swift`)
-- Modelo `cars/BMWM3GTRE46.glb`. El modelo trae una sola rueda (`*_TIRE_*`).
-- Cuatro ruedas con `cars.json` → `tires`: cara exterior en |y| = TireOffsets.y [D: CarRender.cpp].
-- Las del otro lado se reflejan. Las delanteras giran al virar; todas ruedan.
-- Pintura en los materiales `role = pintura`. Se ocultan las tarjetas de llanta de tuneo (`role = llanta`).
+- Modelo `cars/BMWM3GTRE46.glb`, de serie, con la pintura del jugador (`Config.playerPaint`).
+- **Una pieza por ranura** (`Car.visibleParts`, copia de `applyCarConfig` del visor) [D: CarInfo.cpp, CarRender.cpp]:
+  - el kit pedido sustituye al KIT00 solo en las ranuras que trae;
+  - fuera daños (`dano`), zonas de vinilo (`calcomania`) y el soporte de alerón de tuneo;
+  - un panel `DAMAGE0` es la carrocería intacta (policía): solo se ve si la ranura no tiene pieza normal.
+- **Ruedas** como `mountWheels` del visor [D: CarRender.cpp 1855-1999]:
+  - un solo modelo (`FRONT_TIRE`, o `REAR_TIRE` detrás) colocado cuatro veces;
+  - radio `TireOffsets.w`, ancho `skidWidth × kitWidthScale`;
+  - la cara de la llanta en |TireOffsets.y| (+ `kitOffsetFront/Rear` en mm hacia fuera);
+  - lado izquierdo girado 180° (o en espejo si `spokes & 0x80`);
+  - caída `camber × 7°`; altura del eje `z + feCompression − camber × 0,03`.
+- **Frenos** (`FRONT_BRAKE`/`REAR_BRAKE`) en el marcador de la rueda, sin escala de radio, en espejo a la izquierda.
+- Piezas en GPU: 0 carrocería, 1–4 ruedas (giran y viran), 5–8 frenos (solo viran).
+- Las tarjetas de llanta ya se dibujan: el conversor arregló su orientación.
+- `BMWM3` toma los atributos de `bmwm3gtr` (no tiene colección propia) [V: cars.json].
+- Luz: la del visor (`HemisphereLight` + `DirectionalLight`, `MeshStandardMaterial`). Pintura: metal 0,45, rugosidad 0,32.
 - Conducción arcade igual que `viewer/src/drive.ts`. **No es la física del juego.**
 - Suelo: triángulos de colisión en celdas de 8 m. Muros: segmentos verticales.
+
+## Cambios con los datos nuevos (2026-10-12)
+
+Qué cambió en el conversor y cómo lo sigue el motor:
+
+| Cambio en los datos | Qué hace ahora el motor | Por qué |
+|---|---|---|
+| Color de vértice guardado como `(c/128)^2,2` | Fuera la corrección ×0,45 del nivel lejano (`Config.farColorScale`, `--far-scale`) | Medido [V]: lejano/cercano = 0,95–1,2 sin corrección (antes 1,8). Con grado 0 el motor da el mismo color medio que el visor (±2 de 255) |
+| Recorte con umbral `0x28` del juego | El recorte usa el `alphaCutoff` del material y pasa si alfa > umbral | `_alphaRef` [D]. Con 0,5 se perdían rejas y ramas |
+| Pintadas y cristales con mezcla | Ya iban a la pasada de mezcla; ahora sin bordes negros (relleno y mipmaps por alfa) | Igual que `tile-worker.ts` |
+| Repetición por textura (TilableUV) | Ya se leía el `sampler`; verificado con el GLB nuevo | 4 muestreadores (repetir/recortar por eje) |
+| Casillas con más de 256 texturas | Sin cambios: el motor no usa arrays de texturas | `--audit` [V]: 212 casillas × 2 niveles, todas con geometría y texturas; la mayor (10_1) tiene 269 |
+| Coches con `extras.pieza` y `extras.marcadores` | Una pieza por ranura, ruedas y frenos de la decomp | Antes salían todos los kits, daños y calcomanías a la vez |
+| `cars.json` con `skidWidth`, `camber`… | Leídos en `GameData.CarAttribs` | Medidas reales de rueda [D] |
+
+Comparación con el visor (misma cámara, `--carcam`, `--grade 0`) [V]:
+- Pintura del lado en sombra: motor (57, 62, 74), visor (59, 63, 74) en sRGB.
+- Calle de la captura `street.png`: color medio del motor (76, 76, 72), visor (75, 74, 71).
 
 ## Rendimiento medido
 
@@ -216,6 +253,10 @@ MacBook Air M4 (16 GB), pantalla a 2940×1912 píxeles. Compilación release. [V
 | Captura fija 1920×1080 | GPU mediana 4,0 ms, ~1400 llamadas, 0,67 M triángulos |
 | Vuelo a 250 km/h, 20 s, 1920×1080 | GPU mediana 3,2 ms (p95 6,6), 0,2 % de fotogramas > 16,7 ms |
 | Vuelo a 250 km/h, 20 s, 2940×1912 | GPU mediana 3,9–5,0 ms (p95 8,4–9,5), 0,4–3 % > 16,7 ms |
+| Con los datos nuevos (2026-10-12), vuelo 20 s, 1920×1080 | GPU mediana 3,2 ms (p95 4,4), 0,3 % > 16,7 ms, 722 llamadas |
+| Con los datos nuevos, vuelo 20 s, 2940×1912 | GPU mediana 5,3 ms (p95 7,8), 0,9 % > 16,7 ms |
+| Coche de cerca, 1600×900 | GPU mediana 2,1–2,7 ms, ~1000 llamadas |
+| `--audit`: las 212 casillas, cercanas y lejanas | 2,2 s, 6,6 M triángulos, 2562 texturas |
 | Prueba de estrés: ciudad entera con detalle (`--near 6000`) | 60 fps con escala 0,5, GPU ~12 ms, 9300 llamadas, 3,1 M triángulos |
 | Carga inicial (lejanas + cercanas de la vista) | 0,5–1 s |
 
@@ -229,7 +270,9 @@ Notas:
 - Lo que se ve desde el aire entre carreteras es el plano de mar: el mapa del juego solo tiene geometría junto a las calles [V].
 - Algunos objetos lejanos del fondo parecen flotar sobre el horizonte (decorados de fondo del nivel lejano) [I].
 - El nivel lejano usa color medio de textura: se nota el salto al entrar una casilla cercana.
-- La luz del coche es una aproximación; el juego usa mapas de entorno.
+- La luz del coche es la del visor, no la del juego: el juego usa mapas de entorno [D].
+- Llantas, alerones y tomas de techo de tuneo (packs `WHEELS`, `SPOILER`, `ROOF`) aún no se montan: el coche va de serie.
+- El conductor del BMW (`4e8cf857`) no tiene textura en el disco: sale gris oscuro, como en el visor [V].
 - No hay mando, sonido, tráfico, policía, carreras ni menús.
 - La conducción es un prototipo arcade, no la física de la decomp.
 

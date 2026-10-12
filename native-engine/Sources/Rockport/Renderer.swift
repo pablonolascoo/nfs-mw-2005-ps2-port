@@ -18,6 +18,10 @@ struct FrameUniforms {
     var skyHaze: float4
     var skyZenith: float4
     var sunDir: float4
+    // Luces del coche (lineal × intensidad), las mismas que viewer/src/main.ts: HemisphereLight + DirectionalLight.
+    var lightSky: float4
+    var lightGround: float4
+    var lightSun: float4
 }
 
 struct DrawUniforms {
@@ -153,6 +157,10 @@ final class Renderer {
         quadBuffer = device.makeBuffer(bytes: &quad, length: MemoryLayout<Vertex>.stride * 4, options: .storageModeShared)
     }
 
+    /// Metalicidad y rugosidad de cada material del coche, como el visor: la pintura (paintCar) 0,45 / 0,32;
+    /// el resto, lo que escribe tools/src/lib/glb.ts (metallicFactor 0, roughnessFactor 0,85).
+    static func carPBR(_ d: DrawRange) -> float2 { d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85) }
+
     /// Asegura texturas de escena del tamaño máximo (la resolución dinámica usa una parte con el viewport).
     private func ensureTargets(width: Int, height: Int) {
         if let s = sceneColor, s.width == width, s.height == height { return }
@@ -182,7 +190,10 @@ final class Renderer {
                               skyHorizon: float4(srgbToLinear(Config.skyHorizon), 1),
                               skyHaze: float4(srgbToLinear(Config.skyHaze), 1),
                               skyZenith: float4(srgbToLinear(Config.skyZenith), 1),
-                              sunDir: float4(simd_normalize(float3(30, -20, 50)), 0))
+                              sunDir: float4(simd_normalize(Config.sunPosition), 0),
+                              lightSky: float4(srgbToLinear(Config.hemiSky) * Config.hemiIntensity, 0),
+                              lightGround: float4(srgbToLinear(Config.hemiGround) * Config.hemiIntensity, 0),
+                              lightSun: float4(srgbToLinear(Config.sunColor) * Config.sunIntensity, 0))
         let frustum = Frustum(viewProj)
         let visible = frame.meshes.filter { frustum.intersects($0.bounds) }
 
@@ -211,12 +222,12 @@ final class Renderer {
         enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
 
         func drawMeshes(_ meshes: [GPUMesh], kinds: Set<MaterialKind>, model: (Int) -> float4x4 = { _ in .identity },
-                        color: (DrawRange) -> float4 = { $0.color }, spec: (DrawRange) -> Float = { _ in 0 }) {
+                        color: (DrawRange) -> float4 = { $0.color }, pbr: (DrawRange) -> float2 = { _ in .zero }) {
             for m in meshes {
                 var bound = false
                 for d in m.draws where d.visible && kinds.contains(d.kind) {
                     if !bound { enc.setVertexBuffer(m.vertexBuffer, offset: 0, index: 0); bound = true }
-                    var U = DrawUniforms(model: model(d.part), color: color(d), params: float4(d.kind == .mask ? d.cutoff : (d.kind == .blend ? 0.0 : 0.0), 0, spec(d), 0))
+                    var U = DrawUniforms(model: model(d.part), color: color(d), params: float4(d.kind == .mask ? d.cutoff : 0, pbr(d).x, pbr(d).y, 0))
                     enc.setVertexBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
                     enc.setFragmentBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
                     enc.setFragmentTexture(d.texture ?? textures.white, index: 0)
@@ -238,7 +249,7 @@ final class Renderer {
         // Coche (opaco)
         if let car = frame.car {
             enc.setRenderPipelineState(pipelines["car"]!)
-            drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, spec: { $0.role == "pintura" ? 1.0 : 0.15 })
+            drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, pbr: Renderer.carPBR)
         }
 
         // Transparentes: no escriben profundidad
@@ -271,7 +282,7 @@ final class Renderer {
         drawMeshes(visible, kinds: [.water])
         if let car = frame.car {
             enc.setRenderPipelineState(pipelines["carBlend"]!)
-            drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, spec: { _ in 1.0 })
+            drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, pbr: Renderer.carPBR)
         }
         enc.endEncoding()
         lastDrawCalls = draws; lastTriangles = tris

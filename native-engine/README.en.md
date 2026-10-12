@@ -14,10 +14,12 @@ Tags: [V] verified in bytes or measured · [D] from the decomp · [I] inferred �
 
 - Opens the whole of Rockport full screen at 60 fps with vsync [V].
 - Loads the 400 m tiles around the camera on background threads, without hitches [V].
-- Textures, alpha-tested cut-outs, baked shadows, blended decals, additive and water materials [V].
+- Textures, alpha test with the game's threshold (`0x28`), blended graffiti and glass, baked shadows, additive and water [V][D].
+- Per-texture, per-axis repeat or clamp to edge (the game's TilableUV) [V].
 - Sky gradient and sea plane, like the web viewer [H: the game draws a sea plane].
 - **PS2 look**: a warm, slightly yellow final pass with lifted blacks. One number controls it.
 - Free-fly camera (WASD + mouse) and **driving** the BMW M3 GTR with a chase camera.
+- The car is assembled like the game: one part per slot, wheels and brakes sized from `cars.json` [D].
 - The car rides on the game's **real collision** (`collision/*.bin`) and hits its walls [V].
 - Window-less mode for screenshots and performance runs (`--screenshot`, `--bench`).
 
@@ -32,7 +34,8 @@ Written to `native-engine/.build/shots/` (never committed):
 | `drive.png` | Driving the BMW M3 GTR, chase camera |
 | `drive-grade0.png` | Same without the PS2 look (`--grade 0`), to compare |
 | `drive-moving.png` | After 6 s of automatic driving (`--autodrive 6`) |
-| `carside.png`, `cartop.png` | The car with its 4 wheels and contact shadow |
+| `carside.png`, `car34.png` | The car from the side and three-quarter view (`--carcam`) |
+| `carwheel.png` | Front wheel close-up: rim, disc and caliper |
 | `aerial.png` | The whole city from 900 m (far level) |
 
 ## Build and run
@@ -82,7 +85,9 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--screenshot <png> [--size WxH] [--frames N]` | Window-less: load, render, save a screenshot |
 | `--bench [--seconds N] [--size WxH]` | Window-less: 250 km/h flight with frame timings |
 | `--autodrive <s>` | With `--drive` and `--screenshot`: accelerate for s seconds on real collision and summarise |
-| `--near <m>` / `--far-scale <f>` | Debug: near-level radius / far-level brightness |
+| `--near <m>` | Debug: near-level radius (`--near -1`: far level only) |
+| `--carcam ox,oy,oz,tx,ty,tz` | Camera fixed to the car (X forward, Y left, Z up) |
+| `--audit` | Loads every tile and checks geometry and textures |
 
 ## Folder layout
 
@@ -149,6 +154,7 @@ With no data and no bundled converter (development), the app shows an alert with
 - Understands only what `tools/src/lib/glb.ts` writes. That is why it is short and fast.
 - Reads positions, normals, UVs, `COLOR_0` (may exceed 1: PS2 baked lighting [V]) and indices.
 - Materials: `baseColorFactor`, texture, `alphaMode`, `alphaCutoff`, `extras.blend`, `extras.role`.
+- Car nodes: `extras.pieza` (slot, kit, style, stock) and `extras.marcadores` (game matrices).
 - Per-texture sampler: repeat or clamp to edge, per axis (the game's TilableUV).
 - Images by URI (tiles) or embedded (cars).
 - Ignores the root node's −90° X rotation: everything stays in game coordinates, Z up.
@@ -157,6 +163,7 @@ With no data and no bundled converter (development), the app shows an alert with
 ### 2. Textures (`TextureCache.swift`)
 - PNG via ImageIO **without premultiplying** alpha. Many textures are "modulated": alpha ≈ 0 but opaque.
 - Box-filter mipmaps on the loading thread. Upload to private GPU memory with a blit.
+- Textures with useful alpha: empty texels get their neighbours' colour and mipmaps are alpha-weighted. No more black edges on leaves, fences and graffiti.
 - sRGB format: the GPU converts to linear on read.
 - Own upload queue: the main thread never waits for an upload [V: without it there were 38 ms stalls].
 - Cache by path: each texture loads once.
@@ -172,7 +179,7 @@ With no data and no bundled converter (development), the app shows an alert with
 ### 4. Draw passes (`Renderer.swift`)
 1. Sky: gradient by view height (viewer colours).
 2. Opaque and alpha-tested (fences, trees): write depth.
-3. Opaque car: simple lighting (hemisphere + sun + paint highlight).
+3. Opaque car: the same lighting as the viewer (hemisphere + sun, Lambert diffuse and GGX specular).
 4. Sea: plane at z = −0.2 with soft waves.
 5. Baked shadows (`sombra`, `SHD_*` textures) with depth bias; car contact shadow.
 6. Normal blending (`mezcla`, `recorte_mezcla`: signs, graffiti, branches).
@@ -180,7 +187,7 @@ With no data and no bundled converter (development), the app shows an alert with
 
 - Reversed depth with an infinite far plane: precision for 6 km of city.
 - Linear fog towards the horizon colour (1200–9000 m).
-- The far level is darkened ×0.45 to match the near level [V: measured on the same view].
+- The far level is no longer darkened: the converter now writes its colour like the near level's [V: measured on the same view].
 
 ### 5. PS2 look (final pass, `fs_post` in `Shaders.swift`)
 The scene renders to an HDR texture. The final pass scales it to the screen and applies the look.
@@ -199,12 +206,42 @@ Change it without rebuilding with `--grade <n>` or `ROCKPORT_GRADE`, and with th
 - Target: 13.5 ms of GPU, below the 16.7 ms of 60 Hz. Vsync on.
 
 ### 7. Car (`Car.swift`, `Collision.swift`)
-- Model `cars/BMWM3GTRE46.glb`. The model has a single wheel (`*_TIRE_*`).
-- Four wheels from `cars.json` → `tires`: outer rim face at |y| = TireOffsets.y [D: CarRender.cpp].
-- Wheels on the other side are mirrored. Front wheels steer; all wheels roll.
-- Paint on `role = pintura` materials. Aftermarket rim cards (`role = llanta`) are hidden.
+- Model `cars/BMWM3GTRE46.glb`, stock, with the player paint (`Config.playerPaint`).
+- **One part per slot** (`Car.visibleParts`, a copy of the viewer's `applyCarConfig`) [D: CarInfo.cpp, CarRender.cpp]:
+  - the chosen kit replaces KIT00 only in the slots it has;
+  - no damage (`dano`), vinyl zones (`calcomania`) or aftermarket spoiler base;
+  - a `DAMAGE0` panel is the intact body (police): shown only if the slot has no normal part.
+- **Wheels** like the viewer's `mountWheels` [D: CarRender.cpp 1855-1999]:
+  - one model (`FRONT_TIRE`, or `REAR_TIRE` at the back) placed four times;
+  - radius `TireOffsets.w`, width `skidWidth × kitWidthScale`;
+  - rim face at |TireOffsets.y| (+ `kitOffsetFront/Rear` in mm, outwards);
+  - left side turned 180° (or mirrored if `spokes & 0x80`);
+  - camber `camber × 7°`; axle height `z + feCompression − camber × 0.03`.
+- **Brakes** (`FRONT_BRAKE`/`REAR_BRAKE`) at the wheel's marker, no radius scale, mirrored on the left.
+- GPU parts: 0 body, 1–4 wheels (spin and steer), 5–8 brakes (steer only).
+- Rim cards are drawn again: the converter fixed their orientation.
+- `BMWM3` borrows the `bmwm3gtr` attributes (it has no collection of its own) [V: cars.json].
+- Lighting: the viewer's (`HemisphereLight` + `DirectionalLight`, `MeshStandardMaterial`). Paint: metalness 0.45, roughness 0.32.
 - Arcade driving, same as `viewer/src/drive.ts`. **Not the game's physics.**
 - Ground: collision triangles in 8 m cells. Walls: vertical segments.
+
+## Changes for the new data (2026-10-12)
+
+What changed in the converter and how the engine follows it:
+
+| Data change | What the engine does now | Why |
+|---|---|---|
+| Vertex colour stored as `(c/128)^2.2` | The far-level ×0.45 fix is gone (`Config.farColorScale`, `--far-scale`) | Measured [V]: far/near = 0.95–1.2 without it (was 1.8). With grade 0 the engine's mean colour matches the viewer's (±2 of 255) |
+| Alpha test with the game's `0x28` threshold | Alpha test uses the material `alphaCutoff` and passes when alpha > threshold | `_alphaRef` [D]. With 0.5, grates and branches vanished |
+| Blended graffiti and glass | Already in the blend pass; now without black edges (bleed + alpha-weighted mips) | Same as `tile-worker.ts` |
+| Per-texture repeat (TilableUV) | The `sampler` was already read; checked with the new GLB | 4 samplers (repeat/clamp per axis) |
+| Tiles with more than 256 textures | No change needed: the engine uses no texture arrays | `--audit` [V]: 212 tiles × 2 levels, all with geometry and textures; the largest (10_1) has 269 |
+| Cars with `extras.pieza` and `extras.marcadores` | One part per slot, wheels and brakes from the decomp | Before, every kit, damage layer and decal showed at once |
+| `cars.json` with `skidWidth`, `camber`… | Read in `GameData.CarAttribs` | Real wheel measurements [D] |
+
+Comparison with the viewer (same camera, `--carcam`, `--grade 0`) [V]:
+- Paint on the shaded side: engine (57, 62, 74), viewer (59, 63, 74) in sRGB.
+- Street of `street.png`: engine mean colour (76, 76, 72), viewer (75, 74, 71).
 
 ## Measured performance
 
@@ -217,6 +254,10 @@ MacBook Air M4 (16 GB), screen at 2940×1912 pixels. Release build. [V]
 | 250 km/h flight, 20 s, 1920×1080 | Median GPU 3.2 ms (p95 6.6), 0.2 % of frames > 16.7 ms |
 | 250 km/h flight, 20 s, 2940×1912 | Median GPU 3.9–5.0 ms (p95 8.4–9.5), 0.4–3 % > 16.7 ms |
 | Stress test: whole city in full detail (`--near 6000`) | 60 fps at scale 0.5, GPU ~12 ms, 9300 draw calls, 3.1 M triangles |
+| New data (2026-10-12), 20 s flight, 1920×1080 | GPU median 3.2 ms (p95 4.4), 0.3 % > 16.7 ms, 722 draw calls |
+| New data, 20 s flight, 2940×1912 | GPU median 5.3 ms (p95 7.8), 0.9 % > 16.7 ms |
+| Car close-up, 1600×900 | GPU median 2.1–2.7 ms, ~1000 draw calls |
+| `--audit`: all 212 tiles, near and far | 2.2 s, 6.6 M triangles, 2562 textures |
 | Initial load (far + near tiles of the view) | 0.5–1 s |
 
 Notes:
@@ -229,7 +270,9 @@ Notes:
 - Seen from the air, the space between roads is the sea plane: the game map only has geometry along streets [V].
 - Some distant backdrop objects seem to float above the horizon (far-level background props) [I].
 - The far level uses average texture colour: the switch to a near tile is visible.
-- Car lighting is an approximation; the game uses environment maps.
+- Car lighting is the viewer's, not the game's: the game uses environment maps [D].
+- Aftermarket rims, spoilers and roof scoops (`WHEELS`, `SPOILER`, `ROOF` packs) are not mounted yet: the car is stock.
+- The BMW driver texture (`4e8cf857`) is not on the disc: it shows dark grey, as in the viewer [V].
 - No gamepad, sound, traffic, police, races or menus yet.
 - Driving is an arcade prototype, not the decomp physics.
 

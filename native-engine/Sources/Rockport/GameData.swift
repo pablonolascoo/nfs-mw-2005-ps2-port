@@ -82,9 +82,26 @@ struct Zone: Decodable {
 
 struct ZonesFile: Decodable { let zones: [Zone] }
 
+/// Atributos de coche de cars.json (tools/src/cli/car-attribs.ts): clase `ecar` + RIM_SIZE de la clase `tires`.
 struct CarAttribs: Decodable {
+    /// TireOffsets por rueda (0 del. izq., 1 del. dcha., 2 tras. dcha., 3 tras. izq.): x, y, z, radio.
     let tires: [[Float]]?
     let className: String?
+    /// WheelSpokeCount: bit 0x80 = las ruedas izquierdas se reflejan en vez de girarse 180°.
+    let spokes: Int?
+    /// TireSkidWidth por rueda (m): ancho real del neumático.
+    let skidWidth: [Float]?
+    /// TireSkidWidthKitScale[kit] = [delante, detrás].
+    let kitWidthScale: [[Float]]?
+    /// KitWheelOffsetFront/Rear[kit] en mm, hacia fuera.
+    let kitOffsetFront: [Float]?
+    let kitOffsetRear: [Float]?
+    /// CamberFront, CamberRear (× 7° y × 0,03 m de bajada).
+    let camber: [Float]?
+    /// FECompressions[delante, detrás] (m): altura de la suspensión en reposo.
+    let feCompression: [Float]?
+    /// RIM_SIZE (pulgadas) de la clase tires.
+    let rimSize: [Float]?
 }
 
 struct CarsFile: Decodable { let cars: [String: CarAttribs] }
@@ -104,4 +121,12 @@ final class GameData {
     }
 
     func url(_ rel: String) -> URL { root.appendingPathComponent(rel) }
+
+    /// Modelos sin colección `ecar` propia toman la de su pariente [V: cars.json]. Igual que attribsFor en viewer/src/main.ts.
+    static let attribAlias = ["bmwm3": "bmwm3gtr"]
+
+    func carAttribs(_ name: String) -> CarAttribs? {
+        let k = name.lowercased()
+        return cars[k] ?? GameData.attribAlias[k].flatMap { cars[$0] }
+    }
 }

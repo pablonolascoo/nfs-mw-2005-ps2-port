@@ -18,6 +18,7 @@ struct Options {
     var drive = false
     var car = false
     var autodrive: Double = 0
+    var carCam: [Float]?
     var scale: Float?
     var quitAfter: Double?
     var screenshot: String?
@@ -38,8 +39,8 @@ struct Options {
             case "--cam": o.camera = next()?.split(separator: ",").compactMap { Float($0) }
             case "--drive": o.drive = true
             case "--car": o.car = true
+            case "--carcam": o.carCam = next()?.split(separator: ",").compactMap { Float($0) }   // pruebas: ojo,objetivo relativos al coche
             case "--autodrive": o.autodrive = next().flatMap(Double.init) ?? 0   // pruebas: acelera N s antes de capturar
-            case "--far-scale": if let f = next().flatMap(Float.init) { Config.farColorScale = f }
             case "--near":   // depuración: radio del nivel con textura (m)
                 if let r = next().flatMap(Float.init) { Config.nearRadius = r; Config.maxNear = 400 }
             case "--scale": o.scale = next().flatMap(Float.init)
@@ -59,13 +60,16 @@ struct Options {
                   --grade <n>          fuerza del tono PS2 (0 = neutro, 1 = por defecto). También ROCKPORT_GRADE.
                   --cam x,y,z,r,i      cámara inicial (metros; rumbo e inclinación en grados)
                   --drive              empezar conduciendo el BMW M3 GTR
+                  --carcam ox,oy,oz,tx,ty,tz  cámara fija respecto al coche (X adelante, Y izquierda, Z arriba)
                   --scale <f>          fija la escala de resolución (desactiva la dinámica)
                   --quit-after <s>     salir tras s segundos (pruebas)
                   --screenshot <png>   sin ventana: carga, dibuja --frames fotogramas, guarda PNG y sale
                   --size AxB           tamaño del modo sin ventana (1920x1080)
                   --bench              sin ventana: vuelo a 250 km/h durante --seconds y mide tiempos
+                  --audit              carga todas las casillas y comprueba geometría y texturas
                 """)
                 exit(0)
+            case "--audit": break   // se atiende en el arranque (runAudit)
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
             i += 1
@@ -73,6 +77,45 @@ struct Options {
         if o.grade == nil, let g = ProcessInfo.processInfo.environment["ROCKPORT_GRADE"].flatMap(Float.init) { o.grade = g }
         return o
     }
+}
+
+// MARK: - Auditoría de casillas
+
+/// `--audit`: carga TODAS las casillas (cercanas y lejanas) como lo hace el streaming y comprueba que cada una tenga
+/// geometría y que cada material con imagen tenga su textura. En el visor web una casilla con más de 256 texturas
+/// del mismo tamaño se quedaba sin paredes; aquí cada material lleva su textura suelta (sin arrays), pero se verifica.
+func runAudit(_ o: Options) {
+    guard let device = MTLCreateSystemDefaultDevice() else { fputs("sin GPU Metal\n", stderr); exit(1) }
+    let (root, tried) = DataLocator.locate(arg: o.data, disc: o.disc)
+    guard let root, let data = try? GameData(root: root) else { fputs("No encuentro datos. Buscado en:\n\(tried.joined(separator: "\n"))\n", stderr); exit(1) }
+    let textures = TextureCache(device: device)
+    let lock = NSLock()
+    var bad: [String] = [], tris = 0, draws = 0, maxTex = 0, maxTexTile = ""
+    let t0 = CACurrentMediaTime()
+    DispatchQueue.concurrentPerform(iterations: data.world.tiles.count) { i in
+        let t = data.world.tiles[i]
+        for (lvl, rel) in [("cercana", t.near), ("lejana", t.far)] {
+            let url = data.url(rel)
+            guard let f = try? GLB.load(url) else { lock.lock(); bad.append("\(t.id) \(lvl): GLB ilegible"); lock.unlock(); continue }
+            let mesh = GPUMesh.build(device: device, file: f, textures: textures, keyPrefix: url.path)
+            let expected = lvl == "cercana" ? t.tris : t.farTris
+            lock.lock()
+            if let mesh {
+                tris += mesh.triangles; draws += mesh.draws.count
+                let missing = mesh.draws.filter { d in d.texture == nil && f.materials.first { $0.name == d.name }?.image != nil }
+                if !missing.isEmpty { bad.append("\(t.id) \(lvl): \(missing.count) materiales sin textura (\(missing.prefix(3).map(\.name).joined(separator: ", ")))") }
+                if abs(mesh.triangles - expected) > max(2, expected / 100) { bad.append("\(t.id) \(lvl): \(mesh.triangles) triángulos, world.json dice \(expected)") }
+                let nt = Set(f.materials.compactMap(\.image)).count
+                if nt > maxTex { maxTex = nt; maxTexTile = t.id }
+            } else if expected > 0 { bad.append("\(t.id) \(lvl): sin malla (world.json: \(expected) triángulos)") }
+            lock.unlock()
+        }
+    }
+    print(String(format: "Auditoría: %d casillas × 2 niveles en %.1f s · %.2f M triángulos · %d tramos · %d texturas · máx. %d texturas en una casilla (%@)",
+                 data.world.tiles.count, CACurrentMediaTime() - t0, Double(tris) / 1e6, draws, textures.count, maxTex, maxTexTile))
+    if bad.isEmpty { print("Todo bien: todas las casillas tienen geometría y todas sus texturas.") }
+    else { print("Problemas (\(bad.count)):"); for b in bad.sorted() { print("  " + b) } }
+    exit(bad.isEmpty ? 0 : 1)
 }
 
 // MARK: - Modo sin ventana
@@ -87,7 +130,8 @@ func runHeadless(_ o: Options) {
     do { engine = try Engine(device: device, data: data, outputFormat: .bgra8Unorm) } catch { fputs("motor: \(error)\n", stderr); exit(1) }
     if let g = o.grade { engine.renderer.gradeStrength = g }
     if let c = o.camera, c.count == 5 { engine.setCamera(x: c[0], y: c[1], z: c[2], yawDeg: c[3], pitchDeg: c[4]) }
-    if o.drive { engine.toggleMode() } else if o.car { engine.loadCar() }
+    if o.drive { engine.toggleMode() } else if o.car || o.carCam != nil { engine.loadCar() }
+    if let c = o.carCam, c.count == 6 { engine.carCam = (float3(c[0], c[1], c[2]), float3(c[3], c[4], c[5])) }
     let (W, H) = o.size
     engine.aspect = Float(W) / Float(H)
     let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: W, height: H, mipmapped: false)
@@ -190,7 +234,9 @@ if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.
     print("no es una ISO de PS2 reconocible"); exit(2)
 }
 let options = Options.parse(CommandLine.arguments)
-if options.screenshot != nil || options.bench {
+if CommandLine.arguments.contains("--audit") {
+    runAudit(options)
+} else if options.screenshot != nil || options.bench {
     runHeadless(options)
 } else {
     let app = NSApplication.shared

@@ -19,10 +19,8 @@ enum Config {
     /// Cargas de casillas en paralelo (hilos de fondo).
     static let parallelLoads = 4
 
-    /// Corrección de brillo del nivel lejano (material "lejano": color medio de textura × luz horneada).
-    /// Medido [V] comparando la misma vista con nivel cercano y lejano: sin corrección el lejano sale ~1,8× más
-    /// claro en pantalla. Factor lineal; 1 = sin corrección. Se puede probar con `--far-scale <f>`.
-    static var farColorScale: Float = 0.45
+    // El nivel lejano ya no lleva corrección de brillo: el conversor guarda su color (color medio × luz horneada)
+    // como (c/128)^2,2, igual que el cercano. Medido [V] en la misma vista: lejano/cercano ≈ 0,95–1,2 (antes 1,8).
 
     // MARK: Resolución dinámica
     /// Objetivo de tiempo de GPU por fotograma (ms). Por debajo de 16,7 ms para dejar margen al vsync de 60 Hz.
@@ -40,6 +38,15 @@ enum Config {
     static let skyZenith = SIMD3<Float>(0x3d, 0x5a, 0x73) / 255
     static let fogStart: Float = 1200
     static let fogEnd: Float = 9000
+
+    // MARK: Luz del coche (los coches no traen luz horneada). Igual que viewer/src/main.ts.
+    /// HemisphereLight(0xdfe8ff, 0x2a2416, 1.4) y DirectionalLight(0xffe2b0, 2.2) en (30, -20, 50).
+    static let hemiSky = SIMD3<Float>(0xdf, 0xe8, 0xff) / 255
+    static let hemiGround = SIMD3<Float>(0x2a, 0x24, 0x16) / 255
+    static let hemiIntensity: Float = 1.4
+    static let sunColor = SIMD3<Float>(0xff, 0xe2, 0xb0) / 255
+    static let sunIntensity: Float = 2.2
+    static let sunPosition = SIMD3<Float>(30, -20, 50)
 
     /// Color de pintura del coche del jugador (BMW M3 GTR: plata).
     static let playerPaint = SIMD3<Float>(0xae, 0xb7, 0xc2) / 255
