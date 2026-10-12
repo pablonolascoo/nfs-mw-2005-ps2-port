@@ -1,0 +1,24 @@
+name: "🐞 Fallo · Bug"
+description: "Algo no funciona o se ve mal · Something is broken or looks wrong"
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: disc
+    attributes:
+      label: "Disco · Disc"
+      options: ["PAL SLES-53559", "NTSC-U SLUS-21351", "Otro · Other"]
+    validations: { required: true }
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Área · Area"
+      options: ["Conversor (tools)", "Motor nativo (native-engine)", "Visor web (viewer)", "Coches · Cars", "Mapa · Map", "Docs"]
+  - type: textarea
+    id: what
+    attributes:
+      label: "Qué pasa y qué esperabas · What happens and what you expected"
+    validations: { required: true }
+  - type: textarea
+    id: repro
+    attributes:
+      label: "Pasos y capturas · Steps and screenshots"

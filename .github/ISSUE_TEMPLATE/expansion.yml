@@ -1,0 +1,22 @@
+name: "🗺️ Idea para la expansión · Expansion idea"
+description: "Coches, distritos, eventos, historia · Cars, districts, events, story"
+labels: ["expansion"]
+body:
+  - type: markdown
+    attributes:
+      value: "Debe parecer contenido original de 2005–2006 y del Rust Belt. Lee ROADMAP.md. · Must feel like original 2005–2006 Rust Belt content. Read ROADMAP.en.md."
+  - type: dropdown
+    id: kind
+    attributes:
+      label: "Tipo · Kind"
+      options: ["Coche · Car", "Pieza de tuneo · Tuning part", "Distrito / mapa · District / map", "Evento / carrera · Event / race", "Historia · Story", "Policía / persecuciones · Police / pursuits"]
+    validations: { required: true }
+  - type: textarea
+    id: idea
+    attributes:
+      label: "Propuesta · Proposal"
+    validations: { required: true }
+  - type: textarea
+    id: fit
+    attributes:
+      label: "Cómo encaja con el original · How it fits the original"
