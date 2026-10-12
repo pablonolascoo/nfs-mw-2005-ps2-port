@@ -15,7 +15,8 @@ Etiquetas: [V] verificado con SLES-53559 / SLUS-21351 · [D] decomp · [I] infer
 - Clips de radio en SLES-53559 [V]: **castellano 9854**, inglés 13 562, italiano 9986. Duran de 0,1 s a ~22 s.
 - Codec de la radio: EA MicroTalk. vgmstream solo lo abre si el clip se guarda como `.asf` [V].
 - `NISAUDIO.BIG`: 140 pistas SCHl seguidas (EA-XA v2) [V].
-- Tamaño extraído en FLAC: películas 161 MB, escenas 108 MB, radio 706 MB (es) + 1 GB (en) + 762 MB (it). Unos 22 min en un M4. Son trozos de frase que el juego encadena (unidad, dirección, nombre de calle…) [D].
+- Tamaño extraído en FLAC: películas 161 MB, escenas 108 MB, radio 706 MB (es) + 1 GB (en) + 762 MB (it). Unos 22 min en un M4.
+- Los clips de radio son trozos de frase que el juego encadena (unidad, dirección, nombre de calle…) [D].
 - Qué clip suena en cada momento lo deciden `.IDX`, `.CSI` (`MOIR`) y `.EVT`. Aún no están decodificados [H].
 
 ## 2. Extraer todo (uso local)
