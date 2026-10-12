@@ -1,6 +1,6 @@
 {
  "disc": "SLES-53559",
- "generated": "2026-10-11T23:42:09.949Z",
+ "generated": "2026-10-12T06:59:30.947Z",
  "upAxis": "Z",
  "items": [
   {
@@ -8,8 +8,8 @@
    "group": "Coches",
    "label": "911GT2",
    "glb": "cars/911GT2.glb",
-   "tris": 5992,
-   "verts": 8704,
+   "tris": 5847,
+   "verts": 8479,
    "source": "CARS\\911GT2\\GEOMETRY.BIN"
   },
   {
@@ -17,8 +17,8 @@
    "group": "Coches",
    "label": "911TURBO",
    "glb": "cars/911TURBO.glb",
-   "tris": 18614,
-   "verts": 27588,
+   "tris": 5641,
+   "verts": 8155,
    "source": "CARS\\911TURBO\\GEOMETRY.BIN"
   },
   {
@@ -26,8 +26,8 @@
    "group": "Coches",
    "label": "997S",
    "glb": "cars/997S.glb",
-   "tris": 21775,
-   "verts": 32925,
+   "tris": 5728,
+   "verts": 8434,
    "source": "CARS\\997S\\GEOMETRY.BIN"
   },
   {
@@ -35,8 +35,8 @@
    "group": "Coches",
    "label": "A3",
    "glb": "cars/A3.glb",
-   "tris": 22824,
-   "verts": 33422,
+   "tris": 5365,
+   "verts": 7865,
    "source": "CARS\\A3\\GEOMETRY.BIN"
   },
   {
@@ -44,8 +44,8 @@
    "group": "Coches",
    "label": "A4",
    "glb": "cars/A4.glb",
-   "tris": 24623,
-   "verts": 36517,
+   "tris": 5831,
+   "verts": 8787,
    "source": "CARS\\A4\\GEOMETRY.BIN"
   },
   {
@@ -53,8 +53,8 @@
    "group": "Coches",
    "label": "BMWM3",
    "glb": "cars/BMWM3.glb",
-   "tris": 14127,
-   "verts": 21761,
+   "tris": 5597,
+   "verts": 8083,
    "source": "CARS\\BMWM3\\GEOMETRY.BIN"
   },
   {
@@ -62,8 +62,8 @@
    "group": "Coches",
    "label": "BMWM3GTR",
    "glb": "cars/BMWM3GTR.glb",
-   "tris": 5697,
-   "verts": 8323,
+   "tris": 5557,
+   "verts": 8113,
    "source": "CARS\\BMWM3GTR\\GEOMETRY.BIN"
   },
   {
@@ -71,8 +71,8 @@
    "group": "Coches",
    "label": "BMWM3GTRE46",
    "glb": "cars/BMWM3GTRE46.glb",
-   "tris": 6614,
-   "verts": 9502,
+   "tris": 6474,
+   "verts": 9292,
    "source": "CARS\\BMWM3GTRE46\\GEOMETRY.BIN"
   },
   {
@@ -80,8 +80,8 @@
    "group": "Coches",
    "label": "CAMARO",
    "glb": "cars/CAMARO.glb",
-   "tris": 5850,
-   "verts": 7884,
+   "tris": 5674,
+   "verts": 7624,
    "source": "CARS\\CAMARO\\GEOMETRY.BIN"
   },
   {
@@ -89,8 +89,8 @@
    "group": "Coches",
    "label": "CARRERAGT",
    "glb": "cars/CARRERAGT.glb",
-   "tris": 15212,
-   "verts": 22628,
+   "tris": 5877,
+   "verts": 8563,
    "source": "CARS\\CARRERAGT\\GEOMETRY.BIN"
   },
   {
@@ -98,8 +98,8 @@
    "group": "Coches",
    "label": "CAYMANS",
    "glb": "cars/CAYMANS.glb",
-   "tris": 23757,
-   "verts": 35543,
+   "tris": 5545,
+   "verts": 8103,
    "source": "CARS\\CAYMANS\\GEOMETRY.BIN"
   },
   {
@@ -107,8 +107,8 @@
    "group": "Coches",
    "label": "CLIO",
    "glb": "cars/CLIO.glb",
-   "tris": 23126,
-   "verts": 35630,
+   "tris": 5863,
+   "verts": 8739,
    "source": "CARS\\CLIO\\GEOMETRY.BIN"
   },
   {
@@ -116,8 +116,8 @@
    "group": "Coches",
    "label": "CLK500",
    "glb": "cars/CLK500.glb",
-   "tris": 24759,
-   "verts": 38769,
+   "tris": 5823,
+   "verts": 9071,
    "source": "CARS\\CLK500\\GEOMETRY.BIN"
   },
   {
@@ -125,8 +125,8 @@
    "group": "Coches",
    "label": "COBALTSS",
    "glb": "cars/COBALTSS.glb",
-   "tris": 24544,
-   "verts": 39592,
+   "tris": 5682,
+   "verts": 8848,
    "source": "CARS\\COBALTSS\\GEOMETRY.BIN"
   },
   {
@@ -134,8 +134,8 @@
    "group": "Coches",
    "label": "CORVETTE",
    "glb": "cars/CORVETTE.glb",
-   "tris": 19618,
-   "verts": 28982,
+   "tris": 5221,
+   "verts": 7647,
    "source": "CARS\\CORVETTE\\GEOMETRY.BIN"
   },
   {
@@ -143,8 +143,8 @@
    "group": "Coches",
    "label": "CORVETTEC6R",
    "glb": "cars/CORVETTEC6R.glb",
-   "tris": 5752,
-   "verts": 8854,
+   "tris": 5586,
+   "verts": 8584,
    "source": "CARS\\CORVETTEC6R\\GEOMETRY.BIN"
   },
   {
@@ -152,8 +152,8 @@
    "group": "Coches",
    "label": "CTS",
    "glb": "cars/CTS.glb",
-   "tris": 20463,
-   "verts": 30403,
+   "tris": 5618,
+   "verts": 8478,
    "source": "CARS\\CTS\\GEOMETRY.BIN"
   },
   {
@@ -161,8 +161,8 @@
    "group": "Coches",
    "label": "DB9",
    "glb": "cars/DB9.glb",
-   "tris": 23110,
-   "verts": 35006,
+   "tris": 5675,
+   "verts": 8449,
    "source": "CARS\\DB9\\GEOMETRY.BIN"
   },
   {
@@ -170,8 +170,8 @@
    "group": "Coches",
    "label": "ECLIPSEGT",
    "glb": "cars/ECLIPSEGT.glb",
-   "tris": 22224,
-   "verts": 32678,
+   "tris": 5516,
+   "verts": 7840,
    "source": "CARS\\ECLIPSEGT\\GEOMETRY.BIN"
   },
   {
@@ -179,8 +179,8 @@
    "group": "Coches",
    "label": "ELISE",
    "glb": "cars/ELISE.glb",
-   "tris": 26727,
-   "verts": 39801,
+   "tris": 5505,
+   "verts": 8407,
    "source": "CARS\\ELISE\\GEOMETRY.BIN"
   },
   {
@@ -188,8 +188,8 @@
    "group": "Coches",
    "label": "FORDGT",
    "glb": "cars/FORDGT.glb",
-   "tris": 17522,
-   "verts": 26264,
+   "tris": 5608,
+   "verts": 8368,
    "source": "CARS\\FORDGT\\GEOMETRY.BIN"
   },
   {
@@ -197,8 +197,8 @@
    "group": "Coches",
    "label": "GALLARDO",
    "glb": "cars/GALLARDO.glb",
-   "tris": 20773,
-   "verts": 30919,
+   "tris": 5471,
+   "verts": 8025,
    "source": "CARS\\GALLARDO\\GEOMETRY.BIN"
   },
   {
@@ -206,8 +206,8 @@
    "group": "Coches",
    "label": "GTI",
    "glb": "cars/GTI.glb",
-   "tris": 18940,
-   "verts": 28514,
+   "tris": 5700,
+   "verts": 8566,
    "source": "CARS\\GTI\\GEOMETRY.BIN"
   },
   {
@@ -215,8 +215,8 @@
    "group": "Coches",
    "label": "GTO",
    "glb": "cars/GTO.glb",
-   "tris": 22093,
-   "verts": 32495,
+   "tris": 5898,
+   "verts": 8666,
    "source": "CARS\\GTO\\GEOMETRY.BIN"
   },
   {
@@ -224,8 +224,8 @@
    "group": "Coches",
    "label": "IMPREZAWRX",
    "glb": "cars/IMPREZAWRX.glb",
-   "tris": 22100,
-   "verts": 33498,
+   "tris": 5445,
+   "verts": 8113,
    "source": "CARS\\IMPREZAWRX\\GEOMETRY.BIN"
   },
   {
@@ -233,8 +233,8 @@
    "group": "Coches",
    "label": "IS300",
    "glb": "cars/IS300.glb",
-   "tris": 22112,
-   "verts": 32674,
+   "tris": 5306,
+   "verts": 7678,
    "source": "CARS\\IS300\\GEOMETRY.BIN"
   },
   {
@@ -242,8 +242,8 @@
    "group": "Coches",
    "label": "LANCEREVO8",
    "glb": "cars/LANCEREVO8.glb",
-   "tris": 25297,
-   "verts": 36611,
+   "tris": 5681,
+   "verts": 8253,
    "source": "CARS\\LANCEREVO8\\GEOMETRY.BIN"
   },
   {
@@ -251,8 +251,8 @@
    "group": "Coches",
    "label": "MONARO",
    "glb": "cars/MONARO.glb",
-   "tris": 22800,
-   "verts": 34246,
+   "tris": 5683,
+   "verts": 8647,
    "source": "CARS\\MONARO\\GEOMETRY.BIN"
   },
   {
@@ -260,8 +260,8 @@
    "group": "Coches",
    "label": "MURCIELAGO",
    "glb": "cars/MURCIELAGO.glb",
-   "tris": 12681,
-   "verts": 19519,
+   "tris": 4876,
+   "verts": 7590,
    "source": "CARS\\MURCIELAGO\\GEOMETRY.BIN"
   },
   {
@@ -269,8 +269,8 @@
    "group": "Coches",
    "label": "MUSTANGGT",
    "glb": "cars/MUSTANGGT.glb",
-   "tris": 20246,
-   "verts": 31028,
+   "tris": 5013,
+   "verts": 7709,
    "source": "CARS\\MUSTANGGT\\GEOMETRY.BIN"
   },
   {
@@ -278,8 +278,8 @@
    "group": "Coches",
    "label": "PUNTO",
    "glb": "cars/PUNTO.glb",
-   "tris": 20009,
-   "verts": 30943,
+   "tris": 5939,
+   "verts": 9583,
    "source": "CARS\\PUNTO\\GEOMETRY.BIN"
   },
   {
@@ -287,8 +287,8 @@
    "group": "Coches",
    "label": "RX7",
    "glb": "cars/RX7.glb",
-   "tris": 21637,
-   "verts": 32019,
+   "tris": 5282,
+   "verts": 7806,
    "source": "CARS\\RX7\\GEOMETRY.BIN"
   },
   {
@@ -296,8 +296,8 @@
    "group": "Coches",
    "label": "RX8",
    "glb": "cars/RX8.glb",
-   "tris": 22286,
-   "verts": 32640,
+   "tris": 5544,
+   "verts": 8234,
    "source": "CARS\\RX8\\GEOMETRY.BIN"
   },
   {
@@ -314,8 +314,8 @@
    "group": "Coches",
    "label": "SL500",
    "glb": "cars/SL500.glb",
-   "tris": 29086,
-   "verts": 42614,
+   "tris": 6031,
+   "verts": 8849,
    "source": "CARS\\SL500\\GEOMETRY.BIN"
   },
   {
@@ -323,8 +323,8 @@
    "group": "Coches",
    "label": "SL65",
    "glb": "cars/SL65.glb",
-   "tris": 6357,
-   "verts": 9389,
+   "tris": 6181,
+   "verts": 9133,
    "source": "CARS\\SL65\\GEOMETRY.BIN"
   },
   {
@@ -332,8 +332,8 @@
    "group": "Coches",
    "label": "SLR",
    "glb": "cars/SLR.glb",
-   "tris": 19531,
-   "verts": 29931,
+   "tris": 6316,
+   "verts": 9738,
    "source": "CARS\\SLR\\GEOMETRY.BIN"
   },
   {
@@ -341,8 +341,8 @@
    "group": "Coches",
    "label": "SUPRA",
    "glb": "cars/SUPRA.glb",
-   "tris": 22573,
-   "verts": 33057,
+   "tris": 5433,
+   "verts": 7689,
    "source": "CARS\\SUPRA\\GEOMETRY.BIN"
   },
   {
@@ -350,8 +350,8 @@
    "group": "Coches",
    "label": "TT",
    "glb": "cars/TT.glb",
-   "tris": 23797,
-   "verts": 32975,
+   "tris": 5454,
+   "verts": 7532,
    "source": "CARS\\TT\\GEOMETRY.BIN"
   },
   {
@@ -359,8 +359,8 @@
    "group": "Coches",
    "label": "VIPER",
    "glb": "cars/VIPER.glb",
-   "tris": 23743,
-   "verts": 36161,
+   "tris": 5668,
+   "verts": 8602,
    "source": "CARS\\VIPER\\GEOMETRY.BIN"
   },
   {
@@ -413,8 +413,8 @@
    "group": "Piezas de tuneo",
    "label": "BRAKES",
    "glb": "cars/BRAKES.glb",
-   "tris": 129,
-   "verts": 227,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\BRAKES\\GEOMETRY.BIN"
   },
   {
@@ -422,8 +422,8 @@
    "group": "Piezas de tuneo",
    "label": "ROOF",
    "glb": "cars/ROOF.glb",
-   "tris": 11164,
-   "verts": 18414,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\ROOF\\GEOMETRY.BIN"
   },
   {
@@ -431,8 +431,8 @@
    "group": "Piezas de tuneo",
    "label": "SPOILER",
    "glb": "cars/SPOILER.glb",
-   "tris": 17794,
-   "verts": 30584,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\SPOILER\\GEOMETRY.BIN"
   },
   {
@@ -440,8 +440,8 @@
    "group": "Piezas de tuneo",
    "label": "SPOILER_CARRERA",
    "glb": "cars/SPOILER_CARRERA.glb",
-   "tris": 17550,
-   "verts": 29660,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\SPOILER_CARRERA\\GEOMETRY.BIN"
   },
   {
@@ -449,8 +449,8 @@
    "group": "Piezas de tuneo",
    "label": "SPOILER_HATCH",
    "glb": "cars/SPOILER_HATCH.glb",
-   "tris": 17450,
-   "verts": 29962,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\SPOILER_HATCH\\GEOMETRY.BIN"
   },
   {
@@ -458,8 +458,8 @@
    "group": "Piezas de tuneo",
    "label": "SPOILER_PORSCHES",
    "glb": "cars/SPOILER_PORSCHES.glb",
-   "tris": 11610,
-   "verts": 19082,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\SPOILER_PORSCHES\\GEOMETRY.BIN"
   },
   {
@@ -467,8 +467,8 @@
    "group": "Piezas de tuneo",
    "label": "WHEELS",
    "glb": "cars/WHEELS.glb",
-   "tris": 86112,
-   "verts": 123430,
+   "tris": 0,
+   "verts": 0,
    "source": "CARS\\WHEELS\\GEOMETRY.BIN"
   },
   {
@@ -476,8 +476,8 @@
    "group": "Policía",
    "label": "COPGHOST",
    "glb": "cars/COPGHOST.glb",
-   "tris": 241,
-   "verts": 423,
+   "tris": 2000,
+   "verts": 3356,
    "source": "CARS\\COPGHOST\\GEOMETRY.BIN"
   },
   {
@@ -485,8 +485,8 @@
    "group": "Policía",
    "label": "COPGTO",
    "glb": "cars/COPGTO.glb",
-   "tris": 347,
-   "verts": 589,
+   "tris": 3322,
+   "verts": 5402,
    "source": "CARS\\COPGTO\\GEOMETRY.BIN"
   },
   {
@@ -494,8 +494,8 @@
    "group": "Policía",
    "label": "COPGTOGHOST",
    "glb": "cars/COPGTOGHOST.glb",
-   "tris": 347,
-   "verts": 589,
+   "tris": 3164,
+   "verts": 5124,
    "source": "CARS\\COPGTOGHOST\\GEOMETRY.BIN"
   },
   {
@@ -512,8 +512,8 @@
    "group": "Policía",
    "label": "COPMIDSIZE",
    "glb": "cars/COPMIDSIZE.glb",
-   "tris": 530,
-   "verts": 838,
+   "tris": 5722,
+   "verts": 8476,
    "source": "CARS\\COPMIDSIZE\\GEOMETRY.BIN"
   },
   {
@@ -521,8 +521,8 @@
    "group": "Policía",
    "label": "COPMIDSIZEINT",
    "glb": "cars/COPMIDSIZEINT.glb",
-   "tris": 4892,
-   "verts": 7200,
+   "tris": 8747,
+   "verts": 12673,
    "source": "CARS\\COPMIDSIZEINT\\GEOMETRY.BIN"
   },
   {
@@ -530,8 +530,8 @@
    "group": "Policía",
    "label": "COPSPORT",
    "glb": "cars/COPSPORT.glb",
-   "tris": 374,
-   "verts": 610,
+   "tris": 3468,
+   "verts": 5858,
    "source": "CARS\\COPSPORT\\GEOMETRY.BIN"
   },
   {
@@ -539,8 +539,8 @@
    "group": "Policía",
    "label": "COPSPORTGHOST",
    "glb": "cars/COPSPORTGHOST.glb",
-   "tris": 374,
-   "verts": 610,
+   "tris": 3468,
+   "verts": 5852,
    "source": "CARS\\COPSPORTGHOST\\GEOMETRY.BIN"
   },
   {
@@ -548,8 +548,8 @@
    "group": "Policía",
    "label": "COPSPORTHENCH",
    "glb": "cars/COPSPORTHENCH.glb",
-   "tris": 374,
-   "verts": 610,
+   "tris": 3626,
+   "verts": 6100,
    "source": "CARS\\COPSPORTHENCH\\GEOMETRY.BIN"
   },
   {
@@ -557,8 +557,8 @@
    "group": "Policía",
    "label": "COPSUV",
    "glb": "cars/COPSUV.glb",
-   "tris": 349,
-   "verts": 571,
+   "tris": 3608,
+   "verts": 6300,
    "source": "CARS\\COPSUV\\GEOMETRY.BIN"
   },
   {
@@ -566,8 +566,8 @@
    "group": "Policía",
    "label": "COPSUVL",
    "glb": "cars/COPSUVL.glb",
-   "tris": 241,
-   "verts": 429,
+   "tris": 3042,
+   "verts": 5322,
    "source": "CARS\\COPSUVL\\GEOMETRY.BIN"
   },
   {

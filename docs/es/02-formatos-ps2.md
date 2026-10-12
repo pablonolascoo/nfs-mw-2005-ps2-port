@@ -38,5 +38,19 @@ Código de referencia en `tools/src/lib/`.
 - Formatos: PSMT8 (`0x13`) y PSMT4 (`0x14`) con CLUT PSMCT32; alfa PS2 (0x80 = opaco). Mundo: 2 472 de 2 622 texturas son PSMT4 [V].
 - **Swizzle** [V a ojo]: PSMT8 subido como PSMCT32 de (W/2)×(H/2); PSMT4 subido como **PSMCT16** de (W/2)×(H/2). CLUT de 8 bits en CSM1 (bits 3↔4 del índice).
 
-## Transparencia [V][D]
-`TextureInfo.AlphaUsageType` (0 ninguno, 1 recorte, 2 modulado) y `AlphaBlendType` (0 copia, 1 mezcla, 2 aditiva…). Modulado + copia = el alfa no es transparencia (asfalto `TRNS_*_PAVEMENT*`): opaco. Antes se trataba como recorte y las carreteras desaparecían.
+## Transparencia, repetición y color de vértice [V][D]
+Regla del juego: `eSetBlendMode` [D: `GameCube/Src/Ecstasy/EcstasyEx.cpp`]. Código: `alphaFor` en `tools/src/lib/materials.ts`.
+
+| `AlphaUsageType` | `AlphaBlendType` | Modo | Texturas [V] |
+|---|---|---|---|
+| 0 ninguno | 0 copia | opaco | 1 012 |
+| 2 modulado | 0 copia | **opaco** (el alfa no es transparencia: asfalto) | 367 |
+| 1 recorte | 0 copia | prueba de alfa `> 0x28` (0,157) | 175 |
+| 2 modulado | 1 mezcla | mezcla normal: `SHD_*` (1 026) y calcomanías, pintadas, cristales, alambradas (33) | 1 059 |
+| cualquiera | 2 aditiva | aditiva (neones, luces) | 12 |
+
+- El umbral de recorte es `0x28`, no 0,5 [D: `_alphaRef`]. Con 0,5 se perdían hojas, rejas y barandillas finas.
+- `TilableUV` (`TextureInfo +0x4F`): bit 0 repite U, bit 1 repite V; 0 = recortar al borde [V: solo el 0,8 % de los UV de esas texturas sale de 0…1]. Carteles y señales usan 0. En el GLB va como `sampler` (`CLAMP_TO_EDGE` / `REPEAT`).
+- Otros campos útiles de `TextureInfo`: `ApplyAlphaSorting +0x54` (23 texturas), `RenderingOrder +0x51` (4 = sombras), `ScrollType +0x52`.
+- **Color de vértice**: 128 = 1,0 y el GS modula en espacio de pantalla [D/V]. El conversor lo guarda en `COLOR_0` como `(c/128)^2,2` (lineal, puede pasar de 1). Así cualquier visor glTF da textura × color igual que la PS2. Antes se guardaba sin linealizar y la luz horneada salía plana y apagada.
+- Las banderas de tira (`eStripEntry.Flags`) siguen a la textura: `0x4040` ↔ mezcla, `0x4008` ↔ recorte [V]. No hay banderas de cara única: todo se dibuja a dos caras.

@@ -5,10 +5,10 @@
 import { GameDisc } from "../lib/zdir";
 import { readSolidList, type Solid } from "../lib/solid-ps2";
 import { readTexturePack, type Texture } from "../lib/tex-ps2";
-import { solidToMesh } from "../lib/mesh-build";
-import { MaterialTable } from "../lib/materials";
+import { solidToMesh, ps2ColorToLinear } from "../lib/mesh-build";
+import { MaterialTable, alphaFor } from "../lib/materials";
 import { writeGlb } from "../lib/glb";
-import { hex8 } from "../lib/hash";
+import { hex8, bStringHash } from "../lib/hash";
 import { parseChunks } from "../lib/bchunk";
 import { readSectionTable, readScenery, modelHash, readSceneryGroups } from "../lib/world-ps2";
 import { groupNameTable, groupKind } from "../lib/group-names";
@@ -17,11 +17,12 @@ import type { GlbMesh, GlbNode } from "../lib/glb";
 import { flatten, type FlatInstance } from "../lib/flatten";
 import { clusterSimplify } from "../lib/simplify";
 import { carPlaceholders } from "../lib/car-textures";
+import { carPartInfo, MARKER_NAMES } from "../lib/car-parts";
 import { mkdirSync, existsSync, readFileSync } from "node:fs";
 
 const [iso, disc, mode, ...names] = Bun.argv.slice(2);
 const root = new URL("../../../", import.meta.url).pathname;
-const outDir = `${root}map-data/${disc}`;
+const outDir = process.env.ROCKPORT_OUT ?? `${root}map-data/${disc}`; // ROCKPORT_OUT: destino del instalador (src/lib/paths.ts)
 mkdirSync(`${outDir}/cars`, { recursive: true });
 const d = await GameDisc.open(iso);
 
@@ -40,11 +41,11 @@ async function texturesFrom(paths: string[]) {
   return map;
 }
 
-/** Para cada pieza deja solo el mejor nivel de detalle disponible (sufijo _A < _B < …). Descarta piezas de daño. */
+/** Para cada pieza deja solo el mejor nivel de detalle disponible (sufijo _A < _B < …). Descarta los paneles rotos (DAMAGE1+). */
 function bestLod(solids: Solid[]) {
   const best = new Map<string, Solid>();
   for (const s of solids) {
-    if (/_DAMAGE\d/.test(s.name)) continue;
+    if (/_DAMAGE[1-9]/.test(s.name)) continue; // DAMAGE0 = panel intacto (policía/tráfico) o capa de golpes: se queda
     const m = /^(.*)_([A-E])$/.exec(s.name); const key = m ? m[1] : s.name;
     const cur = best.get(key);
     if (!cur || (m && cur.name.slice(-1) > m[2])) best.set(key, s);
@@ -53,19 +54,35 @@ function bestLod(solids: Solid[]) {
 }
 
 if (mode === "car") {
+  // Texturas comunes de los coches: CARS\TEXTURES.BIN y, sobre todo, GLOBAL\GLOBALB.BUN (TREAD, TIRE_BACK, ROTOR1-4,
+  // CARBONFIBRE, WINDOW_MASK, DOORLINE, CARBOTTOM, GRILL_0n, RADIATOR, DRIVER_CUTOUT…) y GLOBAL\INGAMEA.BUN (DRIVER_COP) [V].
+  const shared = await texturesFrom(["CARS\\TEXTURES.BIN", "GLOBAL\\GLOBALB.BUN", "GLOBAL\\INGAMEA.BUN"]);
   for (const name of names) {
     const geo = d.find(`CARS\\${name}\\GEOMETRY.BIN`);
     if (!geo) { console.error(`No existe CARS\\${name}\\GEOMETRY.BIN`); continue; }
+    // Todas las piezas (kits, capós, llantas…) con su mejor LOD; sin daños. Cada nodo lleva en extras.pieza qué es y si
+    // va de serie (carPartInfo): el visor y el motor eligen kit, capó, alerón y llantas sin duplicar piezas.
     const solids = bestLod(readSolidList(await d.readEntry(geo)));
-    const textures = await texturesFrom([`CARS\\${name}\\TEXTURES.BIN`, "CARS\\TEXTURES.BIN"]);
+    const textures = await texturesFrom([`CARS\\${name}\\TEXTURES.BIN`]);
+    for (const [h, t] of shared) if (!textures.has(h)) textures.set(h, t);
+    // Tráfico: <COCHE>_TIRE se sustituye por TRAFFIC_TIRE (REPLACETEX_TIRE) [D: CarRender.cpp 1206-1210].
+    const trafficTire = shared.get(bStringHash("TRAFFIC_TIRE"));
+    if (trafficTire && !textures.has(bStringHash(`${name}_TIRE`))) textures.set(bStringHash(`${name}_TIRE`), trafficTire);
     const mats = new MaterialTable(textures, { placeholders: carPlaceholders(name), missingColor: [0.16, 0.16, 0.17, 1] });
-    const meshes = solids.map(s => solidToMesh(s, h => mats.get(h)));
+    const meshes = solids.map(s => {
+      const m = solidToMesh(s, h => mats.get(h));
+      const markers = s.markers.map(k => ({ nombre: MARKER_NAMES.get(k.nameHash) ?? hex8(k.nameHash), matriz: k.matrix.map(v => +v.toFixed(5)) }));
+      m.extras = { ...m.extras, pieza: carPartInfo(name, s.name), ...(markers.length ? { marcadores: markers } : {}) };
+      return m;
+    });
     const glb = writeGlb(meshes, mats.materials, mats.images, name);
     await Bun.write(`${outDir}/cars/${name}.glb`, glb);
-    const tris = meshes.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.indices.length / 3, 0), 0);
-    const verts = meshes.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.positions.length / 3, 0), 0);
+    const stock = meshes.filter(m => (m.extras!.pieza as { stock: boolean }).stock);
+    const tris = stock.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.indices.length / 3, 0), 0);
+    const verts = stock.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.positions.length / 3, 0), 0);
     const warn = solids.flatMap(s => s.warnings.map(w => `${s.name}: ${w}`));
-    console.log(`${name}: ${solids.length} piezas, ${tris} triángulos, ${textures.size} texturas disponibles, ${mats.images.length} usadas, sin encontrar: ${[...mats.missing].map(hex8).join(" ") || "ninguna"}${warn.length ? `\n  avisos: ${warn.slice(0, 5).join(" | ")}` : ""}`);
+    const kits = [...new Set(solids.map(s => carPartInfo(name, s.name).kit).filter(k => k !== undefined))];
+    console.log(`${name}: ${solids.length} piezas (${stock.length} de serie, kits ${kits.join(",") || "—"}), ${tris} triángulos de serie, ${mats.images.length} texturas usadas, sin encontrar: ${[...mats.missing].map(hex8).join(" ") || "ninguna"}${warn.length ? `\n  avisos: ${warn.slice(0, 5).join(" | ")}` : ""}`);
     index.items = index.items.filter(i => i.id !== `car:${name}`);
     const group = /^COP/.test(name) ? "Policía" : /^(TRAF|TAXI|PIZZA|GARB|CEMTR|MINIVAN|PICKUPA|SEMI)/.test(name) ? "Tráfico" : /^TRAILER/.test(name) ? "Remolques" : /^(WHEELS|SPOILER|ROOF|BRAKES)/.test(name) ? "Piezas de tuneo" : "Coches";
     index.items.push({ id: `car:${name}`, group, label: name, glb: `cars/${name}.glb`, tris, verts, source: `CARS\\${name}\\GEOMETRY.BIN` });
@@ -84,7 +101,8 @@ if (mode === "world") {
     for (const so of readSolidListsDeep(p.buf, p.ch)) if (!solids.has(so.nameHash)) solids.set(so.nameHash, so);
     if (p.ch.some(c => c.id === 0xb3300000)) for (const t of readTexturePack(p.buf).textures) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
   }
-  for (const t of (await texturesFrom(["TRACKS\\L2RA.BUN", "GLOBAL\\GLOBALA.BUN"])).values()) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
+  // GLOBALB/INGAMEA traen HEADLIGHTGLOW y GRAY_MID_A, que usan farolas y señales del mundo [V].
+  for (const t of (await texturesFrom(["TRACKS\\L2RA.BUN", "GLOBAL\\GLOBALA.BUN", "GLOBAL\\GLOBALB.BUN", "GLOBAL\\INGAMEA.BUN"])).values()) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
   console.log(`Mundo: ${sections.length} secciones, ${solids.size} sólidos, ${textures.size} texturas`);
   const written = new Set<number>();
   const manifest: { name: string; number: number; centre: [number, number]; radius: number; glb: string; instances: number; tris: number }[] = [];
@@ -99,7 +117,7 @@ if (mode === "world") {
     let tris = 0;
     for (const sc of scen) for (const [k, inst] of sc.instances.entries()) {
       const info = sc.infos[inst.info]; const h = info && modelHash(info);
-      if (!h) continue;
+      if (!h || (inst.excludeFlags & 0x02)) continue; // 0x02 = fuera de la vista del jugador (ver modo tiles)
       const so = solids.get(h); if (!so) { missingSolids++; continue; }
       let mi = meshIndex.get(h);
       if (mi === undefined) { meshes.push(solidToMesh(so, t => mats.get(t))); mi = meshes.length - 1; meshIndex.set(h, mi); }
@@ -158,10 +176,12 @@ if (mode === "tiles") {
     for (const so of readSolidListsDeep(p.buf, p.ch)) if (!solids.has(so.nameHash)) solids.set(so.nameHash, so);
     if (p.ch.some(c => c.id === 0xb3300000)) for (const t of readTexturePack(p.buf).textures) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
   }
-  for (const t of (await texturesFrom(["TRACKS\\L2RA.BUN", "GLOBAL\\GLOBALA.BUN"])).values()) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
-  // Color medio de cada textura (para el nivel lejano, que no lleva texturas).
+  // GLOBALB/INGAMEA traen HEADLIGHTGLOW y GRAY_MID_A, que usan farolas y señales del mundo [V].
+  for (const t of (await texturesFrom(["TRACKS\\L2RA.BUN", "GLOBAL\\GLOBALA.BUN", "GLOBAL\\GLOBALB.BUN", "GLOBAL\\INGAMEA.BUN"])).values()) if (!textures.has(t.nameHash)) textures.set(t.nameHash, t);
+  // Color medio de cada textura (para el nivel lejano, que no lleva texturas). En las opacas el alfa no cuenta
+  // (el asfalto MODULATED+SRCCOPY tiene alfa ≈ 0 y antes salía gris por defecto).
   const avg = new Map<number, [number, number, number]>();
-  for (const t of textures.values()) { let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < t.rgba.length; i += 16) if (t.rgba[i + 3] > 64) { r += t.rgba[i]; g += t.rgba[i + 1]; b += t.rgba[i + 2]; n++; } if (n) avg.set(t.nameHash, [r / n / 255, g / n / 255, b / n / 255]); }
+  for (const t of textures.values()) { const opaque = alphaFor(t).alphaMode === "OPAQUE"; let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < t.rgba.length; i += 16) if (opaque || t.rgba[i + 3] > 64) { r += t.rgba[i]; g += t.rgba[i + 1]; b += t.rgba[i + 2]; n++; } if (n) avg.set(t.nameHash, [r / n / 255, g / n / 255, b / n / 255]); }
   type Inst = { so: Solid; low: Solid; matrix: number[]; meta: Record<string, unknown>; size: number };
   const tiles = new Map<string, Inst[]>();
   // Grupos de escenario (bloqueos de carril, candados, puertas): sus objetos van a capas aparte.
@@ -172,7 +192,7 @@ if (mode === "tiles") {
   const memberOf = new Map<string, number>(); // "sección:instancia" → índice de grupo
   groups.forEach((g, gi) => { if (g.number !== 1) for (const m of g.members) memberOf.set(`${m.section}:${m.instance}`, gi); });
   const groupInst = new Map<number, Inst[]>();
-  let hiddenSkipped = 0;
+  let hiddenSkipped = 0, mainViewExcluded = 0;
   for (const { s, buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const [k, inst] of sc.instances.entries()) {
     const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
     if (!so || !h) continue;
@@ -180,9 +200,12 @@ if (mode === "tiles") {
     if (/^SKY(DOME|_SPECULAR)/i.test(so.name)) continue;
     const gi = memberOf.get(`${sc.sectionNumber}:${k}`);
     const hidden = (inst.excludeFlags & 0x10) !== 0; // oculto por defecto: solo aparece si el juego activa su grupo
-    // Nivel lejano: el LOD más ligero que trae el propio juego (hashes 1..3 de SceneryInfo).
-    const lods = info.hashes.map(x => solids.get(x)).filter((x): x is Solid => !!x);
-    const low = lods.reduce((a, b) => (b.strips.reduce((t, st) => t + st.np, 0) < a.strips.reduce((t, st) => t + st.np, 0) ? b : a), so);
+    // 0x02: excluido de las vistas del jugador (EVIEW_PLAYER1/2) [D: SetupSceneryCullInfo + Scenery.cpp, máscara ^0x60].
+    // En el disco son copias ~20 m más bajas de pórticos y carteles de autopista, puentes…: se veían duplicados.
+    if ((inst.excludeFlags & 0x02) && gi === undefined) { mainViewExcluded++; continue; }
+    // Nivel lejano: el mismo que usa el juego de lejos, pModel[2] (si falta, pModel[1]) [D: Scenery.cpp, carga y selección
+    // por tamaño en pantalla]. pModel[3] es para reflejos y sombras; pModel[0] no existe en PS2 (se copia de pModel[1]).
+    const low = solids.get(info.hashes[2]) ?? so;
     const cx = (inst.bbMin[0] + inst.bbMax[0]) / 2, cy = (inst.bbMin[1] + inst.bbMax[1]) / 2;
     const key = `${Math.floor(cx / TILE)}_${Math.floor(cy / TILE)}`;
     const r = inst.rotation, p = inst.position;
@@ -206,11 +229,19 @@ if (mode === "tiles") {
     // El nivel lejano no lleva sombras horneadas (SHD_*): su color medio es negro y oscurecería la casilla.
     const farInst = list.filter(i => i.size >= FAR_MIN && !i.so.name.startsWith("SHD_")).map((it0, id) => {
       const it = { ...it0, so: it0.low };
+      // Teñir los vértices con el color medio de la textura × luz horneada, en lineal (ver ps2ColorToLinear).
+      // Fuera las tiras con recorte o mezcla (hojas de árbol, vallas, pintadas): sin su alfa serían placas sólidas
+      // flotando en el cielo; de lejos el árbol se reconoce por el tronco y la copa opaca, si la tiene.
+      const strips = it.so.strips.filter(st => { const t = st.texture >= 0 ? textures.get(it.so.textureHashes[st.texture]) : undefined; return !t || alphaFor(t).alphaMode === "OPAQUE"; });
+      const cols: number[] = [], pos: number[] = [], idx: number[] = []; let base = 0;
+      for (const st of strips) {
+        const c = (st.texture >= 0 && avg.get(it.so.textureHashes[st.texture])) || [0.6, 0.6, 0.6];
+        for (let k = 0; k < st.nv; k++) { const b = st.colors?.[k] ?? [1, 1, 1, 1]; cols.push(...ps2ColorToLinear([c[0] * b[0], c[1] * b[1], c[2] * b[2], 1])); pos.push(...st.positions[k]); }
+        for (const t of stripTriangles(st)) idx.push(base + t[0], base + t[1], base + t[2]);
+        base += st.nv;
+      }
       const m = solidToMesh(it.so, () => farMat);
-      // teñir los vértices con el color medio de la textura de cada tira
-      let v = 0; const cols: number[] = [];
-      for (const st of it.so.strips) { const c = (st.texture >= 0 && avg.get(it.so.textureHashes[st.texture])) || [0.6, 0.6, 0.6]; for (let k = 0; k < st.nv; k++) { const b = st.colors?.[k] ?? [1, 1, 1, 1]; cols.push(c[0] * b[0], c[1] * b[1], c[2] * b[2], 1); v++; } }
-      m.primitives = [{ ...m.primitives[0], positions: new Float32Array(it.so.strips.flatMap(st => st.positions.flat())), normals: undefined, uvs: undefined, colors: new Float32Array(cols), indices: new Uint32Array((() => { const idx: number[] = []; let base = 0; for (const st of it.so.strips) { for (const t of stripTriangles(st)) idx.push(base + t[0], base + t[1], base + t[2]); base += st.nv; } return idx; })()) }];
+      m.primitives = [{ material: farMat, positions: new Float32Array(pos), colors: new Float32Array(cols), indices: new Uint32Array(idx) }];
       return { mesh: m, matrix: it.matrix, id };
     });
     const far = flatten(farInst).map(p => clusterSimplify({ ...p, normals: undefined, uvs: undefined, ids: undefined }, FAR_CELL));
@@ -231,7 +262,7 @@ if (mode === "tiles") {
     for (const p of prims) for (let i = 0; i < p.positions.length; i++) { min[i % 3] = Math.min(min[i % 3], p.positions[i]); max[i % 3] = Math.max(max[i % 3], p.positions[i]); }
     groupOut.push({ name, hash: hex8(g.nameHash), number: g.number, kind: groupKind(gnames.get(g.nameHash), g.barrier), barrier: g.barrier, driveThrough: g.driveThrough, objects: list.length, glb: `groups/${name}.glb`, min, max });
   }
-  console.log(`Grupos: ${groupOut.length} exportados (${["carrera", "candado", "puerta", "otro"].map(k => `${k} ${groupOut.filter(g => g.kind === k).length}`).join(", ")}) · objetos ocultos sin grupo omitidos: ${hiddenSkipped}`);
+  console.log(`Grupos: ${groupOut.length} exportados (${["carrera", "candado", "puerta", "otro"].map(k => `${k} ${groupOut.filter(g => g.kind === k).length}`).join(", ")}) · objetos ocultos sin grupo omitidos: ${hiddenSkipped} · fuera de la vista del jugador (0x02): ${mainViewExcluded}`);
   const wj = existsSync(`${outDir}/world.json`) ? JSON.parse(readFileSync(`${outDir}/world.json`, "utf8")) : { disc, upAxis: "Z", sections: [] };
   wj.groups = groupOut.sort((a, b) => a.number - b.number);
   wj.tiles = out.sort((a, b) => a.id.localeCompare(b.id)); wj.tileSize = TILE;

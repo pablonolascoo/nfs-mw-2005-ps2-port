@@ -10,11 +10,12 @@ import { GameDisc } from "../lib/zdir";
 import { parseChunks, walk } from "../lib/bchunk";
 import { readSectionTable } from "../lib/world-ps2";
 import { readCollisionPack, instanceToWorld } from "../lib/roads-ps2";
+import { outDir } from "../lib/paths";
 
 const [iso, id, sizeArg] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("uso: bun src/cli/collision.ts <iso> <ID> [tamaño]"); process.exit(1); }
 const SIZE = Number(sizeArg ?? 400);
-const root = new URL("../../../", import.meta.url).pathname, out = `${root}map-data/${id}/collision`;
+const out = `${outDir(id)}/collision`;
 await mkdir(out, { recursive: true });
 const disc = await GameDisc.open(iso);
 const l2ra = await disc.readEntry(disc.find("TRACKS\\L2RA.BUN")!);

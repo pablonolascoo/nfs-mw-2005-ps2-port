@@ -1,6 +1,7 @@
 {
  "disc": "SLES-53559",
- "source": "GLOBAL\\ATTRIBUTES.BIN · TireOffsets",
+ "source": "GLOBAL\\ATTRIBUTES.BIN · ecar (TireOffsets, TireSkidWidth, Camber…) + tires (RIM_SIZE)",
+ "note": "default/traffic/racers/cops/street/van/truck/choppers/trailers son plantillas (padres), no coches",
  "cars": {
   "default": {
    "tires": [
@@ -30,7 +31,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "traffic": {
    "tires": [
@@ -60,7 +125,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "racers": {
    "tires": [
@@ -90,7 +215,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 8
+   "spokes": 8,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "choppers": {
    "tires": [
@@ -120,7 +305,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trailers": {
    "tires": [
@@ -150,7 +395,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "cops": {
    "tires": [
@@ -180,7 +485,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "monaro": {
    "tires": [
@@ -210,7 +579,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": -5
+   "spokes": -5,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    40,
+    45,
+    65,
+    40
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    40,
+    50,
+    70,
+    40
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "carreragt": {
    "tires": [
@@ -240,7 +673,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.265,
+    0.265,
+    0.335,
+    0.335
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    85,
+    45,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    90,
+    100,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.28,
+    0.2
+   ],
+   "feCompression": [
+    0.23,
+    0.23
+   ],
+   "rimSize": [
+    20,
+    20
+   ]
   },
   "clio": {
    "tires": [
@@ -270,7 +767,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 16
+   "spokes": 16,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    10,
+    50,
+    55,
+    50
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    10,
+    50,
+    55,
+    50
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "bmwm3gtre46": {
    "tires": [
@@ -300,7 +861,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 8
+   "spokes": 8,
+   "skidWidth": [
+    0.275,
+    0.275,
+    0.315,
+    0.315
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.35,
+    0.25
+   ],
+   "feCompression": [
+    0.27,
+    0.27
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "db9": {
    "tires": [
@@ -330,7 +955,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 10
+   "spokes": 10,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.275,
+    0.275
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    50,
+    60,
+    70,
+    85
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    50,
+    75,
+    80,
+    85
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.24,
+    0.24
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "elise": {
    "tires": [
@@ -360,7 +1049,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 6
+   "spokes": 6,
+   "skidWidth": [
+    0.195,
+    0.195,
+    0.225,
+    0.225
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    5,
+    30,
+    40,
+    50,
+    20
+   ],
+   "kitOffsetRear": [
+    0,
+    5,
+    30,
+    40,
+    50,
+    20
+   ],
+   "camber": [
+    0.24,
+    0.18
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "trailercmt": {
    "tires": [
@@ -390,7 +1143,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.9,
+    0.9,
+    0.9,
+    0.9
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "street": {
    "tires": [
@@ -420,7 +1233,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "911turbo": {
    "tires": [
@@ -450,7 +1323,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": -5
+   "spokes": -5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.295,
+    0.295
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    75,
+    55,
+    65,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    75,
+    55,
+    65,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "911gt2": {
    "tires": [
@@ -480,7 +1417,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 10
+   "spokes": 10,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.315,
+    0.315
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.24,
+    0.2
+   ],
+   "feCompression": [
+    0.2,
+    0.2
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "sl65": {
    "tires": [
@@ -510,7 +1511,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.285,
+    0.285
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.28,
+    0.22
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "copghost": {
    "tires": [
@@ -540,7 +1605,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "mustanggt": {
    "tires": [
@@ -570,7 +1695,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    40,
+    100,
+    65,
+    90
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    40,
+    100,
+    65,
+    90
+   ],
+   "camber": [
+    0.22,
+    0
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "gallardo": {
    "tires": [
@@ -600,7 +1789,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.295,
+    0.295
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    40,
+    0,
+    50,
+    55,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    40,
+    0,
+    50,
+    55,
+    0
+   ],
+   "camber": [
+    0.25,
+    0.2
+   ],
+   "feCompression": [
+    0.19,
+    0.19
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "bmwm3gtr": {
    "tires": [
@@ -630,7 +1883,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 8
+   "spokes": 8,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.28,
+    0.2
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "punto": {
    "tires": [
@@ -660,7 +1977,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 15
+   "spokes": 15,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    10,
+    74,
+    55,
+    50
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    10,
+    78,
+    55,
+    50
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    15,
+    15
+   ]
   },
   "van": {
    "tires": [
@@ -690,7 +2071,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.45,
+    0.45,
+    0.45,
+    0.45
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "997s": {
    "tires": [
@@ -720,7 +2161,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.295,
+    0.295
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    55,
+    60,
+    55,
+    80
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    100,
+    60,
+    55,
+    80
+   ],
+   "camber": [
+    0.25,
+    0.18
+   ],
+   "feCompression": [
+    0.25,
+    0.25
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "sl500": {
    "tires": [
@@ -750,7 +2255,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 7
+   "spokes": 7,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.285,
+    0.285
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    25,
+    40,
+    70,
+    30
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    25,
+    40,
+    70,
+    30
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.19,
+    0.19
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "trailerb": {
    "tires": [
@@ -780,7 +2349,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.6,
+    0.6,
+    0.6,
+    0.6
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trailera": {
    "tires": [
@@ -810,7 +2439,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.6,
+    0.6,
+    0.6,
+    0.6
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    24,
+    24
+   ]
   },
   "tt": {
    "tires": [
@@ -840,7 +2533,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 9
+   "spokes": 9,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    5,
+    0,
+    70,
+    100
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    5,
+    0,
+    70,
+    100
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.12,
+    0.12
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "viper": {
    "tires": [
@@ -870,7 +2627,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.275,
+    0.275,
+    0.345,
+    0.345
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    20,
+    90,
+    95,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    90,
+    95,
+    0
+   ],
+   "camber": [
+    0.25,
+    0.2
+   ],
+   "feCompression": [
+    0.24,
+    0.24
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "gti": {
    "tires": [
@@ -900,7 +2721,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.225,
+    0.225
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    40,
+    120,
+    95,
+    90,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    40,
+    130,
+    105,
+    100,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.16
+   ],
+   "feCompression": [
+    0.12,
+    0.12
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "copsport": {
    "tires": [
@@ -930,7 +2815,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.24,
+    0.28
+   ],
+   "rimSize": [
+    19,
+    20
+   ]
   },
   "is300": {
    "tires": [
@@ -960,7 +2909,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.215,
+    0.215,
+    0.215,
+    0.215
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    70,
+    90,
+    70,
+    70
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    70,
+    90,
+    90,
+    70
+   ],
+   "camber": [
+    0.2,
+    0.16
+   ],
+   "feCompression": [
+    0.11,
+    0.11
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "supra": {
    "tires": [
@@ -990,7 +3003,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    50,
+    40,
+    45,
+    105
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    50,
+    40,
+    45,
+    110
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "lancerevo8": {
    "tires": [
@@ -1020,7 +3097,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 6
+   "spokes": 6,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.235,
+    0.235
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    50,
+    60,
+    60
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    50,
+    60,
+    65
+   ],
+   "camber": [
+    0.26,
+    0.18
+   ],
+   "feCompression": [
+    0.15,
+    0.15
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "imprezawrx": {
    "tires": [
@@ -1050,7 +3191,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 10
+   "spokes": 10,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    30,
+    50,
+    90,
+    90
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    30,
+    60,
+    90,
+    90
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.11,
+    0.11
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "cts": {
    "tires": [
@@ -1080,7 +3285,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 7
+   "spokes": 7,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.225,
+    0.225
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    15,
+    40,
+    60,
+    50,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    15,
+    40,
+    65,
+    80,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "trailercrate": {
    "tires": [
@@ -1110,7 +3379,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.9,
+    0.9,
+    0.9,
+    0.9
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "copmidsizeint": {
    "tires": [
@@ -1140,7 +3469,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "truck": {
    "tires": [
@@ -1170,7 +3559,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.6,
+    0.6,
+    0.6,
+    0.6
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "eclipsegt": {
    "tires": [
@@ -1200,7 +3649,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 7
+   "spokes": 7,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.235,
+    0.235
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    70,
+    85,
+    95,
+    85
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    70,
+    85,
+    95,
+    85
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.14,
+    0.14
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "copheli": {
    "tires": [
@@ -1230,7 +3743,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "copmidsize": {
    "tires": [
@@ -1260,7 +3833,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "a4": {
    "tires": [
@@ -1290,7 +3923,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.235,
+    0.235
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    75,
+    45,
+    55,
+    65,
+    60
+   ],
+   "kitOffsetRear": [
+    0,
+    75,
+    45,
+    55,
+    65,
+    60
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.12,
+    0.12
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "caymans": {
    "tires": [
@@ -1320,7 +4017,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.265,
+    0.265
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    45,
+    65,
+    45,
+    45
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    45,
+    65,
+    45,
+    40
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.18,
+    0.18
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "slr": {
    "tires": [
@@ -1350,7 +4111,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": -9
+   "spokes": -9,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.295,
+    0.295
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    95,
+    105,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    95,
+    105,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.25,
+    0.2
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "cobaltss": {
    "tires": [
@@ -1380,7 +4205,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    125,
+    65,
+    90,
+    80
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    125,
+    65,
+    95,
+    80
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "clk500": {
    "tires": [
@@ -1410,7 +4299,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    60,
+    60,
+    95,
+    75,
+    85
+   ],
+   "kitOffsetRear": [
+    0,
+    60,
+    60,
+    95,
+    75,
+    85
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.13,
+    0.13
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "rx8": {
    "tires": [
@@ -1440,7 +4393,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": -5
+   "spokes": -5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.235,
+    0.235
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    5,
+    119,
+    103,
+    80
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    5,
+    119,
+    103,
+    90
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "copsuvl": {
    "tires": [
@@ -1470,7 +4487,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.265,
+    0.265
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.1,
+    0.1
+   ]
   },
   "trailerlog": {
    "tires": [
@@ -1500,7 +4577,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.6,
+    0.6,
+    0.6,
+    0.6
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "corvettec6r": {
    "tires": [
@@ -1530,7 +4667,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 15
+   "spokes": 15,
+   "skidWidth": [
+    0.285,
+    0.285,
+    0.335,
+    0.335
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.34,
+    0.28
+   ],
+   "feCompression": [
+    0.27,
+    0.27
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "copsuv": {
    "tires": [
@@ -1560,7 +4761,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.345,
+    0.345
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.02,
+    0.02
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "trailercon": {
    "tires": [
@@ -1590,7 +4855,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.9,
+    0.9,
+    0.9,
+    0.9
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "murcielago": {
    "tires": [
@@ -1620,7 +4945,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.335,
+    0.335
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    25,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    25,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.25,
+    0.2
+   ],
+   "feCompression": [
+    0.225,
+    0.225
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "rx8speedt": {
    "tires": [
@@ -1650,7 +5039,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 7
+   "spokes": 7,
+   "skidWidth": [
+    0.255,
+    0.255,
+    0.295,
+    0.295
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.22,
+    0.22
+   ]
   },
   "gto": {
    "tires": [
@@ -1680,7 +5129,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.245,
+    0.245
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    40,
+    60,
+    65,
+    40
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    40,
+    60,
+    70,
+    40
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.19,
+    0.19
+   ],
+   "rimSize": [
+    18,
+    18
+   ]
   },
   "semi": {
    "tires": [
@@ -1710,7 +5223,72 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.7,
+    0.7,
+    0.9,
+    0.9
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 1.5,
+   "feCompression": [
+    0.17,
+    0.17
+   ],
+   "rimSize": [
+    24,
+    24
+   ]
   },
   "rx7": {
    "tires": [
@@ -1740,7 +5318,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.255,
+    0.255
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    50,
+    75,
+    65,
+    80
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    50,
+    75,
+    65,
+    80
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.15,
+    0.15
+   ],
+   "rimSize": [
+    16,
+    16
+   ]
   },
   "corvette": {
    "tires": [
@@ -1770,7 +5412,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": -5
+   "spokes": -5,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.285,
+    0.285
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    65,
+    100,
+    70,
+    50,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    70,
+    90,
+    70,
+    50,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.22,
+    0.23
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "a3": {
    "tires": [
@@ -1800,7 +5506,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 5
+   "spokes": 5,
+   "skidWidth": [
+    0.225,
+    0.225,
+    0.225,
+    0.225
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    30,
+    110,
+    71,
+    60,
+    50
+   ],
+   "kitOffsetRear": [
+    0,
+    37,
+    123,
+    80,
+    60,
+    50
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.135,
+    0.135
+   ],
+   "rimSize": [
+    17,
+    17
+   ]
   },
   "copgto": {
    "tires": [
@@ -1830,7 +5600,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.265,
+    0.265
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ]
   },
   "fordgt": {
    "tires": [
@@ -1860,7 +5690,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 10
+   "spokes": 10,
+   "skidWidth": [
+    0.235,
+    0.235,
+    0.315,
+    0.315
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    120,
+    130,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    135,
+    125,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.23,
+    0.25
+   ],
+   "rimSize": [
+    19,
+    19
+   ]
   },
   "camaro": {
    "tires": [
@@ -1890,7 +5784,71 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 8
+   "spokes": 8,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.315,
+    0.315
+   ],
+   "kitWidthScale": [
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.1,
+    0.1
+   ],
+   "rimSize": [
+    15,
+    15
+   ]
   },
   "trafminivan": {
    "tires": [
@@ -1920,7 +5878,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafnews": {
    "tires": [
@@ -1950,7 +5968,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafha": {
    "tires": [
@@ -1980,7 +6058,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafcamper": {
    "tires": [
@@ -2010,7 +6148,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0,
+    0
+   ]
   },
   "trafgarb": {
    "tires": [
@@ -2040,7 +6238,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.4,
+    0.4,
+    0.5,
+    0.5
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 0,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "traftaxi": {
    "tires": [
@@ -2070,7 +6329,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafcemtr": {
    "tires": [
@@ -2100,7 +6419,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.4,
+    0.4
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 0.93,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "copsportghost": {
    "tires": [
@@ -2130,7 +6510,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.24,
+    0.28
+   ]
   },
   "trafamb": {
    "tires": [
@@ -2160,7 +6600,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.35,
+    0.35,
+    0.5,
+    0.5
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 0,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafsuva": {
    "tires": [
@@ -2190,7 +6691,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "copsporthench": {
    "tires": [
@@ -2220,7 +6781,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.24,
+    0.28
+   ]
   },
   "trafdmptr": {
    "tires": [
@@ -2250,7 +6871,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.45,
+    0.45,
+    0.45,
+    0.45
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": -1,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafvanb": {
    "tires": [
@@ -2280,7 +6962,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.4,
+    0.4,
+    0.4,
+    0.4
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "traf4dsedc": {
    "tires": [
@@ -2310,7 +7052,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "traf4dseda": {
    "tires": [
@@ -2340,7 +7142,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafpizza": {
    "tires": [
@@ -2370,7 +7232,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafficcoup": {
    "tires": [
@@ -2400,7 +7322,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.16,
+    0.16
+   ]
   },
   "trafcourt": {
    "tires": [
@@ -2430,7 +7412,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.23,
+    0.23,
+    0.23,
+    0.23
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "traf4dsedb": {
    "tires": [
@@ -2460,7 +7502,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafpickupa": {
    "tires": [
@@ -2490,7 +7592,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "trafstwag": {
    "tires": [
@@ -2520,7 +7682,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "copgtoghost": {
    "tires": [
@@ -2550,7 +7772,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.245,
+    0.245,
+    0.265,
+    0.265
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0.22,
+    0.18
+   ],
+   "feCompression": [
+    0.21,
+    0.21
+   ]
   },
   "traffire": {
    "tires": [
@@ -2580,7 +7862,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.45,
+    0.45,
+    0.45,
+    0.45
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "cemtr": {
    "tires": [
@@ -2610,7 +7952,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.4,
+    0.4
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 0.93,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "garb": {
    "tires": [
@@ -2640,7 +8043,68 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.4,
+    0.4,
+    0.5,
+    0.5
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "extraRearTire": 0,
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "pickupa": {
    "tires": [
@@ -2670,7 +8134,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "pizza": {
    "tires": [
@@ -2700,7 +8224,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.2,
+    0.2,
+    0.2,
+    0.2
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "taxi": {
    "tires": [
@@ -2730,7 +8314,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.25,
+    0.25,
+    0.25,
+    0.25
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   },
   "minivan": {
    "tires": [
@@ -2760,7 +8404,67 @@
     ]
    ],
    "className": "ecar",
-   "spokes": 0
+   "spokes": 0,
+   "skidWidth": [
+    0.3,
+    0.3,
+    0.3,
+    0.3
+   ],
+   "kitWidthScale": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "kitOffsetFront": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "kitOffsetRear": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "camber": [
+    0,
+    0
+   ],
+   "feCompression": [
+    0.17,
+    0.17
+   ]
   }
  }
 }

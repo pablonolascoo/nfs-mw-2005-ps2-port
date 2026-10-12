@@ -43,7 +43,8 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 - `world.json.groups[]`: `name`, `hash`, `kind` (carrera/candado/puerta), `barrier`, `driveThrough`, `glb`, `min`, `max`.
 - `garages.json.garages[]`: `collection`, `zoneType`, `zone`, `radius`, `building` (caja del edificio), `out` (dirección de salida), `door` (centro, normal, tamaño).
 - `roads.json`: `nodes[] {pos, profile, segments}`, `segments[] {nodes, length, road, flagNames, startControl, endControl}` (Bézier cúbica), `profiles[] {lanes[] {type, width, offset}}`, `roads[]`, `grid`.
-- `cars.json.cars[nombre]`: `tires` = 4 × `[x, y, z, radio]`, `className`, `spokes`.
+- `cars.json.cars[nombre]`: `tires` = 4 × `[x, y, z, radio]`, `className`, `spokes`, `skidWidth`, `kitWidthScale`, `kitOffsetFront/Rear`, `camber`, `feCompression`, `rimSize` (ver doc 10).
+- `cars/*.glb`: cada nodo lleva `extras.pieza` (ranura, kit, estilo, de serie) y, si tiene, `extras.marcadores`.
 
 ## 5. Cómo regenerar una sola parte
 ```bash

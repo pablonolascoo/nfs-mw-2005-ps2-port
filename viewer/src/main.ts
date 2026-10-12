@@ -4,7 +4,7 @@ import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
-import { Driver, makeCollider, carHolder } from "./drive";
+import { Driver, makeCollider, carHolder, tuningPacks, type CarAttribs, type CarConfig } from "./drive";
 import { buildRoads, type RoadsFile } from "./roads";
 import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
 
@@ -79,7 +79,17 @@ let tiles: Tile[] = [];
 let groups: Group[] = [];
 let zones: Zone[] = [];
 let garageInfo: GarageInfo[] = [];
-let carAttribs: Record<string, { tires: number[][] }> = {};
+let carAttribs: Record<string, CarAttribs> = {};
+/** Atributos del coche; los modelos sin colección ecar propia toman los de su pariente (BMWM3 → bmwm3gtr) [V: cars.json]. */
+const attribsFor = (name: string) => carAttribs[name.toLowerCase()] ?? carAttribs[({ bmwm3: "bmwm3gtr" } as Record<string, string>)[name.toLowerCase()] ?? ""];
+// Tuneo por URL (coche del jugador y vista previa): ?kit=2&capo=5&llanta=BBS_STYLE01&aleron=SPOILER_STYLE03&techo=ROOF_STYLE01
+const qs = new URLSearchParams(location.search);
+const carConfig: CarConfig = { kit: qs.has("kit") ? +qs.get("kit")! : undefined, hood: qs.has("capo") ? +qs.get("capo")! : null, rim: qs.get("llanta"), spoiler: qs.get("aleron"), roof: qs.get("techo") };
+/** Carga (una vez) los packs comunes de tuneo que pida la configuración. */
+async function ensureTuning(cfg: CarConfig) {
+  const need = [cfg.rim && "WHEELS", cfg.spoiler && (/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler) ? `SPOILER_${/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler)![1]}` : "SPOILER"), cfg.roof && "ROOF"].filter((x): x is string => !!x);
+  for (const pack of need) if (!tuningPacks.has(pack)) { const it = index?.items.find(i => i.id === `car:${pack}`); if (it) tuningPacks.set(pack, await loadGlb(it.glb)); }
+}
 /** Color de la pintura del coche del jugador (?pintura=1f6fd1). El BMW M3 GTR de la historia es plata y azul. */
 let playerPaint = "#" + (new URLSearchParams(location.search).get("pintura") ?? "aeb7c2").replace(/^#/, "");
 // Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
@@ -157,14 +167,18 @@ async function open(it: Item) {
   let obj = await loadGlb(it.glb);
   // Coches: 4 ruedas (TireOffsets) y pintura, igual que al conducir
   const carName = it.id.startsWith("car:") ? it.id.slice(4).toLowerCase() : "";
-  if (carAttribs[carName]) obj = carHolder(obj, carAttribs[carName].tires, playerPaint).holder;
+  if (attribsFor(carName)) { await ensureTuning(carConfig); obj = carHolder(obj, attribsFor(carName), playerPaint, carConfig).holder; }
+  // Packs de tuneo (llantas, alerones, techos, frenos): todas las piezas en rejilla, una al lado de otra.
+  if (it.group === "Piezas de tuneo") { let k = 0; obj.traverse(o => { if (!o.userData?.pieza) return; const n = k++, cols = 12; o.position.set((n % cols) * 1.2, Math.floor(n / cols) * 1.2, 0); }); }
   content.add(obj);
   $("tri-count").textContent = Math.round(countTris(obj)).toLocaleString("es-ES");
   frame(obj);
 }
 
 function frame(obj: THREE.Object3D) {
-  const box = new THREE.Box3().setFromObject(obj);
+  // Solo lo visible: los coches traen kits, capós y paneles ocultos que estirarían la caja.
+  const box = new THREE.Box3(); obj.updateMatrixWorld(true);
+  obj.traverseVisible(o => { const m = o as THREE.Mesh; if (m.isMesh) { m.geometry.computeBoundingBox(); box.union(m.geometry.boundingBox!.clone().applyMatrix4(m.matrixWorld)); } });
   if (box.isEmpty()) return;
   const c = box.getCenter(new THREE.Vector3()), r = box.getSize(new THREE.Vector3()).length() * 0.9 || 1;
   controls.target.copy(c);
@@ -417,7 +431,7 @@ driver.root.visible = false;
 const pick = $<HTMLSelectElement>("car-pick");
 async function loadCarInto(name: string) {
   const it = index?.items.find(i => i.id === `car:${name}`);
-  if (it) driver.setModel(await loadGlb(it.glb), carAttribs[name.toLowerCase()]?.tires, playerPaint);
+  if (it) { await ensureTuning(carConfig); driver.setModel(await loadGlb(it.glb), attribsFor(name), playerPaint, carConfig); }
 }
 /** Busca suelo desde muy arriba (para aparecer). */
 function groundFromSky(x: number, y: number) {
@@ -435,7 +449,7 @@ function refreshColliders(now: number) {
   const p = driver.root.position, list: THREE.Mesh[] = [];
   for (const s of tileState.values()) {
     if (!s.near || !s.ready || s.box.distanceToPoint(p) > 260) continue;
-    s.near.traverse(o => { const mesh = o as THREE.Mesh; if (!mesh.isMesh || !/opaque|mask50/.test(String((mesh.material as THREE.Material).name))) return;
+    s.near.traverse(o => { const mesh = o as THREE.Mesh; if (!mesh.isMesh || !/^array (opaque|mask) /.test(String((mesh.material as THREE.Material).name))) return;
       if ((mesh.geometry as THREE.BufferGeometry & { boundsTree?: unknown }).boundsTree) list.push(mesh); }); // el BVH llega hecho desde el hilo de carga
   }
   driver.colliders = list;
@@ -531,7 +545,7 @@ async function placeGarageNow(z: Zone) {
   const left = new THREE.Vector3(-out.y, out.x, 0);
   for (const d of mod.display ?? []) {
     const it = index!.items.find(i => i.id === `car:${d.car}`); if (!it) continue;
-    const { holder } = carHolder(await loadGlb(it.glb), carAttribs[d.car.toLowerCase()]?.tires, d.paint ?? "#20242c");
+    const { holder } = carHolder(await loadGlb(it.glb), attribsFor(d.car), d.paint ?? "#20242c");
     holder.position.copy(spot.position).addScaledVector(outV3, d.offset[0]).addScaledVector(left, d.offset[1]).setZ(ground);
     holder.rotation.z = yawOut + THREE.MathUtils.degToRad(d.yaw ?? 0);
     holder.visible = false; display.push(holder); scene.add(holder);

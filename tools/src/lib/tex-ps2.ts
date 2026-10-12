@@ -4,7 +4,7 @@ import { GsMem } from "./gsmem";
 import { parseChunks, walk } from "./bchunk";
 import { lzDecompress } from "./lz";
 
-export interface Texture { name: string; nameHash: number; classHash: number; width: number; height: number; bpp: number; psm: number; cpsm: number; swizzled: boolean; alphaUsage: number; alphaBlend: number; rgba: Uint8Array; warnings: string[] }
+export interface Texture { name: string; nameHash: number; classHash: number; width: number; height: number; bpp: number; psm: number; cpsm: number; swizzled: boolean; alphaUsage: number; alphaBlend: number; tilableUV: number; applyAlphaSorting: number; renderingOrder: number; scrollType: number; texFlags: number; rgba: Uint8Array; warnings: string[] }
 
 const PSM = { CT32: 0, CT24: 1, CT16: 2, T8: 0x13, T4: 0x14 } as const;
 
@@ -14,7 +14,7 @@ export function decodeTexture(info: Uint8Array, plat: Uint8Array, pixels: Uint8A
   const width = iv.getInt16(0x44, true), height = iv.getInt16(0x46, true);
   const comp = info[0x4a], psm = plat[4], cpsm = plat[5];
   const tbw = pv.getInt8(0x10 + 6), swizzled = plat[0x10 + 7] === 1;
-  const t: Texture = { name, nameHash: iv.getUint32(0x24, true), classHash: iv.getUint32(0x28, true), width, height, bpp: comp, psm, cpsm, swizzled, alphaUsage: info[0x55], alphaBlend: info[0x56], rgba: new Uint8Array(width * height * 4), warnings: [] };
+  const t: Texture = { name, nameHash: iv.getUint32(0x24, true), classHash: iv.getUint32(0x28, true), width, height, bpp: comp, psm, cpsm, swizzled, alphaUsage: info[0x55], alphaBlend: info[0x56], tilableUV: info[0x4f], applyAlphaSorting: info[0x54], renderingOrder: info[0x51], scrollType: info[0x52], texFlags: info[0x57], rgba: new Uint8Array(width * height * 4), warnings: [] };
   let idx: Uint8Array;
   if (psm === PSM.T8 || psm === PSM.T4) {
     const is4 = psm === PSM.T4;

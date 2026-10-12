@@ -28,9 +28,9 @@ export function carPlaceholders(car: string): Map<number, Placeholder> {
   named("LICENSEPLATE", { role: "matricula", color: [0.9, 0.9, 0.86, 1] });
   add(0x5799e60b, { name: "DRIVER", role: "piloto_conductor", color: [0.12, 0.12, 0.13, 1] });
   for (const n of ["BRAKE_GLOBAL", "BRAKE_GLOBAL_LEFT"]) named(n, { role: "freno", color: [0.35, 0.35, 0.37, 1] });
-  // Sin nombre resuelto todavía [I]: caras de la llanta en la pieza TIRE y disco de freno (por la geometría que los usa).
-  add(0x03c906ef, { name: "LLANTA_03c906ef", role: "llanta", color: [0.58, 0.59, 0.62, 1] });
-  add(0xe38806e3, { name: "LLANTA_e38806e3", role: "llanta", color: [0.3, 0.31, 0.33, 1] });
-  add(0x7811c149, { name: "FRENO_7811c149", role: "freno", color: [0.35, 0.35, 0.37, 1] });
+  // Respaldo por si faltara GLOBAL\GLOBALB.BUN: nombres resueltos por hash y encontrados allí [V].
+  add(0x03c906ef, { name: "TREAD", role: "goma", color: [0.1, 0.1, 0.1, 1] });
+  add(0xe38806e3, { name: "TIRE_BACK", role: "goma", color: [0.08, 0.08, 0.08, 1] });
+  for (const n of ["ROTOR1", "ROTOR2", "ROTOR3", "ROTOR4"]) named(n, { role: "freno", color: [0.35, 0.35, 0.37, 1] });
   return m;
 }

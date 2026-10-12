@@ -43,7 +43,8 @@ None of it is pushed to GitHub except small metadata JSON files. Figures are for
 - `world.json.groups[]`: `name`, `hash`, `kind` (carrera = race / candado = padlock / puerta = door), `barrier`, `driveThrough`, `glb`, `min`, `max`.
 - `garages.json.garages[]`: `collection`, `zoneType`, `zone`, `radius`, `building` (building box), `out` (exit direction), `door` (centre, normal, size).
 - `roads.json`: `nodes[] {pos, profile, segments}`, `segments[] {nodes, length, road, flagNames, startControl, endControl}` (cubic Bézier), `profiles[] {lanes[] {type, width, offset}}`, `roads[]`, `grid`.
-- `cars.json.cars[name]`: `tires` = 4 × `[x, y, z, radius]`, `className`, `spokes`.
+- `cars.json.cars[name]`: `tires` = 4 × `[x, y, z, radius]`, `className`, `spokes`, `skidWidth`, `kitWidthScale`, `kitOffsetFront/Rear`, `camber`, `feCompression`, `rimSize` (see doc 10).
+- `cars/*.glb`: each node has `extras.pieza` (slot, kit, style, stock) and, when present, `extras.marcadores`.
 
 ## 5. Regenerate a single part
 ```bash

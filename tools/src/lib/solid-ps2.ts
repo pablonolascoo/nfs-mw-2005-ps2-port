@@ -5,7 +5,9 @@ import { parseChunks, type Chunk } from "./bchunk";
 import { parseVif, unpackValues, type Unpack } from "./vif";
 
 export interface Strip { nv: number; np: number; texture: number; lightMaterial: number; flags: number; positions: number[][]; uvs: number[][]; normals: number[][]; colors?: number[][]; adc: boolean[] }
-export interface Solid { name: string; nameHash: number; numPolys: number; numVerts: number; aabbMin: number[]; aabbMax: number[]; pivot: number[]; textureHashes: number[]; lightMaterialHashes: number[]; strips: Strip[]; warnings: string[] }
+/** ePositionMarker (0x50 B): NameHash, iParam0, fParam0, fParam1, bMatrix4 (filas; v3 = traslación) [D: EcstasyData.hpp]. */
+export interface PositionMarker { nameHash: number; iParam0: number; fParam0: number; fParam1: number; matrix: number[] }
+export interface Solid { name: string; nameHash: number; markers: PositionMarker[]; numPolys: number; numVerts: number; aabbMin: number[]; aabbMax: number[]; pivot: number[]; textureHashes: number[]; lightMaterialHashes: number[]; strips: Strip[]; warnings: string[] }
 
 const PAD = 0x11111111;
 const f32 = (dv: DataView, o: number) => dv.getFloat32(o, true);
@@ -44,7 +46,7 @@ function readSolid(buf: Uint8Array, c: Chunk): Solid {
     aabbMin: [f32(dv, h + 0x20), f32(dv, h + 0x24), f32(dv, h + 0x28)],
     aabbMax: [f32(dv, h + 0x30), f32(dv, h + 0x34), f32(dv, h + 0x38)],
     pivot: Array.from({ length: 16 }, (_, i) => f32(dv, h + 0x40 + i * 4)),
-    textureHashes: [], lightMaterialHashes: [], strips: [], warnings: [],
+    textureHashes: [], lightMaterialHashes: [], strips: [], warnings: [], markers: [],
   };
   const readHashTable = (id: number) => {
     const t = kids.find(k => k.id === id); if (!t) return [];
@@ -54,6 +56,12 @@ function readSolid(buf: Uint8Array, c: Chunk): Solid {
   };
   solid.textureHashes = readHashTable(0x00134012);
   solid.lightMaterialHashes = readHashTable(0x00134013);
+  // Marcadores de posición (chunk 0x0013401A, BCHUNK_SOLID_MARKERS): dónde van alerón, toma de techo, frenos, luces… [D][V]
+  const mk = kids.find(k => k.id === 0x0013401a);
+  if (mk) for (let o = align(mk.dataOffset, 16); o + 0x50 <= mk.dataOffset + mk.size; o += 0x50) {
+    if (dv.getUint32(o, true) === PAD) { o -= 0x4c; continue; }
+    solid.markers.push({ nameHash: dv.getUint32(o, true), iParam0: dv.getInt32(o + 4, true), fParam0: f32(dv, o + 8), fParam1: f32(dv, o + 12), matrix: Array.from({ length: 16 }, (_, i) => f32(dv, o + 0x10 + i * 4)) });
+  }
   const plat = kids.find(k => k.id === 0x80134100);
   if (!plat) { solid.warnings.push("sin chunk de plataforma 0x80134100"); return solid; }
   const tbl = plat.children!.find(k => k.id === 0x00134a01), dat = plat.children!.find(k => k.id === 0x00134a02);

@@ -9,6 +9,8 @@ import { join, resolve } from "node:path";
 import { Glob } from "bun";
 import { GameDisc } from "../lib/zdir";
 import { AttribDatabase, Vault, attribHash, hexKey, parseVpak, type CollectionInfo, type Value } from "../lib/vlt";
+import { loadAttribNames } from "../lib/attrib-names";
+import { outDir as outDirFor } from "../lib/paths";
 
 const [iso, id, file = "GLOBAL\\GAMEPLAY.BIN"] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("Uso: bun src/cli/vlt-dump.ts <iso> <ID> [GLOBAL\\GAMEPLAY.BIN]"); process.exit(1); }
@@ -39,6 +41,9 @@ try {
     }
   }
 } catch { console.warn("Aviso: no se encontró el decomp; los campos se resolverán solo con cadenas del disco."); }
+
+// 1b) Lista propia de nombres (tools/data/attrib-names.txt, incrustada): basta sin la decomp.
+const ownNames = await loadAttribNames(db);
 
 // 2) Esquema (ATTRIBUTES.BIN) + datos (GAMEPLAY.BIN u otro VPAK).
 const schemaVaults = parseVpak(await read("GLOBAL\\ATTRIBUTES.BIN"));
@@ -124,7 +129,7 @@ const zones = ours.filter(c => { const r = resolved(c); return ZONE_TYPES.includ
 }).sort((a, b) => (a.zoneType as string).localeCompare(b.zoneType as string) || a.collection.localeCompare(b.collection, "en", { numeric: true }));
 
 // 6) Escritura.
-const outDir = join(ROOT, "map-data", id);
+const outDir = outDirFor(id);
 mkdirSync(outDir, { recursive: true });
 const parentCounts: Record<string, number> = {};
 for (const c of collections) if (c.parent) parentCounts[c.parent] = (parentCounts[c.parent] ?? 0) + 1;

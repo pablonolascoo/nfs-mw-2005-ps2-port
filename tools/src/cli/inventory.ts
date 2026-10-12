@@ -4,13 +4,16 @@ import { GameDisc } from "../lib/zdir";
 import { loadCandidates } from "../lib/names";
 import { sniff } from "../lib/magic";
 import { hex8 } from "../lib/hash";
+import { embedded, inventoryDir } from "../lib/paths";
+import { mkdirSync } from "node:fs";
 
 const [isoPath, id] = Bun.argv.slice(2);
 if (!isoPath || !id) { console.error("Uso: bun src/cli/inventory.ts <iso> <ID>"); process.exit(1); }
-const root = new URL("../../../", import.meta.url).pathname;
+const inv = inventoryDir();
+mkdirSync(inv, { recursive: true });
 
 const disc = await GameDisc.open(isoPath);
-const cands = await loadCandidates(disc, [`${root}tools/data/filenames-mw-ps2.list`, `${root}tools/data/filenames-extra.list`]);
+const cands = await loadCandidates(disc, embedded.filenameLists);
 const resolved = disc.resolveNames(cands);
 console.log(`${id}: ${disc.entries.length} archivos en ZDIR, ${resolved} con nombre (${cands.size} candidatos)`);
 
@@ -28,8 +31,8 @@ for (const e of disc.entries) {
 rows.sort((a, b) => a.path.localeCompare(b.path));
 
 const isoFiles = disc.files.filter(f => !f.isDir).map(f => ({ path: f.path, size: f.size }));
-await Bun.write(`${root}inventory/${id}.json`, JSON.stringify({ disc: id, iso: isoPath.split("/").pop(), generated: new Date().toISOString(), isoFiles, entries: rows }, null, 1));
-await Bun.write(`${root}inventory/${id}.csv`, ["path,named,hash,archive,sector,size,sha256,format,confidence,head", ...rows.map(r => [r.path, r.named, r.hash, r.archive, r.sector, r.size, r.sha256, `"${r.format}"`, r.confidence, r.head].join(","))].join("\n"));
+await Bun.write(`${inv}/${id}.json`, JSON.stringify({ disc: id, iso: isoPath.split("/").pop(), generated: new Date().toISOString(), isoFiles, entries: rows }, null, 1));
+await Bun.write(`${inv}/${id}.csv`, ["path,named,hash,archive,sector,size,sha256,format,confidence,head", ...rows.map(r => [r.path, r.named, r.hash, r.archive, r.sector, r.size, r.sha256, `"${r.format}"`, r.confidence, r.head].join(","))].join("\n"));
 
 const byDir = new Map<string, { n: number; bytes: number }>();
 for (const r of rows) { const d = r.path.split("\\")[0]; const v = byDir.get(d) ?? { n: 0, bytes: 0 }; v.n++; v.bytes += r.size; byDir.set(d, v); }
@@ -43,5 +46,5 @@ const md = [
   "## Formato probable (por cabecera)", "", "| Formato | Archivos |", "|---|---|", ...[...byFmt].sort((a, b) => b[1] - a[1]).map(([f, n]) => `| ${f} | ${n} |`), "",
   "## 25 archivos más grandes", "", "| Ruta | MB | Formato |", "|---|---|---|", ...[...rows].sort((a, b) => b.size - a.size).slice(0, 25).map(r => `| ${r.path} | ${mb(r.size)} | ${r.format} |`), "",
 ].join("\n");
-await Bun.write(`${root}inventory/${id}.md`, md);
+await Bun.write(`${inv}/${id}.md`, md);
 console.log(`Listo: inventory/${id}.{json,csv,md}`);

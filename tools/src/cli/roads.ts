@@ -6,11 +6,12 @@ import { mkdir } from "node:fs/promises";
 import { GameDisc } from "../lib/zdir";
 import { parseChunks, walk } from "../lib/bchunk";
 import { readSectionTable } from "../lib/world-ps2";
+import { outDir } from "../lib/paths";
 import { readRoadNetwork, readCollisionPack, instanceToWorld, segmentPoint, type RoadNetwork } from "../lib/roads-ps2";
 
 const [iso, id] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("uso: bun src/cli/roads.ts <iso> <ID>"); process.exit(1); }
-const root = new URL("../../../", import.meta.url).pathname, out = `${root}map-data/${id}`;
+const out = outDir(id);
 const disc = await GameDisc.open(iso);
 const l2ra = await disc.readEntry(disc.find("TRACKS\\L2RA.BUN")!);
 const net = readRoadNetwork(l2ra);

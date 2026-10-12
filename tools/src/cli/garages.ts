@@ -2,6 +2,7 @@
 // Entrada: map-data/<ID>/zones.json (vlt-dump). Salida: map-data/<ID>/garages.json.
 // Regla [V en 7 de 8 talleres]: la zona queda frente a una cara del edificio; se toma el eje local (±X, ±Y) más alineado
 // con la dirección edificio→zona. Sin edificio identificado: la puerta mira hacia el punto de reaparición [H].
+import { outDir } from "../lib/paths";
 import { GameDisc } from "../lib/zdir";
 import { parseChunks } from "../lib/bchunk";
 import { readSectionTable, readScenery, modelHash } from "../lib/world-ps2";
@@ -10,7 +11,7 @@ import { readTexturePack } from "../lib/tex-ps2";
 import { hex8 } from "../lib/hash";
 
 const [iso, disc] = Bun.argv.slice(2);
-const root = new URL("../../../", import.meta.url).pathname, out = `${root}map-data/${disc}`;
+const out = outDir(disc);
 const zones = (await Bun.file(`${out}/zones.json`).json()).zones as { collection: string; zoneType: string; position: number[]; radius: number; respawn?: { position: number[]; rotation: number } }[];
 const BUILDING: Record<string, RegExp> = { safehouse: /SafehouseA|SafeGarage/i, carlot: /CarParkDealership/i, customshop: /ChopShop/i };
 const d = await GameDisc.open(iso);

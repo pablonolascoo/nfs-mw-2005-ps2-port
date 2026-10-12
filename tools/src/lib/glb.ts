@@ -3,7 +3,8 @@
 export interface GlbPrimitive { positions: Float32Array; normals?: Float32Array; uvs?: Float32Array; colors?: Float32Array; ids?: Float32Array; indices: Uint32Array; material: number }
 export interface GlbMesh { name: string; primitives: GlbPrimitive[]; extras?: Record<string, unknown>; matrix?: number[] }
 export interface GlbMaterial { name: string; color: [number, number, number, number]; texture?: number; alphaMode?: "OPAQUE" | "MASK" | "BLEND"; alphaCutoff?: number; doubleSided?: boolean; unlit?: boolean; extras?: Record<string, unknown> }
-export interface GlbImage { name: string; png?: Uint8Array; uri?: string }
+/** wrap = TilableUV del juego: bit 0 repite U, bit 1 repite V (si no, CLAMP_TO_EDGE). Sin valor = repetir. */
+export interface GlbImage { name: string; png?: Uint8Array; uri?: string; wrap?: number }
 export interface GlbNode { name: string; mesh: number; matrix?: number[]; extras?: Record<string, unknown> }
 
 export function writeGlb(meshes: GlbMesh[], materials: GlbMaterial[], images: GlbImage[] = [], rootName = "root", nodes?: GlbNode[]): Uint8Array {
@@ -47,7 +48,7 @@ export function writeGlb(meshes: GlbMesh[], materials: GlbMaterial[], images: Gl
     meshes: gltfMeshes,
     ...(materials.some(m => m.unlit) ? { extensionsUsed: ["KHR_materials_unlit"] } : {}),
     materials: materials.map(m => ({ name: m.name, ...(m.unlit ? { extensions: { KHR_materials_unlit: {} } } : {}), doubleSided: m.doubleSided ?? true, alphaMode: m.alphaMode ?? "OPAQUE", ...(m.alphaMode === "MASK" ? { alphaCutoff: m.alphaCutoff ?? 0.5 } : {}), ...(m.extras ? { extras: m.extras } : {}), pbrMetallicRoughness: { baseColorFactor: m.color, metallicFactor: 0, roughnessFactor: 0.85, ...(m.texture !== undefined ? { baseColorTexture: { index: m.texture } } : {}) } })),
-    ...(images.length ? { images: imageDefs, textures: images.map((_, i) => ({ source: i, sampler: 0 })), samplers: [{ magFilter: 9729, minFilter: 9987, wrapS: 10497, wrapT: 10497 }] } : {}),
+    ...(images.length ? { images: imageDefs, textures: images.map((img, i) => ({ source: i, sampler: img.wrap ?? 3 })), samplers: [0, 1, 2, 3].map(w => ({ magFilter: 9729, minFilter: 9987, wrapS: w & 1 ? 10497 : 33071, wrapT: w & 2 ? 10497 : 33071 })) } : {}),
     accessors, bufferViews, buffers: [{ byteLength }],
   };
   let json = new TextEncoder().encode(JSON.stringify(gltf));

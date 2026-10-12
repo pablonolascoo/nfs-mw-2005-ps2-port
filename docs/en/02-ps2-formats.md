@@ -38,5 +38,19 @@ Reference code: `tools/src/lib/`.
 - Formats: PSMT8 (`0x13`) and PSMT4 (`0x14`) with a PSMCT32 CLUT; PS2 alpha (0x80 = opaque). World: 2,472 of 2,622 textures are PSMT4 [V].
 - **Swizzle** [V, visually]: PSMT8 was uploaded as PSMCT32 of (W/2)×(H/2); PSMT4 as **PSMCT16** of (W/2)×(H/2). 8-bit CLUT in CSM1 order (index bits 3↔4 swapped).
 
-## Transparency [V][D]
-`TextureInfo.AlphaUsageType` (0 none, 1 punch-through, 2 modulated) and `AlphaBlendType` (0 src-copy, 1 blend, 2 additive…). Modulated + src-copy means alpha is not transparency (asphalt `TRNS_*_PAVEMENT*`): opaque. It used to be treated as cut-out and the roads vanished.
+## Transparency, wrapping and vertex colour [V][D]
+Game rule: `eSetBlendMode` [D: `GameCube/Src/Ecstasy/EcstasyEx.cpp`]. Code: `alphaFor` in `tools/src/lib/materials.ts`.
+
+| `AlphaUsageType` | `AlphaBlendType` | Mode | Textures [V] |
+|---|---|---|---|
+| 0 none | 0 copy | opaque | 1,012 |
+| 2 modulated | 0 copy | **opaque** (alpha is not transparency: asphalt) | 367 |
+| 1 punch-through | 0 copy | alpha test `> 0x28` (0.157) | 175 |
+| 2 modulated | 1 blend | normal blend: `SHD_*` (1,026) and decals, graffiti, glass, chain-link (33) | 1,059 |
+| any | 2 additive | additive (neons, lights) | 12 |
+
+- The cut-out threshold is `0x28`, not 0.5 [D: `_alphaRef`]. With 0.5, leaves, grilles and thin railings were lost.
+- `TilableUV` (`TextureInfo +0x4F`): bit 0 repeats U, bit 1 repeats V; 0 = clamp to edge [V: only 0.8 % of those textures' UVs leave 0…1]. Signs use 0. The GLB carries it as a `sampler` (`CLAMP_TO_EDGE` / `REPEAT`).
+- Other useful `TextureInfo` fields: `ApplyAlphaSorting +0x54` (23 textures), `RenderingOrder +0x51` (4 = shadows), `ScrollType +0x52`.
+- **Vertex colour**: 128 = 1.0 and the GS modulates in screen (gamma) space [D/V]. The converter stores `COLOR_0` as `(c/128)^2.2` (linear, may exceed 1). Any glTF viewer then gives texture × colour exactly like the PS2. It used to be stored unlinearised and the baked lighting looked flat and dull.
+- Strip flags (`eStripEntry.Flags`) follow the texture: `0x4040` ↔ blend, `0x4008` ↔ cut-out [V]. There is no single-sided flag: everything is drawn double-sided.

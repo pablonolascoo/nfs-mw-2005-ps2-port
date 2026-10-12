@@ -1,6 +1,7 @@
 // Plano cenital de Rockport rasterizado desde los datos del disco (sin GPU).
 // Color = color medio de la textura × color de vértice horneado. Se queda la superficie más alta (z-buffer).
 // Uso: bun src/cli/topdown.ts <iso> <ID> [px=4096]
+import { outDir } from "../lib/paths";
 import { GameDisc } from "../lib/zdir";
 import { parseChunks } from "../lib/bchunk";
 import { readSectionTable, readScenery, modelHash } from "../lib/world-ps2";
@@ -10,7 +11,7 @@ import { encodePng } from "../lib/png";
 
 const [iso, disc, pxArg = "4096"] = Bun.argv.slice(2);
 const PX = +pxArg;
-const root = new URL("../../../", import.meta.url).pathname;
+const out0 = outDir(disc);
 const d = await GameDisc.open(iso);
 const sections = readSectionTable(await d.readEntry(d.find("TRACKS\\L2RA.BUN")!));
 const stream = await d.readEntry(d.find("TRACKS\\STREAML2RA.BUN")!);
@@ -64,7 +65,7 @@ for (const { buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (co
     }
   }
 }
-const out = `${root}map-data/${disc}/rockport-plano.png`;
+const out = `${out0}/rockport-plano.png`;
 await Bun.write(out, encodePng(img, PX, PX));
-await Bun.write(`${root}map-data/${disc}/rockport-plano.json`, JSON.stringify({ px: PX, minX, minY, metrosPorPixel: 1 / scale, nota: "x_mundo = minX + px*m; y_mundo = minY + (PX-1-py)*m" }, null, 1));
+await Bun.write(`${out0}/rockport-plano.json`, JSON.stringify({ px: PX, minX, minY, metrosPorPixel: 1 / scale, nota: "x_mundo = minX + px*m; y_mundo = minY + (PX-1-py)*m" }, null, 1));
 console.log(`Plano: ${out} · ${tris} triángulos · ${(1 / scale).toFixed(2)} m/px · X ${minX.toFixed(0)}..${maxX.toFixed(0)} Y ${minY.toFixed(0)}..${maxY.toFixed(0)}`);
