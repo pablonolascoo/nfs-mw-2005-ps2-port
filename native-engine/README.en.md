@@ -202,7 +202,7 @@ With no data and no bundled converter (development), the app shows an alert with
 - Each tile is one vertex buffer and one index buffer, with one range per material.
 
 ### 4. Draw passes (`Renderer.swift`)
-1. Sky: gradient by view height (viewer colours).
+1. Sky: the game's textures (`SKY_MIDDAY_A_*` from `DYNTEX.BIN`) by elevation; without `fx/`, the viewer gradient (doc 20).
 2. Opaque and alpha-tested (fences, trees): write depth.
 3. Opaque car: the same lighting as the viewer (hemisphere + sun, Lambert diffuse and GGX specular).
 4. Sea: plane at z = −0.2 with soft waves.
@@ -216,7 +216,8 @@ With no data and no bundled converter (development), the app shows an alert with
 
 ### 5. PS2 look (final pass, `fs_post` in `Shaders.swift`)
 The scene renders to an HDR texture. The final pass scales it to the screen and applies the look.
-It works in display (gamma) space, in three steps:
+The scene already arrives encoded (gamma blending like the PS2, doc 20) with the game's visual treatment (bloom, black bloom).
+The look works in display (gamma) space, in three steps:
 1. **Lifted blacks** with a warm touch (PS2 analogue output rarely gave pure black [I]).
 2. **Yellow/amber tint** in mid-tones and highlights, not in shadows.
 3. **Saturation** slightly lower, keeping warm tones.
@@ -246,9 +247,27 @@ It is always on in the game. For development only, change it with `--grade <n>` 
 - GPU parts: 0 body, 1–4 wheels (spin and steer), 5–8 brakes (steer only).
 - Rim cards are drawn again: the converter fixed their orientation.
 - `BMWM3` borrows the `bmwm3gtr` attributes (it has no collection of its own) [V: cars.json].
-- Lighting: the viewer's (`HemisphereLight` + `DirectionalLight`, `MeshStandardMaterial`). Paint: metalness 0.45, roughness 0.32.
+- Lighting: the game's light material per strip + environment map (doc 20, `SceneShading.swift` `carShade`). Without `fx/`: neutral light.
 - Driving: **the game's physics** ported from the decomp (see "Game physics" below and doc 13). Without `physics.json`, the old arcade prototype.
 - Ground: collision triangles in 8 m cells. Walls: vertical segments.
+
+## Game lighting and effects (2026-10-15, doc 20)
+
+- **PS2 colour space**: the scene is written encoded (sRGB) and blending happens in gamma, like the GS. Fixes the safehouse light
+  shafts (they were opaque green boxes) and the weak baked shadows. Rule for new scene shaders: `scenePreludeMSL` +
+  `sceneRGB(...)` (`SceneShading.swift`).
+- **Cars**: the game's light material per strip (`eLightMaterial`, `extras.luz` in the GLBs; paint takes the preset's) and the
+  garage's spherical environment map (`<GARAGE>_CARSELECTENVMAP`) or the sky one (`SMALLENVMAP`), scaled by skin gloss.
+  Tinted windows use `WINDSHIELD_TINT_*`. Traffic and police share the same shading.
+- **Car shadow**: `CARSHADOW` from the disc (player, rivals, showroom, traffic and police), stretched away from the sun.
+- **Sky** with the `GLOBAL\DYNTEX.BIN` textures and a **sun** (centre and halo of `SunChunkInfo` MIDDAY).
+- The game's **visual treatment** (`visuallook` "default": yellow bloom, black bloom, desaturation) before the PS2 grade.
+- Per-garage front-end lighting (`SceneLighting.frontEnd`) [I] and low haze in the main menu.
+- Data: `fx` step (`fx/`), `DATA_FORMAT` 8. Debug: `ROCKPORT_LOOK=0` (no treatment), `ROCKPORT_ENV=<n>` (reflections),
+  `ROCKPORT_GARAGE_HIDE=NAME,…` (hide interior materials).
+- Measured (M4, loaded machine): 2940×1912 fly-through GPU median 3.7 ms (3.3 without the visual treatment); 1920×1080 pursuit
+  2.5 ms; 2-player split screen 2940×1912 4.7 ms. Well under the 13.5 ms budget.
+- Before/after shots: `.build/shots/fx/before/` and `.build/shots/fx/after/`.
 
 ## Game cars: presets, vinyls and composite skins (2026-10-15)
 - `CarSkin.swift` reads `presets.json` (82 presets from `GLOBAL\GLOBALB.BUN`: Blacklist `RAZORMUSTANG`, `BL2…BL15`, the story BMW `M3GTRCAREERSTART`…) and composites the body like `CarSkin.cpp`: base colour (alpha = gloss) + vinyl through its mask (`m ≥ 128` → vinyl, `0 < m < 128` → blend `m/128`). Composited on the CPU at 1024×1024 (twice the PS2 size) with bilinear sampling and uploaded with mipmaps. The same skin is used by the spoiler and roof scoop.

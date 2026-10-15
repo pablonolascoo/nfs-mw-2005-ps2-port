@@ -106,8 +106,7 @@ struct Options {
             case "--race-test", "--opponents", "--save", "--race": i += 1   // Race/RaceTests.swift, App.swift
             case "--career-test", "--career", "--race-audit": break
             case "--garage-test", "--garage-mode", "--garage-screen", "--garage-select": i += 1   // Garage/GarageTests.swift
-            case "--garage-scene", "--fe-angle", "--scene-car": i += 1   // Garage/GarageScenesTests.swift
-            case "--garage-swap-test": break
+            case "--garage-scene", "--fe-angle", "--scene-car", "--garage-swap-test": i += 1   // Garage/GarageScenesTests.swift
             case "--split-test", "--displays", "--players", "--split": i += 1   // Multiplayer/ (pantalla partida, varias pantallas)
             case "--quickrace-test", "--multi-display-test", "--unplug-test": break
             case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
@@ -300,6 +299,8 @@ if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     runGarageTest(options, zone: z)
 } else if let k = GarageSceneTestOptions.kind {
     runGarageSceneTest(options, kind: k)
+} else if let z = GarageSceneTestOptions.swapZone {
+    runGarageSwapTest(options, zone: z)
 } else if RaceTestOptions.careerTest {
     runCareerTest(options)
 } else if let n = MPTestOptions.splitTest {

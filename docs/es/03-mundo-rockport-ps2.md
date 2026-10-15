@@ -26,7 +26,7 @@ En el juego original, pulsar el botón en la zona llama a `EQuitToFE(GARAGETYPE_
 ## Sombras, agua y cielo [V]/[H]
 - **Sombras horneadas** `SHD_*` (1 026 texturas): RGB negro y alfa = densidad. Se mezclan encima del suelo; no van al nivel lejano [V].
 - **Agua animada** `ANM_WATERA_000…013` (14 fotogramas) en `TRN_Ocean_*` y piezas de costa, con alfa de vértice 0,5 [V]. Esos modelos solo cubren la costa; el cuerpo de agua se dibuja como plano a z = 0 en el visor [H: no localizado aún en el código del juego].
-- **Cielo** `SKYDOME`/`SKY_SPECULAR`: sus texturas no existen en el disco (se generan al vuelo); el visor dibuja un degradado propio [V: búsqueda en todos los archivos].
+- **Cielo** `SKYDOME`/`SKY_SPECULAR`: la cúpula cambia sus texturas por capa (`SkyRender.cpp`) y esas texturas **sí están** en `GLOBAL\DYNTEX.BIN` (`SKY_MIDDAY_A_GRADIENT_A`, `…_CLOUDS_A`, `…_CAP_A`…, nombres truncados a 23 letras) [V, corrige lo dicho antes]. El motor nativo las usa (doc 20 §5); el visor sigue con su degradado.
 
 ## Visibilidad y niveles de detalle del escenario [D][V]
 Código del juego: `SetupSceneryCullInfo` (`Ecstasy.cpp`) y el recorte de `Scenery.cpp`. Código propio: modo `tiles` de `tools/src/cli/convert.ts`.

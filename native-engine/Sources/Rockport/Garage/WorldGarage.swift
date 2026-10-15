@@ -302,8 +302,11 @@ final class WorldGarages {
         for i in 0..<16 {
             let a = Float(i) / 16 * 2 * .pi
             let d = float3(cos(a), sin(a), 0)
-            // A dos alturas: los pretiles y barandillas bajas (concesionario) no dejan pasar el coche aunque a 1,2 m esté libre
-            let t = min(cast(float3(0, 0, floorZ + 1.2), d) ?? 200, cast(float3(0, 0, floorZ + 0.45), d) ?? 200)
+            // Pasillo del ancho de un coche (±1 m) a dos alturas: pretiles bajos (concesionario), elevadores con un coche
+            // encima y columnas del taller no dejan pasar aunque el rayo central a 1,2 m esté libre
+            let side = float3(-d.y, d.x, 0)
+            var t: Float = 200
+            for off: Float in [-1, 0, 1] { for h: Float in [0.45, 1.2] { t = min(t, cast(side * off + float3(0, 0, floorZ + h), d) ?? 200) } }
             if t > bestD { bestD = t; dir = SIMD2(d.x, d.y) }
         }
         var bb = AABB.empty; for v in tris { bb.add(v) }

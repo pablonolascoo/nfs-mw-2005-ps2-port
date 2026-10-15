@@ -93,7 +93,7 @@ El juego coloca **un solo modelo de rueda** cuatro veces (`CarRender.cpp` 1855-1
 
 ## 7. Pendiente
 - Remolques: se ven todas las cargas `ATTACHMENTn`; algunas quedan lejos del remolque (seguramente van con marcador o una por variante) [H].
-- Alerones con `USEMARKER2` (marcador `SPOILER2`), capa de golpes, `ExtraRearTireOffset`, mapas de entorno de la pintura (el PS2 refleja el cielo; aquí PBR) y calcomanías de tienda (sección 8).
+- Alerones con `USEMARKER2` (marcador `SPOILER2`), capa de golpes, `ExtraRearTireOffset`, calcomanías de tienda (sección 8). Reflejos y material de luz de la pintura: hechos (doc 20).
 - Hashes sin nombre de la sección 3.
 
 ## 8. Coches predefinidos (Lista Negra), vinilos y piel compuesta (2026-10-15)

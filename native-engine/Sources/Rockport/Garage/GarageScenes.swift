@@ -6,7 +6,7 @@
 //  - Colisión NFSC de la escena (muros del volumen y suelo del umbral) enganchada a CollisionWorld.
 //  - El reflejo del interior del frontend (BACKDROP_REFLECTION, interiors/<NOMBRE>.reflection.glb) bajo el suelo
 //    semitransparente del escenario del menú, como FEGeometryModels::Render [D].
-//  - Cambio de coche sin pantallas de carga («Mis coches», concesionario): la cámara mira a un lado, el coche nuevo
+//  - Cambio de coche sin pantallas de carga («Mis coches», concesionario): la cámara mira al techo, el coche nuevo
 //    entra rodando desde la puerta con su física y se para en la plaza mientras la cámara vuelve.
 import Foundation
 import Metal
@@ -63,6 +63,8 @@ final class GarageScenes {
     unowned let engine: Engine
     /// Depuración: ROCKPORT_SCENE_OFF=1 no dibuja la escena (para comparar con el interior solo).
     static let debugOff = ProcessInfo.processInfo.environment["ROCKPORT_SCENE_OFF"]
+    /// Intensidad del reflejo del suelo del escenario (ROCKPORT_REFLECTION=0…1 para probar).
+    static let reflectionTint: Float = ProcessInfo.processInfo.environment["ROCKPORT_REFLECTION"].flatMap(Float.init) ?? 0.18
     private let root: URL
     private var cache: [String: Scene?] = [:]
     private var reflections: [String: GPUMesh?] = [:]
@@ -146,7 +148,8 @@ final class GarageScenes {
         if stage.active {
             if let r = reflection(stage.kind.interior) {
                 let model = float4x4(translation: FEStage.origin + float3(0, stage.kind.geometryY, 0)) * float4x4(rotationZ: stage.kind.geometryZAngle * .pi / 180)
-                out.append(GarageDrawItem(mesh: r, model: model, clip: nil))
+                // Atenuado: el suelo deja ver el reflejo por su alfa, y la copia invertida no lleva la luz del techo [I]
+                out.append(GarageDrawItem(mesh: r, model: model, clip: nil, tint: float3(repeating: GarageScenes.reflectionTint)))
             }
             return out
         }
@@ -198,18 +201,21 @@ final class GarageScenes {
         if key == playerKey && swap == nil { w.preview(key: nil); return }
         guard let car = CarTuning.build(key, engine: engine) else { return }
         w.preview(key: nil)
-        let s = CarSwap(key: key, car: car, spot: player.position, yaw: player.yaw, ground: g.ground, maxRun: max(2.5, min(5.5, simd_length(SIMD2(player.position.x - g.doorP.x, player.position.y - g.doorP.y)) - 1.2)), mover: w.mover)
+        let s = CarSwap(key: key, car: car, previous: swap?.car, spot: player.position, yaw: player.yaw, ground: g.ground, maxRun: max(2.5, min(5.5, simd_length(SIMD2(player.position.x - g.doorP.x, player.position.y - g.doorP.y)) - 1.2)), mover: w.mover)
         swap = s
     }
     /// En el fotograma: el coche de la animación ocupa el sitio del coche aparcado.
     func apply(_ f: inout SceneFrame) {
         guard let s = swap, !(engine.garages?.stage.active ?? false), GarageCutout.active else { return }
-        f.car = (s.car.mesh, s.car.partMatrices); f.carShadow = s.car.shadowMatrix
+        // Mientras la cámara se va sigue a la vista el coche de antes (el del jugador, que ya dibuja el motor, o el anterior)
+        if s.showNew { f.car = (s.car.mesh, s.car.partMatrices); f.carShadow = s.car.shadowMatrix }
+        else if let o = s.previous { f.car = (o.mesh, o.partMatrices); f.carShadow = o.shadowMatrix }
     }
     var swapping: Bool { swap.map { !$0.done } ?? false }
+    var swapDebug: String { swap.map { $0.debug } ?? "—" }
 }
 
-/// Cambio de coche sin cortes: la cámara del frontend se va a un lado (0,45 s), el coche nuevo aparece a unos metros detrás
+/// Cambio de coche sin cortes: la cámara del frontend mira al techo (0,45 s), el coche nuevo aparece a unos metros detrás
 /// de la plaza (hacia la puerta, fuera de cuadro) y entra rodando con su física hasta la plaza mientras la cámara vuelve.
 final class CarSwap {
     let key: String
@@ -223,14 +229,16 @@ final class CarSwap {
     private var phase = 0          // 0 la cámara se va · 1 el coche entra · 2 parado
     private(set) var done = false
 
-    init(key: String, car: Car, spot: float3, yaw: Float, ground: Float, maxRun: Float, mover: FECameraMover) {
-        self.key = key; self.car = car; self.spot = spot; self.yaw = yaw; self.ground = FlatGround(z: ground); run = maxRun; self.mover = mover
+    /// Coche que había a la vista (nil = el del jugador).
+    let previous: Car?
+    var showNew: Bool { phase >= 1 }
+    init(key: String, car: Car, previous: Car?, spot: float3, yaw: Float, ground: Float, maxRun: Float, mover: FECameraMover) {
+        self.key = key; self.car = car; self.previous = previous; self.spot = spot; self.yaw = yaw; self.ground = FlatGround(z: ground); run = maxRun; self.mover = mover
         back = mover.current
         var away = mover.current
-        // Mirar a un lado: el punto de mira se desplaza 4,5 m en horizontal, perpendicular a la vista, y sube un poco
-        let e = away.eye, d = simd_normalize(SIMD2(away.lookAt.x - e.x, away.lookAt.y - e.y) + SIMD2(1e-4, 0))
-        away.lookAt += float3(-d.y, d.x, 0) * 4.5 + float3(0, 0, 0.9)
-        away.radius *= 1.12
+        // Mirar arriba (vigas y luces del techo): el punto de mira sube y el coche sale de cuadro por abajo. Solo cambia la
+        // altura del punto de mira, así la comprobación de muros de la cámara del garaje (en planta) no se altera.
+        away.lookAt += float3(0, 0, 2.8)
         away.animSpeed = 0.45
         mover.setDesired(away)
         // El coche espera detrás de la plaza, mirando hacia ella
@@ -261,6 +269,10 @@ final class CarSwap {
             car.update(dt: dt, input: Car.Input(handbrake: true), collision: ground)
             if t > 0.6 { done = true }
         }
+    }
+    var debug: String {
+        let fwd = float3(cos(yaw), sin(yaw), 0)
+        return String(format: "fase %d · falta %.2f m · %.1f km/h · lateral %.2f", phase, simd_dot(spot - car.position, fwd), car.kmh, simd_dot(spot - car.position, float3(-fwd.y, fwd.x, 0)))
     }
     /// Cerrar al momento (salir del menú a mitad de animación): la cámara vuelve a su ángulo.
     func finish() { if !done, let b = back { mover?.setDesired(b) }; done = true }

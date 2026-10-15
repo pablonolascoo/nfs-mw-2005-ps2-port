@@ -26,7 +26,7 @@ In the original game, pressing the button in a zone calls `EQuitToFE(GARAGETYPE_
 ## Shadows, water and sky [V]/[H]
 - **Baked shadows** `SHD_*` (1,026 textures): black RGB, alpha = density. Blended over the ground; excluded from the far level [V].
 - **Animated water** `ANM_WATERA_000…013` (14 frames) on `TRN_Ocean_*` and shoreline pieces, vertex alpha 0.5 [V]. Those meshes only cover shorelines; the viewer draws the water body as a plane at z = 0 [H: not yet located in the game code].
-- **Sky** `SKYDOME`/`SKY_SPECULAR`: their textures are not on the disc (generated at runtime); the viewer draws its own gradient [V: searched every file].
+- **Sky** `SKYDOME`/`SKY_SPECULAR`: the dome swaps its textures per layer (`SkyRender.cpp`) and those textures **are** in `GLOBAL\DYNTEX.BIN` (`SKY_MIDDAY_A_GRADIENT_A`, `…_CLOUDS_A`, `…_CAP_A`…, names truncated to 23 letters) [V, corrects the earlier claim]. The native engine uses them (doc 20 §5); the viewer keeps its gradient.
 
 ## Scenery visibility and levels of detail [D][V]
 Game code: `SetupSceneryCullInfo` (`Ecstasy.cpp`) and the culling in `Scenery.cpp`. Our code: `tiles` mode in `tools/src/cli/convert.ts`.

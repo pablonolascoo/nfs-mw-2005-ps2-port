@@ -202,7 +202,7 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 - Cada casilla es un búfer de vértices y uno de índices, con un tramo por material.
 
 ### 4. Pasadas de dibujo (`Renderer.swift`)
-1. Cielo: degradado según la altura de la mirada (colores del visor).
+1. Cielo: texturas del juego (`SKY_MIDDAY_A_*` de `DYNTEX.BIN`) por elevación; sin `fx/`, el degradado del visor (doc 20).
 2. Opacos y recorte alfa (vallas, árboles): escriben profundidad.
 3. Coche opaco: la misma luz que el visor (hemisférica + sol, difusa Lambert y especular GGX).
 4. Mar: plano a z = −0,2 con olas suaves.
@@ -216,7 +216,8 @@ Sin datos y sin conversor dentro (desarrollo), la app muestra un aviso con las r
 
 ### 5. Tono PS2 (pasada final, `fs_post` en `Shaders.swift`)
 La escena se dibuja en una textura HDR. La pasada final la escala a la pantalla y aplica el tono.
-Trabaja en espacio de pantalla (gamma), en tres pasos:
+La escena ya llega codificada (mezclas en gamma como el PS2, doc 20) y con el tratamiento visual del juego (bloom, black bloom).
+El tono trabaja en espacio de pantalla (gamma), en tres pasos:
 1. **Negros levantados** con un toque cálido (la salida analógica del PS2 casi nunca daba negro puro [I]).
 2. **Tinte amarillo/ámbar** en medios tonos y luces, no en sombras.
 3. **Saturación** algo más baja, conservando los tonos cálidos.
@@ -246,9 +247,27 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - Piezas en GPU: 0 carrocería, 1–4 ruedas (giran y viran), 5–8 frenos (solo viran).
 - Las tarjetas de llanta ya se dibujan: el conversor arregló su orientación.
 - `BMWM3` toma los atributos de `bmwm3gtr` (no tiene colección propia) [V: cars.json].
-- Luz: la del visor (`HemisphereLight` + `DirectionalLight`, `MeshStandardMaterial`). Pintura: metal 0,45, rugosidad 0,32.
+- Luz: material de luz del juego por tira + mapa de entorno (doc 20, `SceneShading.swift` `carShade`). Sin `fx/`: luz neutra.
 - Conducción: **la física del juego** portada de la decomp (ver «Física del juego» abajo y el doc 13). Sin `physics.json`, el prototipo arcade de antes.
 - Suelo: triángulos de colisión en celdas de 8 m. Muros: segmentos verticales.
+
+## Luz y efectos del juego (2026-10-15, doc 20)
+
+- **Espacio de color del PS2**: la escena se escribe codificada (sRGB) y las mezclas ocurren en gamma, como el GS. Arregla los
+  rayos de luz del refugio (eran cajas verdes opacas) y las sombras horneadas flojas. Regla para shaders nuevos de escena:
+  `scenePreludeMSL` + `sceneRGB(...)` (`SceneShading.swift`).
+- **Coches**: material de luz del juego por tira (`eLightMaterial`, `extras.luz` en los GLB; la pintura toma el del preset) y
+  mapa de entorno esférico del garaje (`<GARAJE>_CARSELECTENVMAP`) o del cielo (`SMALLENVMAP`), con el brillo de la piel.
+  Cristales tintados con `WINDSHIELD_TINT_*`. Tráfico y policía con el mismo sombreado.
+- **Sombra del coche** `CARSHADOW` del disco (jugador, rivales, exposición, tráfico y policía), alargada lejos del sol.
+- **Cielo** con las texturas de `GLOBAL\DYNTEX.BIN` y **sol** (centro y halo de `SunChunkInfo` MIDDAY).
+- **Tratamiento visual** del juego (`visuallook` «default»: bloom amarillo, black bloom, desaturación) antes del tono PS2.
+- Luz de cada garaje del frontend (`SceneLighting.frontEnd`) [I] y bruma baja en el menú principal.
+- Datos: paso `fx` (`fx/`), `DATA_FORMAT` 8. Depuración: `ROCKPORT_LOOK=0` (sin tratamiento), `ROCKPORT_ENV=<n>` (reflejos),
+  `ROCKPORT_GARAGE_HIDE=NOMBRE,…` (oculta materiales de interiores).
+- Medido (M4, máquina cargada): 2940×1912 vuelo GPU med 3,7 ms (3,3 sin tratamiento visual); 1920×1080 persecución 2,5 ms;
+  pantalla partida 2 jugadores 2940×1912 4,7 ms. Muy por debajo de los 13,5 ms del presupuesto.
+- Capturas antes/después: `.build/shots/fx/before/` y `.build/shots/fx/after/`.
 
 ## Coches del juego: presets, vinilos y piel compuesta (2026-10-15)
 - `CarSkin.swift` lee `presets.json` (82 presets de `GLOBAL\GLOBALB.BUN`: Lista Negra `RAZORMUSTANG`, `BL2…BL15`, el BMW de la historia `M3GTRCAREERSTART`…) y compone la carrocería como `CarSkin.cpp`: color base (alfa = brillo) + vinilo con su máscara (`m ≥ 128` → vinilo, `0 < m < 128` → mezcla `m/128`). Se compone en CPU a 1024×1024 (el doble del PS2) con muestreo bilineal y se sube con mipmaps. La misma piel va al alerón y a la toma de techo.

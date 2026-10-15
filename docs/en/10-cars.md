@@ -93,7 +93,7 @@ The game places **one wheel model** four times (`CarRender.cpp` 1855-1999, 3330-
 
 ## 7. Open
 - Trailers: the `ATTACHMENTn` cargo pieces are all shown; some sit far from the trailer (they probably need markers or one per variant) [H].
-- `USEMARKER2` spoilers (marker `SPOILER2`), damage overlays, `ExtraRearTireOffset`, paint environment maps (the PS2 reflects the sky; here PBR) and shop decals (section 8).
+- `USEMARKER2` spoilers (marker `SPOILER2`), damage overlays, `ExtraRearTireOffset`, shop decals (section 8). Paint reflections and light materials: done (doc 20).
 - Unknown hashes listed in section 3.
 
 ## 8. Preset cars (Blacklist), vinyls and composite skins (2026-10-15)

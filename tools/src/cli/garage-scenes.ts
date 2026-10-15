@@ -192,15 +192,20 @@ for (const g of garages) {
     }
     return best;
   };
-  let left = width / 2, right = -width / 2, volSource = "edificio";
+  // Lados del edificio respecto al eje de la puerta (la puerta puede estar a un lado de la fachada): ningún muro de la escena
+  // ni el recorte deben salir del edificio, o se cortaría la calle de al lado [V: taller 7, puerta en una esquina].
+  const bc = b ? toLocal(b.center[0], b.center[1])[1] : 0;
+  const bL = b ? bc + b.across / 2 - 0.4 : width / 2, bR = b ? bc - b.across / 2 + 0.4 : -width / 2;
+  let left = Math.min(width / 2, bL), right = Math.max(-width / 2, bR), volSource = "edificio";
   const backHit = 1 + ray(-1, 0, -1, 0, 60);
   if (backHit >= 8 && backHit < 41) { depth = Math.min(depth, backHit); volSource = "colisión"; }
   {
     const xs = Array.from({ length: 8 }, (_, i) => -2 - i * (depth - 3) / 7);
     const l = Math.min(...xs.map(x => ray(x, 0, 0, 1, 15))), r = Math.min(...xs.map(x => ray(x, 0, 0, -1, 15)));
     const minHalf = doorW / 2 + 0.05;
-    if (l < width / 2) { left = Math.max(l, minHalf); volSource = "colisión"; }
-    if (r < width / 2) { right = -Math.max(r, minHalf); volSource = "colisión"; }
+    if (l < left) { left = Math.max(l, minHalf); volSource = "colisión"; }
+    if (r < -right) { right = -Math.max(r, minHalf); volSource = "colisión"; }
+    left = Math.max(left, minHalf); right = Math.min(right, -minHalf);
   }
   width = left - right;
 

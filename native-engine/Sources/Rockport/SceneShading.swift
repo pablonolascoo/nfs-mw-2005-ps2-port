@@ -157,7 +157,8 @@ struct SceneLighting {
     var frontEnd = false
     var sky = true                                   // pintar el cielo del juego (fs_sky)
 
-    static let world = SceneLighting()
+    /// Calle: reflejo del cielo más suave que en los garajes (SMALLENVMAP es casi todo cielo claro) [I].
+    static let world: SceneLighting = { var l = SceneLighting(); l.envStrength = 0.5; return l }()
 
     /// Garajes del frontend [I]: luz principal cálida desde arriba a un lado (ventanas), relleno frío, contraluz; reflejo con el
     /// mapa esférico del garaje [V: GLOBAL\DYNTEX.BIN] y sombra del coche a alfa 255 (CarBaseShadowAlphaMinFE/MaxFE) [D].

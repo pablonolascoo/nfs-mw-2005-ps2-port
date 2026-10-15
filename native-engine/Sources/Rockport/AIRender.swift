@@ -16,6 +16,12 @@ protocol RenderOverlay: AnyObject {
     /// Tras el tono PS2, sobre la imagen final (HUD).
     func encodeScreen(_ cb: MTLCommandBuffer, target: MTLTexture)
     var drawCalls: Int { get }
+    /// Sombras de coche (cuadrado unidad −1…1 → mundo) que la capa pide al Renderer tras su pasada opaca (CARSHADOW, doc 20 §4).
+    var shadowQuads: [float4x4] { get }
+}
+
+extension RenderOverlay {
+    var shadowQuads: [float4x4] { [] }
 }
 
 private let aiShaderSource = scenePreludeMSL + """
@@ -50,17 +56,7 @@ fragment float4 fs_inst(VOut in [[stage_in]], constant FrameUniforms& F [[buffer
     return float4(sceneRGB(F, c.rgb, in.world), saturate(c.a));
 }
 
-// Sombra de los coches de la IA: CARSHADOW en un cuadrado bajo cada coche (matriz en la pieza 0 del anillo de sombras).
-struct SOut { float4 pos [[position]]; float2 uv; };
-vertex SOut vs_ishadow(uint vid [[vertex_id]], uint iid [[instance_id]], constant FrameUniforms& F [[buffer(1)]], const device float4x4* m [[buffer(3)]]) {
-    float2 c = float2((vid == 1 || vid == 2 || vid == 4) ? 1.0 : -1.0, (vid == 2 || vid == 4 || vid == 5) ? 1.0 : -1.0);
-    SOut o; o.pos = F.viewProj * (m[iid] * float4(c, 0, 1)); o.uv = c * 0.5 + 0.5; return o;
-}
-fragment float4 fs_ishadow(SOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
-    return float4(0, 0, 0, tex.sample(s, in.uv).a * F.env.z);
-}
-
-// Destellos: cuadrado orientado a la cámara, suma (aditivo), se apagan con la niebla.
+// Destellos: cuadrado orientado a la cámara, suma (aditivo, en gamma), se apagan con la niebla.
 struct Flare { float4 pos; float4 color; };
 struct FlareOut { float4 pos [[position]]; float2 q; float4 color; };
 struct FlareU { float4 right; float4 up; };
@@ -71,8 +67,7 @@ vertex FlareOut vs_flare(uint vid [[vertex_id]], uint iid [[instance_id]], const
     float3 toCam = normalize(F.camPos.xyz - f.pos.xyz);
     float3 w = f.pos.xyz + toCam * 0.25 + (U.right.xyz * c.x + U.up.xyz * c.y) * f.pos.w;
     FlareOut o; o.pos = F.viewProj * float4(w, 1); o.q = c; o.color = f.color;
-    float k = saturate((distance(w, F.camPos.xyz) - F.fog.x) / (F.fog.y - F.fog.x));
-    o.color.rgb *= (1 - k);
+    o.color.rgb *= (1 - fogFactor(F, w));
     return o;
 }
 fragment float4 fs_flare(FlareOut in [[stage_in]]) {
@@ -89,12 +84,12 @@ final class AIRenderer: RenderOverlay {
     let device: MTLDevice
     let textures: TextureCache
     unowned let world: AIWorld
-    private var pInst: MTLRenderPipelineState!, pInstBlend: MTLRenderPipelineState!, pFlare: MTLRenderPipelineState!, pShadow: MTLRenderPipelineState!
+    private var pInst: MTLRenderPipelineState!, pInstBlend: MTLRenderPipelineState!, pFlare: MTLRenderPipelineState!
     /// Renderer de la escena: texturas de fx/ (mapa de entorno de la vista, CARSHADOW) y materiales de luz (doc 20).
     weak var sceneRenderer: Renderer?
     private var envSampler: MTLSamplerState!
-    private var shadowRing: [MTLBuffer] = []
-    private var shadowCount = 0
+    /// Sombras de los coches cercanos de este fotograma (las dibuja el Renderer con CARSHADOW).
+    private(set) var shadowQuads: [float4x4] = []
     private var depthWrite: MTLDepthStencilState!, depthRead: MTLDepthStencilState!
     private var sampler: [MTLSamplerState] = []
     private var ring: [(mats: MTLBuffer, inst: MTLBuffer, flares: MTLBuffer)] = []
@@ -139,11 +134,10 @@ final class AIRenderer: RenderOverlay {
         pInst = try make("vs_inst", "fs_inst", blend: 0, vertex: true)
         pInstBlend = try make("vs_inst", "fs_inst", blend: 1, vertex: true)
         pFlare = try make("vs_flare", "fs_flare", blend: 2, vertex: false)
-        pShadow = try make("vs_ishadow", "fs_ishadow", blend: 1, vertex: false)
         let es = MTLSamplerDescriptor()
         es.minFilter = .linear; es.magFilter = .linear; es.mipFilter = .linear; es.sAddressMode = .repeat; es.tAddressMode = .clampToEdge
         envSampler = device.makeSamplerState(descriptor: es)
-        for _ in 0..<16 { shadowRing.append(device.makeBuffer(length: AIRenderer.maxInst * 64, options: .storageModeShared)!) }
+
         let ds = MTLDepthStencilDescriptor()
         ds.depthCompareFunction = .greaterEqual; ds.isDepthWriteEnabled = true
         depthWrite = device.makeDepthStencilState(descriptor: ds)
@@ -207,8 +201,7 @@ final class AIRenderer: RenderOverlay {
         let fl = r.flares.contents().bindMemory(to: float4.self, capacity: AIRenderer.maxFlares * 2)
         batches.removeAll(keepingCapacity: true)
         flareCount = 0
-        shadowCount = 0
-        let shadows = shadowRing[ringIndex].contents().bindMemory(to: float4x4.self, capacity: AIRenderer.maxInst)
+        shadowQuads.removeAll(keepingCapacity: true)
         let frustum = Frustum(frame.proj * frame.view)
         var n = 0
         let t = frame.time
@@ -233,8 +226,7 @@ final class AIRenderer: RenderOverlay {
                 // Sombra (DrawAmbientShadow [D]): caja del coche × 1,05 con CARSHADOW, a ras de suelo
                 if simd_distance(v.pos, frame.camPos) < 250 {
                     let body = pm[0] * m.local.inverse
-                    shadows[shadowCount] = body * float4x4(translation: float3(0, 0, 0.1)) * float4x4(scale: float3(m.halfLength * 1.2, m.halfWidth * 1.18, 1))
-                    shadowCount += 1
+                    shadowQuads.append(body * float4x4(translation: float3(0, 0, 0.1)) * float4x4(scale: float3(m.halfLength * 1.2, m.halfWidth * 1.18, 1)))
                 }
                 // Destellos de la barra de luces [D: CarRender.cpp 2364-2423]
                 if v.lights, simd_distance(v.pos, frame.camPos) < 700 {
@@ -316,18 +308,6 @@ final class AIRenderer: RenderOverlay {
     }
 
     func encodeTransparent(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {
-        if ProcessInfo.processInfo.environment["ROCKPORT_DBG_SHADOW"] != nil { fputs("ai sombras \(shadowCount) tex \(sceneRenderer?.fxTexture("CARSHADOW") != nil) rend \(sceneRenderer != nil)\n", stderr) }
-        if shadowCount > 0, let tex = sceneRenderer?.fxTexture("CARSHADOW") {
-            enc.setRenderPipelineState(pShadow)
-            enc.setDepthStencilState(depthRead)
-            enc.setDepthBias(1, slopeScale: 2, clamp: 0.01)
-            enc.setVertexBuffer(shadowRing[ringIndex], offset: 0, index: 3)
-            enc.setFragmentTexture(tex, index: 0)
-            enc.setFragmentSamplerState(sampler[0], index: 0)
-            enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: shadowCount)
-            enc.setDepthBias(0, slopeScale: 0, clamp: 0)
-            drawCalls += 1
-        }
         if !batches.isEmpty {
             bindEnv(enc, frame: frame)
             enc.setRenderPipelineState(pInstBlend)

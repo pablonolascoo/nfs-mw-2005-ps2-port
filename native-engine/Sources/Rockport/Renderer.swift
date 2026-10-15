@@ -430,7 +430,7 @@ final class Renderer {
         // (SunScale = (1 − sol.z)·0,5 m, DrawAmbientShadow [D]); en el frontend sin sol y a alfa 255.
         let shadowTex = fxTexture("CARSHADOW")
         enc.setFragmentSamplerState(samplers[0], index: 0); boundWrap = 0
-        for m in [frame.carShadow] + frame.extraCars.map(\.shadow) {
+        for m in [frame.carShadow] + frame.extraCars.map(\.shadow) + overlays.flatMap(\.shadowQuads).map(Optional.some) {
             guard let m else { continue }
             enc.setRenderPipelineState(pipelines["blob"]!)
             var q = m
