@@ -28,24 +28,24 @@ Todo lo que entre al proyecto tiene que parecer **del juego original**. Si no pa
 
 ## Fase 2 · Expansión «Most Wanted: Rust Belt» (propuesta)
 
-**Diseño completo con plano y bocetos: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md).** 4 distritos que se desbloquean tras la Lista Negra original: Millbrook, Acerías del Río, Puerto de Mercancías y Sierra Alta.
+**Diseño completo con plano y bocetos: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md).** 4 distritos que se desbloquean tras la Lista Negra original: Millbrook, River Steelworks, Freight Harbor y High Ridge.
 
 ![Plano de la expansión](docs/expansion/mapa-expansion.svg)
-Pensada como un DLC de la época. Se monta como **mod de datos** sobre el juego original (`mods/`).
+Pensada como un DLC de la época. Los nombres de los distritos van **siempre en inglés**, en todos los idiomas, igual que «Rockport». Se monta como **mod de datos** sobre el juego original (`mods/`).
 
 ### Historia (propuesta para debatir)
 - Arranca **justo después del final**: el jugador ha recuperado su BMW M3 GTR y ha cruzado el puente.
-- Al otro lado del río está **Iron Harbor** (nombre provisional), el distrito industrial de un condado vecino. Sigue siendo Rust Belt.
+- Al otro lado del río empieza un condado vecino del Rust Belt con 4 distritos: **Millbrook**, **River Steelworks**, **Freight Harbor** y **High Ridge**.
 - Una **segunda Lista Negra de 15** corredores domina ese condado. Cada uno con su coche **único**, preparado como de competición.
-- La policía del condado tiene otras reglas: unidades nuevas, controles en los puentes, persecuciones en el puerto de mercancías y en la sierra.
+- La policía del condado tiene otras reglas: unidades nuevas, controles en los puentes, persecuciones en Freight Harbor y en High Ridge.
 - El sargento Cross reaparece como federal; Mia vuelve como contacto. Final con un **puerto de montaña** donde se decide todo.
 
 ### Mapa (propuesta)
 Todo conectado con Rockport por el puente y la autopista, misma escala y misma paleta:
-- **Acerías del río**: altos hornos, cintas transportadoras, vías de tren, naves oxidadas.
-- **Puerto de mercancías**: grúas, contenedores, muelles largos para persecuciones.
-- **Barrio obrero**: casas de ladrillo, iglesias, bares, calles estrechas.
-- **Sierra Alta**: carretera de montaña con curvas, pinos, nieve en lo alto, presa y túneles. Influencia de los Apalaches.
+- **River Steelworks**: altos hornos, cintas transportadoras, vías de tren, naves oxidadas.
+- **Freight Harbor**: grúas, contenedores, muelles largos para persecuciones.
+- **Millbrook**: barrio obrero, casas de ladrillo, iglesias, bares, calles estrechas.
+- **High Ridge**: carretera de montaña con curvas, pinos, nieve en lo alto, presa y túneles. Influencia de los Apalaches.
 - **Autopista interestatal** con peajes y áreas de servicio.
 
 ### Coches nuevos (propuesta)

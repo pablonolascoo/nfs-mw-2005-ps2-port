@@ -110,7 +110,7 @@ A fan-made expansion **as if it were 2006**. It unlocks after beating the origin
 
 | River Steelworks | Freight Harbor | High Ridge | Bridge and I-99 |
 |---|---|---|---|
-| <img src="docs/expansion/acerias.jpg" alt="Steelworks"> | <img src="docs/expansion/puerto.jpg" alt="Harbor"> | <img src="docs/expansion/sierra-alta.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
+| <img src="docs/expansion/river-steelworks.jpg" alt="River Steelworks"> | <img src="docs/expansion/freight-harbor.jpg" alt="Freight Harbor"> | <img src="docs/expansion/high-ridge.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
 
 Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md). AI mood sketches (not game assets).
 

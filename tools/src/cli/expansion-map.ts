@@ -22,15 +22,16 @@ for (const s of roads.segments) {
   path += `M${sx(a[0])} ${sy(a[1])}C${sx(c1[0])} ${sy(c1[1])} ${sx(c2[0])} ${sy(c2[1])} ${sx(b[0])} ${sy(b[1])}`;
 }
 
-// Zonas propuestas: orden = orden de desbloqueo tras vencer a la Lista Negra original
+// Zonas propuestas: orden = orden de desbloqueo tras vencer a la Lista Negra original.
+// Los nombres van siempre en inglés, en todos los idiomas (como «Rockport»); sub/en describen la zona.
 const zones = [
-  { n: 1, es: "MILLBROOK", sub: "Pueblo obrero · nuevo refugio", en: "Working-class town · new safehouse", bl: "#15–#11",
+  { n: 1, name: "MILLBROOK", sub: "Pueblo obrero · nuevo refugio", en: "Working-class town · new safehouse", bl: "#15–#11",
     poly: [[1300, 5500], [4600, 5300], [5400, 6400], [4700, 7900], [2200, 8100], [1100, 7000]] },
-  { n: 2, es: "ACERÍAS DEL RÍO", sub: "Altos hornos · vías de tren", en: "Steelworks · rail yards", bl: "#10–#6",
+  { n: 2, name: "RIVER STEELWORKS", sub: "Altos hornos · vías de tren", en: "Steelworks · rail yards", bl: "#10–#6",
     poly: [[-4300, -1700], [-1700, -2100], [-1200, -400], [-1500, 1900], [-3200, 2400], [-4500, 900]] },
-  { n: 3, es: "PUERTO DE MERCANCÍAS", sub: "Grúas · contenedores · muelles", en: "Cranes · containers · piers", bl: "#5–#2",
+  { n: 3, name: "FREIGHT HARBOR", sub: "Grúas · contenedores · muelles", en: "Cranes · containers · piers", bl: "#5–#2",
     poly: [[1700, -1500], [4400, -1300], [6900, -2100], [6700, -3500], [3200, -3600], [1500, -2600]] },
-  { n: 4, es: "SIERRA ALTA", sub: "Puerto de montaña · presa · túneles", en: "Mountain pass · dam · tunnels", bl: "#1",
+  { n: 4, name: "HIGH RIDGE", sub: "Puerto de montaña · presa · túneles", en: "Mountain pass · dam · tunnels", bl: "#1",
     poly: [[-4500, 3200], [-1600, 3000], [-800, 4600], [-1300, 7300], [-3600, 8300], [-4600, 6000]] },
 ];
 // Interestatal propuesta (I-99) que une las zonas nuevas por fuera de la ciudad, y los accesos desde Rockport
@@ -53,7 +54,7 @@ for (const q of zones) {
   z += `<path d="${pl(q.poly)}Z" fill="${amber}" fill-opacity=".09" stroke="${amber}" stroke-width="2" stroke-dasharray="10 6"/>`;
   z += `<g transform="translate(${sx(cx)} ${sy(cy)})">`;
   z += `<rect x="-20" y="-62" width="40" height="40" fill="${amber}"/><text x="0" y="-31" text-anchor="middle" ${font} font-weight="900" font-size="30" fill="${ink}">${q.n}</text>`;
-  z += `<text x="0" y="6" text-anchor="middle" ${font} font-weight="900" font-size="34" letter-spacing="1" fill="${paper}">${q.es}</text>`;
+  z += `<text x="0" y="6" text-anchor="middle" ${font} font-weight="900" font-size="34" letter-spacing="1" fill="${paper}">${q.name}</text>`;
   z += `<text x="0" y="28" text-anchor="middle" ${mono} font-size="13" fill="${fog}">${q.sub}</text>`;
   z += `<text x="0" y="46" text-anchor="middle" ${mono} font-size="12" fill="${fog}" opacity=".75">${q.en}</text>`;
   z += `<text x="0" y="68" text-anchor="middle" ${mono} font-size="13" fill="${amber}">LISTA NEGRA 2 · ${q.bl}</text></g>`;
