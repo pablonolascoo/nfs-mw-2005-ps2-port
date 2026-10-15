@@ -114,6 +114,7 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--sound-dump` · `--sound-test [CAR]` · `--sound-trace` · `--sound-live [s]` | Window-less: decoded banks and engines (vs vgmstream) · scripted run rendered to `.build/sound-test/<CAR>.wav` · RPM and mix trace · real Mac output for a few seconds (silent with `--volume 0`) |
 | `--no-movies` · `--skip-intro` · `--movie NAME` · `--iso <path>` · `--lang <language>` | No movies · no boot movies (logo, PSA, attract) · play NAME at start · ISO to read them from · audio and subtitle language (also `settings.json` → `"movies"`) |
 | `--movie-test NAME\|all [--seconds N] [--realtime --mute] [--engine]` | Window-less: movie with a simulated clock → `.build/movie-test/` (screenshots, `audio.wav`, `stats.json`) · all of them · real time · inside the engine |
+| `--fx-test burnout\|street\|pursuit\|stats [--screenshot base.png]` · `ROCKPORT_FX=0\|hide` | Window-less: burnout and nitrous · junction with traffic lights · patrol cars with light bars on (shots and GPU with and without effects) · curves · without the effects layer / without drawing it (doc 20 §9) |
 | `--music-off` · `--music-volume 0…1` · `--music-test [--busted] [--project N]` · `--music-live S` | Music off · volume (also `settings.json` → `"music"`) · window-less: free roam → pursuit → evade → `.build/music-test/` · real output |
 
 ## Folder layout
@@ -142,6 +143,7 @@ native-engine/
 │  ├─ Camera/               chase camera with the game's camerainfo views (and the split-screen ones)
 │  ├─ Garage/               menu background and seamless garages: scene, front-end camera, menus, tuning (doc 07)
 │  ├─ Multiplayer/          split screen: controller per player, views, split HUD, several displays (doc 19)
+│  ├─ Effects/              the game's particles (EmitterSystem), light flares, per-zone fog and tint, light shafts (doc 20 §9)
 │  ├─ Movies/               movies read from the ISO: VideoToolbox, R3 audio, subtitles, story moments (doc 22 §13)
 │  ├─ Audio/Music*.swift    PathFinder music: EA Trax, interactive pursuit music, ambiences, mixing (doc 25 §10)
 │  └─ MathUtil.swift        matrices, boxes, frustum
@@ -277,6 +279,24 @@ It is always on in the game. For development only, change it with `--grade <n>` 
 - Measured (M4, loaded machine): 2940×1912 fly-through GPU median 3.7 ms (3.3 without the visual treatment); 1920×1080 pursuit
   2.5 ms; 2-player split screen 2940×1912 4.7 ms. Well under the 13.5 ms budget.
 - Before/after shots: `.build/shots/fx/before/` and `.build/shots/fx/after/`.
+
+## Particles, light flares and per-zone fog (2026-10-15, doc 20 §9)
+
+- **The game's particles** (`Effects/`): `EmitterSystem.cpp` ported with the VLT data (`effects.json`): lifetime colour and size
+  curves, on/off cycles, volume/cone/disc emission, drag, gravity, inherited velocity, animated grids. World emitters (1,535:
+  leaves, fog, chimney smoke, steam) streamed by distance like the game, plus the front-end garages' emitters: **the low haze and
+  steam of the menu yard and the safehouse** are now the disc's own particles. Instanced billboards (two calls per view, textures
+  in an array), blended in PS2 space.
+- **Cars**: tyre smoke per surface (`simsurface`: slides, burnouts, rolling), **nitrous flames** on the exhaust markers, **sparks**
+  on impacts. Player, rivals and split screen.
+- **Light flares** (`light_flares_cg`): the world's traffic lights and cat's eyes (2,242, blinking like the game), head, tail and
+  reverse lights of every car, the **police light bar** with `CarRender`'s flicker and its halo, the sun. Depth-occluded. The PS2
+  has no street-lamp flares [V].
+- **Per-zone fog and tint** (ParameterMaps "Normal Fog", "Screen Tint Midday") with the game's distance blending (50 m).
+- **Garages**: the dark strip at the bottom when entering the safehouse is gone (door-gap ground and a threshold darker than the
+  interior) and the windows of the drivable scenes' walls get light shafts.
+- Measured cost: +0.1–0.4 ms GPU; 2-player split screen at 2940×1912 6.4–6.7 ms with effects (6.3–6.7 without).
+- Tests: `--fx-test burnout|street|pursuit|stats`; `ROCKPORT_FX=0|hide`. Before/after shots in `.build/shots/fx/cmp-*.png`.
 
 ## Game cars: presets, vinyls and composite skins (2026-10-15)
 - `CarSkin.swift` reads `presets.json` (82 presets from `GLOBAL\GLOBALB.BUN`: Blacklist `RAZORMUSTANG`, `BL2…BL15`, the story BMW `M3GTRCAREERSTART`…) and composites the body like `CarSkin.cpp`: base colour (alpha = gloss) + vinyl through its mask (`m ≥ 128` → vinyl, `0 < m < 128` → blend `m/128`). Composited on the CPU at 1024×1024 (twice the PS2 size) with bilinear sampling and uploaded with mipmaps. The same skin is used by the spoiler and roof scoop.

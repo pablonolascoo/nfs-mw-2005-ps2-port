@@ -114,6 +114,7 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--sound-dump` · `--sound-test [COCHE]` · `--sound-trace` · `--sound-live [s]` | Sin ventana: bancos y motores decodificados (contra vgmstream) · recorrido con guion renderizado a `.build/sound-test/<COCHE>.wav` · traza de RPM y mezcla · salida real del Mac unos segundos (con `--volume 0` no se oye) |
 | `--no-movies` · `--skip-intro` · `--movie NOMBRE` · `--iso <ruta>` · `--lang <idioma>` | Sin películas · sin las del arranque (logo, aviso, demo) · reproducir NOMBRE al empezar · ISO de donde leerlas · idioma de audio y subtítulos (también `settings.json` → `"movies"`) |
 | `--movie-test NOMBRE\|all [--seconds N] [--realtime --mute] [--engine]` | Sin ventana: película con reloj simulado → `.build/movie-test/` (capturas, `audio.wav`, `stats.json`) · todas · en tiempo real · dentro del motor |
+| `--fx-test burnout\|street\|pursuit\|stats [--screenshot base.png]` · `ROCKPORT_FX=0\|hide` | Sin ventana: quemada y nitro · cruce con semáforos · patrullas con la barra encendida (capturas y GPU con y sin efectos) · curvas · sin la capa de efectos / sin dibujarla (doc 20 §9) |
 | `--music-off` · `--music-volume 0…1` · `--music-test [--busted] [--project N]` · `--music-live S` | Música apagada · volumen (también `settings.json` → `"music"`) · sin ventana: zona libre → persecución → evasión → `.build/music-test/` · salida real |
 
 ## Estructura de carpetas
@@ -142,6 +143,7 @@ native-engine/
 │  ├─ Camera/               cámara de persecución con las vistas camerainfo del juego (y las de pantalla partida)
 │  ├─ Garage/               fondo de los menús y garajes sin carga: escenario, cámara del frontend, menús, tuneo (doc 07)
 │  ├─ Multiplayer/          pantalla partida: mando por jugador, vistas, HUD partido, varias pantallas (doc 19)
+│  ├─ Effects/              partículas del juego (EmitterSystem), destellos, niebla y tinte por zona, haces de luz (doc 20 §9)
 │  ├─ Movies/               películas leídas de la ISO: VideoToolbox, audio R3, subtítulos, momentos de la historia (doc 22 §13)
 │  ├─ Audio/Music*.swift    música PathFinder: EA Trax, persecución interactiva, ambientes, mezcla (doc 25 §10)
 │  └─ MathUtil.swift        matrices, cajas, frustum
@@ -277,6 +279,24 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - Medido (M4, máquina cargada): 2940×1912 vuelo GPU med 3,7 ms (3,3 sin tratamiento visual); 1920×1080 persecución 2,5 ms;
   pantalla partida 2 jugadores 2940×1912 4,7 ms. Muy por debajo de los 13,5 ms del presupuesto.
 - Capturas antes/después: `.build/shots/fx/before/` y `.build/shots/fx/after/`.
+
+## Partículas, destellos y niebla por zona (2026-10-15, doc 20 §9)
+
+- **Partículas del juego** (`Effects/`): `EmitterSystem.cpp` portado con los datos del VLT (`effects.json`): curvas de color y
+  tamaño por vida, ciclos, volumen/cono/disco, arrastre, gravedad, herencia de velocidad, rejillas animadas. Emisores del mundo
+  (1 535: hojas, niebla, humo de chimeneas, vapor) por distancia como el juego, y de los garajes del frontend: **la bruma baja y el
+  vapor del patio del menú y del refugio** son ahora las partículas del disco. Billboards instanciados (dos llamadas por vista,
+  texturas en un array), mezclados en el espacio del PS2.
+- **Coches**: humo de ruedas por superficie (`simsurface`: derrape, quemada, rodadura), **llamas del nitro** en los marcadores de
+  escape, **chispas** en los golpes. Jugador, rivales y pantalla partida.
+- **Destellos** (`light_flares_cg`): semáforos y catadióptricos del mundo (2 242, intermitentes como el juego), faros, pilotos y
+  marcha atrás de todos los coches, **barra de luces de la policía** con el parpadeo de `CarRender` y su halo, sol. Con oclusión
+  por profundidad. El PS2 no tiene destellos de farola [V].
+- **Niebla y tinte por zona** (ParameterMaps «Normal Fog», «Screen Tint Midday») con la mezcla por distancia del juego (50 m).
+- **Garajes**: fuera la franja oscura de abajo al entrar en el refugio (suelo del hueco de la puerta y umbral más oscuro que el
+  interior) y haces de luz en las ventanas de las paredes de las escenas conducibles.
+- Coste medido: +0,1–0,4 ms de GPU; pantalla partida 2 jugadores a 2940×1912 6,4–6,7 ms con efectos (6,3–6,7 sin ellos).
+- Pruebas: `--fx-test burnout|street|pursuit|stats`; `ROCKPORT_FX=0|hide`. Capturas antes/después en `.build/shots/fx/cmp-*.png`.
 
 ## Coches del juego: presets, vinilos y piel compuesta (2026-10-15)
 - `CarSkin.swift` lee `presets.json` (82 presets de `GLOBAL\GLOBALB.BUN`: Lista Negra `RAZORMUSTANG`, `BL2…BL15`, el BMW de la historia `M3GTRCAREERSTART`…) y compone la carrocería como `CarSkin.cpp`: color base (alfa = brillo) + vinilo con su máscara (`m ≥ 128` → vinilo, `0 < m < 128` → mezcla `m/128`). Se compone en CPU a 1024×1024 (el doble del PS2) con muestreo bilineal y se sube con mipmaps. La misma piel va al alerón y a la toma de techo.

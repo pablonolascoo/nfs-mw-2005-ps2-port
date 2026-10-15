@@ -182,4 +182,4 @@ Nombres `TRN_CP_*_Road/Terrain_*`, `TROUGH_*`, `TroughNJ_*`, con `_Hole` y `_Seg
 - 3 capas de parámetros sin nombre, el hash de sol de TrackInfo y el tipo de la TrackOBB.
 - 710 modelos de rompibles con nombre completo desconocido (en el disco solo está cortado).
 - El uso exacto de los troughs (`0x34105/06/07`: doc 22 §10).
-- La función de reproducción de partículas (spawn, color por clave, texturas en rejilla) está en `EmitterSystem.cpp` [D]; falta portarla al motor.
+- Reproducción de partículas, destellos y niebla/tinte por zona en el motor nativo: hechos (doc 20 §9, `native-engine/Sources/Rockport/Effects/`). Faltan los rompibles, los disparadores de sonido y el material del suelo para el polvo y el agua de las ruedas.

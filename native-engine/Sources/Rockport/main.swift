@@ -103,6 +103,7 @@ struct Options {
                   --music-off · --music-volume V   música apagada · volumen de la música 0…1
                   --music-test [--seconds N]  sin ventana: zona libre → persecución → evasión con la música interactiva → .build/music-test/
                   --sound-test [COCHE] sin ventana: recorrido con guion → .build/sound-test/<COCHE>.wav · --sound-dump bancos · --sound-live S salida real
+                  --fx-test burnout|street|pursuit|stats  sin ventana: efectos (humo, nitro, destellos, barra de policía) con capturas y GPU con/sin · ROCKPORT_FX=0|hide
                 """)
                 exit(0)
             case "--audit": break   // se atiende en el arranque (runAudit)

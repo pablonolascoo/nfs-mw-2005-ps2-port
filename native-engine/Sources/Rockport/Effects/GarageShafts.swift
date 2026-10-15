@@ -13,7 +13,7 @@ final class GarageShafts {
     private var local: [float4] = []      // vértices en el marco de la puerta (pos, uvw)
     private var model = float4x4.identity
     /// Color y fuerza de los haces (luz de día cálida, como el sol de la calle) [I].
-    static var colour = float4(1.0, 0.9, 0.68, 0.16)
+    static var colour = float4(1.0, 0.9, 0.68, 0.1)
 
     init(engine: Engine) { self.engine = engine }
 
@@ -35,6 +35,8 @@ final class GarageShafts {
         let vb = mesh.vertexBuffer.contents().bindMemory(to: Vertex.self, capacity: mesh.vertexBuffer.length / MemoryLayout<Vertex>.stride)
         let ib = mesh.indexBuffer.contents().bindMemory(to: UInt32.self, capacity: mesh.indexBuffer.length / 4)
         let floorZ: Float = 0
+        var windows = 0
+        defer { if windows > 0 { print("garaje \(s.info.zone): \(windows) haces de luz en las ventanas") } }
         for d in mesh.draws where d.name.uppercased().contains("WINDOW") {
             // Cada ventana es un cuadrado de 2 triángulos: se agrupan de 6 en 6 índices
             var k = d.indexStart
@@ -42,6 +44,7 @@ final class GarageShafts {
                 var b = AABB.empty
                 for j in 0..<6 { let v = vb[Int(ib[k + j])]; b.add(float3(v.px, v.py, v.pz)) }
                 k += 6
+                windows += 1
                 let size = b.size, c = b.center
                 // Normal hacia dentro: el eje más fino de la caja; hacia el centro del volumen (x < 0, y → 0)
                 // (paredes izquierda/derecha: y fino; fondo y fachada: x fino, el fondo mira a +x y la fachada a −x)

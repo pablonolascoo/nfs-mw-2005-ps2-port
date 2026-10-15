@@ -43,8 +43,10 @@ final class EffectsSystem: RenderOverlay {
 
     /// Fuerza del tinte de zona en el tono PS2 (0,3: con 219, 206, 87 da casi el ámbar fijo de antes) [I].
     static var screenTintStrength: Float = 0.3
-    /// Apagar (depuración / comparar): ROCKPORT_FX=0.
+    /// Apagar (depuración / comparar): ROCKPORT_FX=0 (sin la capa) o ROCKPORT_FX=hide (la capa simula pero no dibuja ni cambia la
+    /// niebla ni el tinte: capturas «antes» con las mismas pruebas).
     static var enabled = ProcessInfo.processInfo.environment["ROCKPORT_FX"] != "0"
+    static var hidden = ProcessInfo.processInfo.environment["ROCKPORT_FX"] == "hide"
 
     @discardableResult
     static func attach(_ engine: Engine) -> EffectsSystem? {
@@ -55,7 +57,7 @@ final class EffectsSystem: RenderOverlay {
         let s = EffectsSystem(engine: engine, library: lib, gpu: gpu)
         engine.renderer.overlays.append(s)
         engine.renderer.effects = s
-        AIRenderer.externalFlares = true   // los destellos de la barra de luces los pone esta capa
+        AIRenderer.externalFlares = !hidden   // los destellos de la barra de luces los pone esta capa
         return s
     }
 
@@ -74,13 +76,15 @@ final class EffectsSystem: RenderOverlay {
     private var inFrontEnd: Bool { engine.garages?.stage.active ?? false }
 
     /// Interior del garaje a la vista y su matriz (interior → mundo).
-    private func garageContext() -> (key: String, model: float4x4)? {
+    /// `clip`: caja (mundo → −1…1) del interior dentro del edificio del mundo; los emisores de fuera de ella (chimeneas y
+    /// pájaros del patio del frontend) no se ponen.
+    private func garageContext() -> (key: String, model: float4x4, clip: float4x4?)? {
         guard let gs = engine.garages else { return nil }
         if gs.stage.active {
             let k = gs.stage.kind
-            return (k.interior, float4x4(translation: FEStage.origin + float3(0, k.geometryY, 0)) * float4x4(rotationZ: k.geometryZAngle * .pi / 180))
+            return (k.interior, float4x4(translation: FEStage.origin + float3(0, k.geometryY, 0)) * float4x4(rotationZ: k.geometryZAngle * .pi / 180), nil)
         }
-        if GarageCutout.active, let g = gs.world?.current { return (g.interior, g.interiorModel) }
+        if GarageCutout.active, let g = gs.world?.current { return (g.interior, g.interiorModel, g.clip) }
         return nil
     }
 
@@ -114,7 +118,12 @@ final class EffectsSystem: RenderOverlay {
             feKey = ctx?.key; feModel = ctx?.model ?? .identity
             if let ctx {
                 for e in library.frontendEmitters[ctx.key] ?? [] {
-                    guard let g = particles.makeGroup(e.group, flags: [.alwaysClose], matrix: ctx.model * e.matrix) else { continue }
+                    let m = ctx.model * e.matrix
+                    if let c = ctx.clip {
+                        let l = c * m.columns.3
+                        if abs(l.x) > 1 || abs(l.y) > 1 || abs(l.z) > 1.2 { continue }
+                    }
+                    guard let g = particles.makeGroup(e.group, flags: [.alwaysClose], matrix: m) else { continue }
                     g.autoUpdate = true
                     feGroups.append(g)
                     let life = g.emitters.map(\.def.life).max() ?? 0
@@ -140,14 +149,14 @@ final class EffectsSystem: RenderOverlay {
 
     /// Niebla por zona de la calle (no en los garajes del frontend). `view` = orden de la vista en el fotograma.
     func adjust(_ L: inout SceneLighting, frame: SceneFrame, view: Int) {
-        guard !L.frontEnd || L.sky else { return }
+        guard !EffectsSystem.hidden, !L.frontEnd || L.sky else { return }
         if let f = zone.fog(view: view, at: frame.camPos) {
             L.fog = f.params
             L.fogColor = f.colour
         }
     }
     /// Tinte de pantalla (RGB 0…255) de la vista principal.
-    var screenTint: float3? { lastTint }
+    var screenTint: float3? { EffectsSystem.hidden ? nil : lastTint }
     private var lastTint: float3?
 
     // MARK: RenderOverlay
@@ -164,6 +173,7 @@ final class EffectsSystem: RenderOverlay {
     }
 
     func encodeTransparent(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {
+        if EffectsSystem.hidden { return }
         let viewProj = frame.proj * frame.view
         let frustum = Frustum(viewProj)
         // Partículas de la vista
@@ -229,6 +239,7 @@ final class EffectsSystem: RenderOverlay {
         guard frame.lighting.useSun, let fx = engine.renderer.fx, fx.loaded else { return }
         let dir = simd_normalize(fx.sunPosition - frame.camPos)
         guard dir.z > 0 else { return }
-        flares.add(&fl, type: 21, pos: frame.camPos + dir * 3000, dir: nil, intensity: min(1, dir.z * 10), cam: frame.camPos, projY: projY, sizeScale: 1)
+        // A 400 m en su dirección (el tamaño va en píxeles; así no le toca la atenuación de lejos de los destellos)
+        flares.add(&fl, type: 21, pos: frame.camPos + dir * 400, dir: nil, intensity: min(1, dir.z * 10), cam: frame.camPos, projY: projY, sizeScale: 1)
     }
 }

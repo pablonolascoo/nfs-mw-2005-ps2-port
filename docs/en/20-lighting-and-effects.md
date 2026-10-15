@@ -1,10 +1,10 @@
-# 20 · Lighting and effects: PS2 colour space, cars, sky, shadows and visual treatment
+# 20 · Lighting and effects: PS2 colour space, cars, sky, shadows, visual treatment, particles and flares
 
 Tags: **[V]** verified on SLES-53559 bytes or measured · **[D]** decomp · **[I]** inferred · **[H]** hypothesis.
 Converter step: `bun src/cli/fx.ts <iso> <ID>` → `map-data/<ID>/fx/` (`fx.json` + 32 PNGs, < 1 s). `DATA_FORMAT` = 8.
 Engine: `native-engine/Sources/Rockport/SceneShading.swift` (shared MSL prelude, `FXData`, `SceneLighting`), `Shaders.swift`,
 `Renderer.swift`, `AIRender.swift`, `Garage/GarageRender.swift`. What the `effects` step exports (particles, world flares,
-per-zone fog and tint) is in doc 24.
+per-zone fog and tint) is in doc 24; how the engine uses it (particles, flares, per-zone fog and tint, `Effects/`) is in §9.
 
 ## 1. What looked wrong and why
 
@@ -112,6 +112,110 @@ See the table in the engine README (§ Lighting and effects). The visual treatme
 
 ## 8. Remaining
 - Real values of each garage's shaper rig (BSS: find who fills them in the ELF).
-- Live street environment map (the game draws the sky into `EVIEW_ENVMAP`), projected "Keith" shadow, sun rays and lens flares,
-  street-lamp and car light flares (`light_flares_cg` + doc 24 §4), per-zone screen tint and fog from the ParameterMaps
-  (doc 24 §6.2), world `SKYDOME` geometry.
+- Live street environment map (the game draws the sky into `EVIEW_ENVMAP`), projected "Keith" shadow, world `SKYDOME` geometry.
+  Particles, flares, per-zone fog and tint: done (§9); what is left of them is in §9.7.
+
+## 9. Particles, flares, per-zone fog and tint (native engine, `Effects/`, 2026-10-15)
+Code: `native-engine/Sources/Rockport/Effects/` (`EffectsLibrary`, `Particles`, `CarEffects`, `LightFlares`, `ZoneFog`,
+`GarageShafts`, `EffectsGPU`, `EffectsSystem`, `EffectsTests`). Data: `effects.json` + `effects/particles/` (`effects` step,
+doc 24) and `fx/fx.json` (`light_flares_cg`). The data format does not change. It hooks into the Renderer as one more layer
+(`RenderOverlay`): it simulates once per frame and draws in every view inside the scene pass, in the PS2 colour space (§2).
+`ROCKPORT_FX=0` removes it; `ROCKPORT_FX=hide` simulates without drawing ("before" shots).
+
+### 9.1 Particles: `EmitterSystem.cpp` ported [D][V][I]
+| Part | How [tag] |
+|---|---|
+| Lifetime curves | `CalculateBases`: colour (4 RGBA byte keys) and size/rotation (`Size`/2, `RelativeAngle`×182.04) are a cubic polynomial through the 4 values at `KeyPositions`/3 (`hermite_basis` = U⁻¹·P) [D]. t = 1 − remaining life / the emitter's `Life`; colour clamped to 0…255 [D] |
+| On/off | `EmitterControl::Update`: delay, on/off cycles with variance, one-shot [D] |
+| How many | `SpawnParticles`: `NumParticles` × intensity × dt (accumulated when < 1); a one-shot uses `Life` instead of dt [D] |
+| Emission | volume (`VolumeCenter` ± `VolumeExtent`/2), cone (emitter Z axis ± `SpreadAngle`/2) or disc with `Speed`; otherwise `VelocityStart` ± `VelocityDelta` along the emitter axes and acceleration in world axes [D] |
+| Motion | drag `v += v·max(−1, −dt·Drag·|v|)`; with `Gravity` ≠ 0 only z falls, else `v += a·dt`; inherited car velocity (`MotionInherit`) [D]. `MotionLive`: particles follow the emitter [I] |
+| Death | life, or alpha ≤ `AlphaToKillAt` unless `NoKillAtAlpha` [D] |
+| Animation | N×N grid (`ParticleAnimationInfo`), frame from FPS and random start (`GetAnimatedUVs`) [D] |
+| World | 1,535 emitters (0x0003BC00): created at `FarClip` + 20 m ahead (cosine 0.55) and deleted when left behind; particles beyond `FarClip` die (`ServiceWorldEffects`, `UpdateParticles`) [D]. 23 are triggered by a nearby car (radius, reset) and give one burst [D][I] |
+| Front-end garages | 41 emitters from `FRONTEND\PLATFORMS\*.BIN` in interior space: low fog and steam in the menu yard (`fxenv_fog_fe1`, `fxenv_small_steam1`), safehouse steam (`fxenv_small_steam2` ×7), shop, car lot [V]. In world garages only those inside the interior box. Created warm (up to 10 s simulated) [I] |
+| Drawing | camera-facing billboards rotated by `mAngle`, or in an XY/XZ/YZ plane (`AxisConstraint`, `GetConstraintBasis`) [D]; half side = `mSize` [D]. One instanced call for normal-blend particles (sorted far to near) and one for additive ones; the 42 used textures in a 64×64 array [I] |
+| Colour | texture × vertex colour/128 in gamma (like every PS2 vertex colour, doc 02) and alpha/128 [I: the PS2 `PlatAddParticle` code is not decompiled]. Normal or additive blending from the TPK texture's `AlphaBlendType` [V] |
+| Cap | the PS2 has 1,024 particles and 500 emitters [D]; here 2,048 particles [I] |
+
+Cars (`CarEffects.swift`):
+- Tyres (`TireState::DoFX`, `SetSurface`, `Effect::Update` [D]): three effects per grounded wheel with intensity
+  `Ramp(value, minSpeed, maxSpeed)` from the surface record: sideways slide (`TireSlideEffects`), wheelspin (`TireSlipEffects`)
+  and rolling (`TireDriveEffects`). The exported collision has no surface material: "asphalt" [I] (`fxtd_sk_asphalt` 1–2,
+  `fxtd_sl_asphalt` 0.125–5 [V]). `SlipFX`/`SkidFX` (`ecar` attribute, not exported) = 0.5 [I]; slip = `Tire.slip` (m/s),
+  slide = `Tire.lateralSpeed` (m/s). A standing burnout (throttle + brake) spins at ~22 m/s: 80–95 smoke particles, like the game
+  (10 per second per wheel, 2.4 s life, alpha 12–40 of 128) [V: measured].
+- Nitrous: `NOSEffect` = `carexhaustnos` → `fxcar_nos` (`emcar_nos_fire` + `emcar_nos_glow`) on every `*_EXHAUST` marker of the
+  model, direction = its Z axis [D][V] (the M3 GTR has them on the right-hand side).
+- Impacts: a burst of `carhitwall` → `fxcar_impactl` (sparks and glow) on the hit side when the velocity changes by more than
+  4 m/s in one frame [I: the game fires it from the collision; the engine does not publish contacts yet].
+- Dust, dirt and water: they come out on their own for non-asphalt surfaces (`dirt`, `grass`, `water`…), but the ground
+  material is still missing.
+
+### 9.2 Flares (`LightFlares.swift`) [D][V][I]
+- World: the 2,242 solid markers (doc 24 §4) [V]: 955 amber, 340 red (`XO_TRAFFICLIGHT*` traffic lights), 199 green, 748
+  cat's eyes. **There are no street-lamp flares** on PS2: no marker is `ELF_LAMPPOST` and `lamppost_outer` has colour 0 [V].
+- Blinkers (`eResestLightFlarePool` [D]): three clocks of 0.5 / 0.4 / 0.45 s; amber uses the one at |x| mod 3, red the first and
+  green the third.
+- Cars (`CreateCarLightFlares`, `RenderFlaresOnCar` [D]): markers `LEFT/RIGHT/CENTRE_HEADLIGHT` (headlight, 1), `*_BRAKELIGHT`
+  (0.5, +16 when braking, capped at 1; traffic uses `brakelight_traffic_inner`), `*_REVERSE` (reverse gear) and the police light
+  bar (`COPLIGHT*`, hashes `1e4150b4` red, `e662c161` blue, `b4348dba` white [V]) with `coplightflicker2`: alternating red and
+  blue (cos(8t) > 0.2), cos²(24t) pulse, white = sin(3·flicker) [D]. Player, rivals, split screen, traffic and police.
+- Light-bar halo: `RenderFlaresOnCar` with `renderFlareFlags & 1` redraws only the police lights at ×10 [D]; here ×6 with
+  `HEADLIGHTGLOW` and weight 0.15 [I]. The `fxcar_coplight*` groups (0.01 s life) are used by nothing in the decomp: not used.
+- Sun: `ELF_SUN_FLARE` with `sun_flare` in the `SunChunkInfo` direction [V], intensity 1 above the horizon [I].
+- `light_flares_cg` parameters [V]: colour, `MinSize`/`MaxSize`, `MinScale`/`Maxscale`, `Power`, `ZBias`, `flare_texture`.
+  `eRenderLightFlare` is undecompiled PS2 code, so drawing is [I]: diameter in pixels of a 480-line screen =
+  `MaxSize` × (0.35 + 0.65·k) × min(1, max(0.35, 30 m / distance)); k = intensity × (facing)^`Power` for head and tail lights;
+  Cs = texture × colour×2 (saturating like the GS) added with weight alpha×2·k; pulled `ZBias` m towards the camera and depth
+  tested (occlusion); fades out between 500 and 800 m. Textures 0/1/2 = `HEADLIGHTGLOW` / `HEADLIGHTFLAREOUTER` /
+  `HEADLIGHTFLAREINNER` [H: order of `eLightFlareTextureNameHashes`].
+
+### 9.3 Per-zone fog and tint (`ZoneFog.swift`) [V][D][I]
+- Layers `Normal Fog` (3 sets of 8 values), `Screen Tint Midday` (219, 206, 87 all over Rockport) and `Fog Blend Distance` (50 m)
+  [V], looked up by the camera's (x, y) in their quadtree.
+- The game's blending (`ParameterAccessorBlendByDistance::CaptureData` [D]): the value moves towards the new zone's in the ratio
+  distance travelled / 50 m, one accessor per view (`FogAccessor[2]` [D]).
+- Fog fields [I]: [0] maximum density (0.5 / 0.6 / 0.2), [1] start (200 / 202 / 243 m), [2…4] colour (greys 128 and 135),
+  [5] falloff → scale 2,600 m × 0.75 / falloff; [6] and [7] unknown [H] (`FogQuery::CalculateFogInfo` is empty).
+- Tint: replaces the fixed amber of the PS2 grade with the zone colour normalised by its luminance, strength 0.3 (with 219, 206, 87
+  it gives (1.035, 1.015, 0.833), close to the previous (1.07, 1.03, 0.86)) [I]. Not used in the front-end garages.
+
+### 9.4 Garages: the safehouse dark strip, threshold light and window shafts
+- **Dark strip at the bottom when entering the safehouse** (the "inside" shot of `--garage-test zone_safehouse_1`): it was not the
+  street ground nor the door's baked `SHD_*` shadow [V: still there with `ROCKPORT_WORLD_HIDE=SHD`] but two things: (1) the interior
+  clip box started 0.3 m inside the roller door, and between it and the door line the world ground showed, dark from the building's
+  baked light; (2) the scene's threshold (`APRON`, colour measured inside) is much darker than the lit interior floor [V: it vanished
+  without the scene]. Fix: the world no longer draws the ground under the door gap (`GarageCutout.threshold`, a third box in the
+  shaders' `Cutout`), the interior box reaches 0.8 m further towards the street (`GarageRenderer.doorReach`) and the threshold gets
+  the interior light spilling through the door (×6 next to the door, fading over 1.8 m: `GarageDrawItem.spill`) [I]. Measured:
+  the 22 px band (35–77 of 255) is gone; the floor reaches the edge [V].
+- **Window light shafts** on our walls (`*WINDOW*` decals from `garage-scenes`, currently the shop's): two crossed additive planes
+  per window going down and inwards at 50°, with a gradient and dust [I] (`GarageShafts.swift`). The interiors' own rays from the
+  disc (`CRIB1_LIGHTRAYS*`, `SFX_LIGHTRAY`, `CSHOP_LIGHTRAYS01`…) were already drawn (§1).
+- The haze of the references (menu yard, safehouse) now comes from the game's own particles (`fxenv_fog_fe1`,
+  `fxenv_small_steam1/2`); our low haze in the menu (`fogHeight`, §6) stays for the yellow tone of the ground [I].
+
+### 9.5 Tests
+- `Rockport --fx-test burnout|street|pursuit --screenshot base.png [--size WxH]`: standing burnout and nitrous (`base-quemada`,
+  `base-nitro`), the junction with the most traffic lights (`base-calle`), three patrol cars with their light bars on
+  (`base-persecucion`), with GPU time with and without effects in the same process. `--fx-test stats`: curves and counts, no drawing.
+- Menu, safehouse and garages with the usual tests (`--ui-test MainMenu`, `--garage-scene career_safehouse --fe-angle
+  career_car_select`, `--garage-test zone_safehouse_1`, `--garage-test zone_customshop_1`).
+- Debug: `ROCKPORT_WORLD_HIDE=TEXT,…` (skips world materials; `*` = all), `ROCKPORT_DEBUG_CAM=1` (camera position).
+- Before/after shots in `native-engine/.build/shots/fx/` (`cmp-*.png`, `cmp-resumen.png`).
+
+### 9.6 Performance [V: M4, machine shared with other jobs: noisy numbers]
+| Test | Without effects | With effects |
+|---|---|---|
+| Fly-through 12 s, 2940×1912 (GPU median) | 5.98–6.01 ms | 5.90–6.67 ms |
+| 2-player split screen, 2940×1912 (GPU median) | 6.28–6.70 ms | 6.44–6.74 ms |
+| Same process, 1920×1080, burnout / pursuit / street | 1.36 / 1.20 / 2.25 ms | 1.76 / 1.40 / 2.28 ms |
+
+Cost: +0.1–0.4 ms GPU and < 0.1 ms CPU (≤ 2,048 particles, ≤ 4 calls per view). Far from 16.7 ms.
+
+### 9.7 Remaining
+- Ground material in the collision (dust, dirt and water from the tyres) and real contacts for sparks and scrapes
+  (`OnScrapeGround`, `carscrapewall`); tyre blow-out and police car death (`carblowtire`, `cardeath1`).
+- Breakables (`smokeables`) with their effects; sound triggers; per-zone rain and clouds (no rain in free roam on PS2 [I]).
+- What exactly `eRenderLightFlare` (sizes and scale) and `PlatAddParticle` (colour scale) do on PS2: undecompiled code.

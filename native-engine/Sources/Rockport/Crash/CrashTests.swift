@@ -279,27 +279,27 @@ func runCrashTest(_ o: Options, scenario: String) {
             r["playerHeadingChangeDeg"] = yawPeak * 180 / .pi; r["playerYawRatePeak"] = spinPeak
             r["playerDamageZones"] = car.damage.zones
         case "rompibles":
-            // La fila de rompibles más cercana al recorrido: los que quedan a ±3 m de una recta de 120 m por un tramo
+            // La fila de rompibles más larga cerca del refugio: para cada rompible suelto o rompible (DETACH_FORCE 0…8000),
+            // los que quedan a ±1,6 m de la recta del tramo de carretera más cercano, 0…50 m por delante
             var best: (p: float3, d: float3, list: [Smackable])?
-            for i in 0..<ai.net.count where ai.net.trafficAllowed(i) && ai.net.segs[i].length > 60 {
-                let a = ai.net.point(i, 0), b = ai.net.point(i, 1)
-                if simd_distance(a, start) > 900 { continue }
-                let dir = simd_normalize(float3(b.x - a.x, b.y - a.y, 0) + 1e-6)
-                for off in [-6, -4.5, 4.5, 6] as [Float] {
-                    let sd = float3(dir.y, -dir.x, 0) * off
-                    var l: [Smackable] = []
-                    crash.smackables.near(a + sd + dir * 30, radius: 40, into: &l)
-                    let line = l.filter { s in
-                        let rel = s.pos - (a + sd); let along = simd_dot(rel, dir); let across = abs(simd_dot(rel, float3(dir.y, -dir.x, 0)))
-                        return along > 10 && along < 70 && across < 1.5 && s.state == .attached && s.type.detachForce >= 0 && s.type.detachForce < 8000
-                    }
-                    if line.count > (best?.list.count ?? 1) { best = (a + sd, dir, line) }
+            let cands = crash.smackables.all.filter { $0.state == .attached || $0.state == .loose }.filter {
+                simd_distance($0.pos, start) < 700 && $0.type.detachForce >= 0 && $0.type.detachForce < 8000 }
+            for s0 in cands {
+                guard let h = ai.net.nearest(s0.pos, maxDist: 25) else { continue }
+                var dir = ai.net.tangent(h.seg, h.t); dir.z = 0; dir = simd_normalize(dir + 1e-6)
+                let lat = float3(dir.y, -dir.x, 0)
+                var l: [Smackable] = []
+                crash.smackables.near(s0.pos + dir * 25, radius: 30, into: &l)
+                let line = l.filter { x in
+                    let rel = x.pos - s0.pos; let along = simd_dot(rel, dir)
+                    return along >= -0.1 && along < 50 && abs(simd_dot(rel, lat)) < 1.6 && x.type.detachForce >= 0 && x.type.detachForce < 8000
                 }
+                if line.count > (best?.list.count ?? 2) { best = (s0.pos - dir * 45, dir, line) }
             }
             guard let b = best else { r["error"] = "sin rompibles en línea"; break }
-            reset(b.p, yaw: atan2(b.d.y, b.d.x))
+            reset(b.p + float3(0, 0, 1), yaw: atan2(b.d.y, b.d.x))
             rig.load(30)
-            let target = b.p + b.d * 90
+            let target = b.p + b.d * 120
             rig.driver = { _ in autopilot(car, kmh: 80, toward: target) }
             var first: Int?
             let res = run(6) { i in
@@ -313,15 +313,18 @@ func runCrashTest(_ o: Options, scenario: String) {
             r["impacts"] = res.impacts; r["maxImpulseNs"] = res.maxImpulse; r["playerKmhEnd"] = car.kmh
             r["smackablesHit"] = ai.stats.smackablesHit
         case "derrumbe":
-            guard let br = crash.breakers.list.sorted(by: { simd_distance($0.pos, start) < simd_distance($1.pos, start) })
-                    .first(where: { b in b.members.contains { $0.type.detachForce >= 0 && $0.type.detachForce < 5000 } }),
-                  let trig = br.members.filter({ $0.type.detachForce >= 0 }).min(by: { $0.type.detachForce < $1.type.detachForce }) else { r["error"] = "sin derrumbe"; break }
-            // Arranque a 60 m del soporte, de cara a él
-            var dir = trig.pos - br.pos; dir.z = 0
-            if simd_length(dir) < 3 { dir = float3(1, 0, 0) }
-            dir = simd_normalize(dir)
-            let from = trig.pos + dir * 55
-            reset(from, yaw: atan2(-dir.y, -dir.x))
+            let good = ["WaterTowerMoment", "ScaffoldingCollapseMoment", "GasStationMoment", "TorusRoofMoment", "PorchCollapseMoment"]
+            let isTrig = { (x: Smackable) -> Bool in x.type.detachForce >= 0 && x.type.detachForce <= 5000 && ["support", "scaffold", "gaspump"].contains(where: { x.type.name.contains($0) }) }
+            guard let br = crash.breakers.list.filter({ b in good.contains(b.name) && b.members.count >= 2 && b.members.contains(where: isTrig) })
+                    .sorted(by: { simd_distance($0.pos, start) < simd_distance($1.pos, start) }).first,
+                  let trig = br.members.filter(isTrig).min(by: { simd_distance($0.pos, br.pos) < simd_distance($1.pos, br.pos) }),
+                  let rh = ai.net.nearest(trig.pos, maxDist: 80) else { r["error"] = "sin derrumbe"; break }
+            // Llegada por la carretera más cercana: 60 m antes del punto de la vía junto al soporte
+            let q = ai.net.point(rh.seg, rh.t)
+            var tan = ai.net.tangent(rh.seg, rh.t); tan.z = 0; tan = simd_normalize(tan + 1e-6)
+            let from = q - tan * 60
+            reset(from + float3(0, 0, 1), yaw: atan2(tan.y, tan.x))
+            rig.driver = { _ in autopilot(car, kmh: 70, toward: simd_distance(car.position, q) > 18 && simd_dot(car.position - q, tan) < -12 ? q : trig.pos) }
             AIConfig.police = true
             ai.police.heat = 3
             rig.load(30)
@@ -334,13 +337,16 @@ func runCrashTest(_ o: Options, scenario: String) {
             rig.frame(); ai.police.forcePursuit()
             rig.load(20)
             e.camPos = from
-            rig.driver = { _ in autopilot(car, kmh: 70, toward: trig.pos) }
             var trigAt: Int?
+            var closest: Float = 1e9
             let res = run(8) { i in
+                closest = min(closest, simd_distance(car.position, trig.pos))
                 if trigAt == nil, br.triggered { trigAt = i; rig.shot("derrumbe-1") }
                 if let t = trigAt, i == t + 50 { rig.shot("derrumbe-2") }
                 if let t = trigAt, i == t + 120 { rig.shot("derrumbe-3") }
             }
+            rig.shot("derrumbe-final")
+            r["closestToTriggerM"] = closest; r["triggerState"] = "\(trig.state)"; r["triggerDetachForce"] = trig.type.detachForce
             r["breaker"] = br.name; r["members"] = br.members.count; r["trigger"] = trig.type.name; r["triggered"] = br.triggered
             r["fallen"] = br.members.filter { $0.state != .attached && $0.state != .loose }.count
             r["copsImmobilized"] = cops.filter { $0.damage.destroyed }.count
@@ -363,7 +369,7 @@ func runCrashTest(_ o: Options, scenario: String) {
         default:
             r["error"] = "escenario desconocido"
         }
-        r["log"] = crash.log.suffix(30)
+        r["log"] = Array(crash.log.suffix(30))
         results[sc] = r
         let summary = r.filter { $0.key != "log" }.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: " · ")
         print("— \(sc): \(summary)")

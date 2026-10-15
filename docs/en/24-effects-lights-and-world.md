@@ -182,4 +182,4 @@ Names `TRN_CP_*_Road/Terrain_*`, `TROUGH_*`, `TroughNJ_*`, with `_Hole` and `_Se
 - 3 unnamed parameter layers, the TrackInfo sun hash and the TrackOBB type.
 - 710 breakable models with unknown full names (only truncated on disc).
 - The exact use of troughs (`0x34105/06/07`: doc 22 §10).
-- The particle simulation (spawn, keyed colour, grid textures) is in `EmitterSystem.cpp` [D]; it still has to be ported to the engine.
+- Particle playback, flares and per-zone fog/tint in the native engine: done (doc 20 §9, `native-engine/Sources/Rockport/Effects/`). Breakables, sound triggers and the ground material for tyre dust and water are still missing.
