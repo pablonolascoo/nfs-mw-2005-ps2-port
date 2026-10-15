@@ -4,13 +4,15 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.3)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
 <img src="site/img/blacklist-grid.jpg" alt="The 15 Blacklist cars with their exclusive liveries" width="100%">
 
-| The game's original interface | Police pursuit |
+| Race with the original HUD | Police pursuit |
 |---|---|
-| <img src="site/img/menu.jpg" alt="Original main menu"> | <img src="site/img/persecucion.jpg" alt="Pursuit in the native engine"> |
+| <img src="site/img/carrera.jpg" alt="Sprint race with the original HUD and the event barriers"> | <img src="site/img/persecucion.jpg" alt="Pursuit with the original HUD and radar"> |
+| **Original main menu** | **Blacklist screen** |
+| <img src="site/img/menu.jpg" alt="Original main menu"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
 
 Open research and tools to turn your own **PlayStation 2** copy of *Need for Speed: Most Wanted* (2005) into open formats (glTF/PNG/JSON), as a base for **native ports to any platform**, macOS first.
 
@@ -41,7 +43,9 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | **Story cars with their exact liveries**: classic silver/blue BMW M3 GTR, Razor's Mustang and all 15 Blacklist cars (82 preset rides, vinyls composited like the game) — [doc 10](docs/en/10-cars.md) | ✅ v0.3 |
 | **Police radio** from your disc (own MicroTalk decoder), event-driven, through the PS4/PS5 pad speaker or the Mac; configurable light bar — [doc 15](docs/en/15-controllers.md), [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.3 |
 | Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
-| Playable races and Blacklist, garages in the native engine, in-game audio | 🔜 |
+| **Playable races and Blacklist**: sprint, circuit, knockout, drag, speedtrap, tollbooth and challenges; rivals with the game's AI and cars; 15 → 1 progression, pink slips, district padlocks and save game — [doc 18](docs/en/18-races-and-blacklist.md) | ✅ v0.4 |
+| **100 % original HUD** with the game's radar, race screens, results, Blacklist and pursuit endings — [doc 17](docs/en/17-interface.md) | ✅ v0.4 |
+| Garages in the native engine, engine sound, movies, car-to-car collisions | 🔜 |
 
 ## Play on your Mac
 1. Download `Rockport-<version>.dmg` from [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) and drag **Rockport** to Applications.

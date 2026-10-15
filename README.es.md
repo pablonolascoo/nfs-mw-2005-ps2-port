@@ -4,13 +4,15 @@ Español · [English](README.md)
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.3)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La ampliación</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La ampliación</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
 <img src="site/img/blacklist-grid.jpg" alt="Los 15 coches de la Lista Negra con sus pinturas exclusivas" width="100%">
 
-| Interfaz original del juego | Persecución con la policía |
+| Carrera con el HUD original | Persecución con la policía |
 |---|---|
-| <img src="site/img/menu.jpg" alt="Menú principal original"> | <img src="site/img/persecucion.jpg" alt="Persecución en el motor nativo"> |
+| <img src="site/img/carrera.jpg" alt="Carrera sprint con el HUD original y las vallas de la prueba"> | <img src="site/img/persecucion.jpg" alt="Persecución con el HUD original y el radar"> |
+| **Menú principal original** | **Pantalla de la Lista Negra** |
+| <img src="site/img/menu.jpg" alt="Menú principal original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
 Investigación y herramientas abiertas para convertir tu propia copia de **PlayStation 2** de *Need for Speed: Most Wanted* (2005) en formatos abiertos (glTF/PNG/JSON). Es la base para **ports nativos a cualquier plataforma**, empezando por macOS.
 
@@ -41,7 +43,9 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | **Coches de la historia con su pintura exacta**: BMW M3 GTR gris con franjas azules, Mustang de Razor y los 15 de la Lista Negra (82 coches preparados, vinilos montados como el juego) — [doc 10](docs/es/10-coches.md) | ✅ v0.3 |
 | **Radio de la policía** de tu disco (decodificador MicroTalk propio), según lo que pasa, por el altavoz del mando PS4/PS5 o el Mac; barra de luz configurable — [doc 15](docs/es/15-mandos.md), [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.3 |
 | Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
-| Carreras y Lista Negra jugables, garajes en el motor nativo, audio dentro del juego | 🔜 |
+| **Carreras y Lista Negra jugables**: sprint, circuito, eliminación, drag, radar, peaje y desafíos; rivales con la IA del juego y sus coches; progresión 15 → 1, coches de rosa, candados de distrito y partida guardada — [doc 18](docs/es/18-carreras-y-lista-negra.md) | ✅ v0.4 |
+| **HUD 100 % original** con radar del juego, pantallas de carrera, resultados, Lista Negra y final de persecución — [doc 17](docs/es/17-interfaz.md) | ✅ v0.4 |
+| Garajes en el motor nativo, sonido de motor, películas, choques entre coches | 🔜 |
 
 ## Jugar en tu Mac
 1. Descarga `Rockport-<versión>.dmg` de [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) y arrastra **Rockport** a Aplicaciones.

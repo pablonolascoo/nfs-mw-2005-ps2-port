@@ -82,6 +82,7 @@ func runRaceTest(_ o: Options, eventKey: String) {
     let base = o.screenshot.map { ($0 as NSString).deletingPathExtension }
     var gpu: [Double] = [], cpu: [Double] = []
     var shotStart = false, shotMid = false, shotResults = false
+    var resultsFrames = 0
     var lastLog = -1
     var endFrame: Int?
     for i in 0..<frames {
@@ -111,8 +112,10 @@ func runRaceTest(_ o: Options, eventKey: String) {
             if i % 20 == 10 { engine.keys.insert(36) } else if i % 20 == 12 { engine.keys.remove(36) }
         }
         if session.phase == .results {
-            if !shotResults, let b = base, i % 2 == 0 { shotResults = true; writePNG(target, device: device, queue: engine.queue, path: b + "-results.png") }
-            if i % 20 == 10 { engine.keys.insert(36) } else if i % 20 == 12 { engine.keys.remove(36) }
+            resultsFrames += 1
+            // Captura con la pantalla ya asentada (el HUD tarda unos fotogramas en ocultarse) y luego Intro
+            if !shotResults, let b = base, resultsFrames == 60 { shotResults = true; writePNG(target, device: device, queue: engine.queue, path: b + "-results.png") }
+            if resultsFrames > 70 { if i % 20 == 10 { engine.keys.insert(36) } else if i % 20 == 12 { engine.keys.remove(36) } }
         }
         if outcome != nil && endFrame == nil { endFrame = i; engine.keys.remove(36) }
         if let e = endFrame, i - e > 30 { break }

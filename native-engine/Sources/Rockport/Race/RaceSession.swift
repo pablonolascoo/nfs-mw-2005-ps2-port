@@ -633,6 +633,7 @@ final class RaceSession {
         hud.setPosition(p.position, of: racers.count)
         hud.setLap(min(max(1, event.laps), p.lapsCompleted + 1), of: max(1, event.laps))
         hud.setTimer(raceTime: isTimeTrial ? timeRemaining : clock, lapTime: event.isLapRace ? clock - p.lapStart : nil, bestLap: p.bestLap)
+        hud.setProgress(racePct(p))
         hud.setRacers(rank.map { RaceHUDRacer(name: $0.name, isPlayer: $0.isPlayer, knockedOut: $0.knockedOut || $0.dnf, gap: $0.progress - p.progress, position: $0.position) })
         hud.setRacerBlips(racers.filter { !$0.isPlayer }.map(\.car.position))
         if p.nextGate < gates.count, hasRoute { hud.setNextCheckpoint(gates[p.nextGate].marker.p) } else { hud.setNextCheckpoint(nil) }
