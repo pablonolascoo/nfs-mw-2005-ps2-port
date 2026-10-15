@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.5)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
 **An open decompilation and reverse-engineering project** for the **PlayStation 2** *Need for Speed: Most Wanted* (2005). We read your own ISO, understand every format and game system (helped by the [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) decomp) and rebuild it as a **native game**, faithful to the original: same city, same cars, same interface, same warm PS2 tone.
 
@@ -17,7 +17,7 @@ Then **we expand it**: an expansion that continues the story as if the same stud
 | | What | Status |
 |---|---|---|
 | 🔬 **Decompilation** | Disc formats, database, physics, AI, interface, audio… all documented in [`docs/`](docs/en), every fact tagged ([V] verified, [D] decomp, [I] inferred, [H] hypothesis) | ✅ well advanced |
-| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.4) |
+| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.5) |
 | 🗺️ **"Rust Belt" expansion** | 4 new districts, Blacklist 2, classic cars, the story continues | 🧭 designed, [see below](#the-rust-belt-expansion) |
 
 ### Platforms
@@ -43,6 +43,8 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | Race with the original HUD | Police pursuit |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Sprint race with the original HUD and the event barriers"> | <img src="site/img/persecucion.jpg" alt="Pursuit with the original HUD and radar"> |
+| **Original main menu, with your car** | **Customization shop, no loading screens** |
+| <img src="site/img/menu.jpg" alt="Original main menu with the BMW M3 GTR"> | <img src="site/img/taller.jpg" alt="Customization shop: painting the BMW"> |
 | **Race results** | **Blacklist screen** |
 | <img src="site/img/resultados.jpg" alt="Original results screen"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
 
@@ -72,7 +74,10 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
 | **Playable races and Blacklist**: sprint, circuit, knockout, drag, speedtrap, tollbooth and challenges; rivals with the game's AI and cars; 15 → 1 progression, pink slips, district padlocks and save game — [doc 18](docs/en/18-races-and-blacklist.md) | ✅ v0.4 |
 | **100 % original HUD** with the game's radar, race screens, results, Blacklist and pursuit endings — [doc 17](docs/en/17-interface.md) | ✅ v0.4 |
-| Garages in the native engine, engine sound, movies, car-to-car collisions | 🔜 |
+| **Garages without loading screens** in the native engine: the door opens, you drive in, park and get the safehouse, car lot (buy cars) and shop menus (paint, vinyls, rims, spoilers, kits, light bar) — [doc 07](docs/en/07-driving-and-garages.md) | ✅ v0.5 |
+| **Original sound**: each car's engine with the game's synthesis, turbo, shifts, nitrous, skids, impacts, sirens and horns — [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.5 |
+| **Quick Race and split screen**: 2 players (original) and 3-4 (extension), several displays, one controller per player — [doc 19](docs/en/19-quick-race-and-multiplayer.md) | ✅ v0.5 |
+| Movies, music, career map, car-to-car collisions, helicopter | 🔜 |
 
 ## Quick Race and split screen
 

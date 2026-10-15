@@ -37,6 +37,10 @@ Se generan en `native-engine/.build/shots/` (no se suben a git):
 | `carside.png`, `car34.png` | El coche de lado y de tres cuartos (`--carcam`) |
 | `carwheel.png` | Rueda delantera de cerca: llanta, disco y pinza |
 | `aerial.png` | Toda la ciudad desde 900 m (nivel lejano) |
+| `garage/mainmenu-1920.png`, `-2940.png` | Menú principal con el garaje del frontend y el BMW (`--ui-test MainMenu`) |
+| `garage/safehouse-1920-1-fuera/2-dentro/3-aparcado.png` | Entrar conduciendo en el refugio 1: persiana, interior y menú (`--garage-test zone_safehouse_1`) |
+| `garage/customshop-paint-1920-3-aparcado.png`, `customshop-rims-…` | Taller: pintura y llantas montadas en el coche |
+| `garage/carlot-1920-3-aparcado.png` | Concesionario con precio y logotipos |
 
 ## Cómo se compila y se arranca
 

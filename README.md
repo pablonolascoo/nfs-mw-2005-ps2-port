@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.5)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
 **Proyecto abierto de decompilación e ingeniería inversa** del *Need for Speed: Most Wanted* (2005) de **PlayStation 2**. Leemos tu propia ISO, entendemos cada formato y cada sistema del juego (con ayuda de la decomp [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw)) y lo volvemos a montar como **juego nativo**, fiel al original: misma ciudad, mismos coches, misma interfaz, mismo tono cálido de PS2.
 
@@ -17,7 +17,7 @@ Y después, **lo ampliamos**: una expansión que continúa la historia como si l
 | | Qué | Estado |
 |---|---|---|
 | 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ muy avanzada |
-| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.4) |
+| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.5) |
 | 🗺️ **Expansión «Rust Belt»** | 4 distritos nuevos, Lista Negra 2, coches clásicos, la historia continúa | 🧭 diseñada, [ver abajo](#la-ampliación-rust-belt) |
 
 ### Plataformas
@@ -43,6 +43,8 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | Carrera con el HUD original | Persecución con la policía |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Carrera sprint con el HUD original y las vallas de la prueba"> | <img src="site/img/persecucion.jpg" alt="Persecución con el HUD original y el radar"> |
+| **Menú principal original, con tu coche** | **Taller de tuneo sin pantallas de carga** |
+| <img src="site/img/menu.jpg" alt="Menú principal original con el BMW M3 GTR"> | <img src="site/img/taller.jpg" alt="Taller de tuneo: pintura del BMW"> |
 | **Resultados de la carrera** | **Pantalla de la Lista Negra** |
 | <img src="site/img/resultados.jpg" alt="Pantalla de resultados original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
@@ -72,7 +74,10 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
 | **Carreras y Lista Negra jugables**: sprint, circuito, eliminación, drag, radar, peaje y desafíos; rivales con la IA del juego y sus coches; progresión 15 → 1, coches de rosa, candados de distrito y partida guardada — [doc 18](docs/es/18-carreras-y-lista-negra.md) | ✅ v0.4 |
 | **HUD 100 % original** con radar del juego, pantallas de carrera, resultados, Lista Negra y final de persecución — [doc 17](docs/es/17-interfaz.md) | ✅ v0.4 |
-| Garajes en el motor nativo, sonido de motor, películas, choques entre coches | 🔜 |
+| **Garajes sin pantallas de carga** en el motor nativo: se abre la puerta, entras, aparcas y salen los menús del refugio, el concesionario (comprar coches) y el taller (pintura, vinilos, llantas, alerones, kits, barra de luz) — [doc 07](docs/es/07-conduccion-y-garajes.md) | ✅ v0.5 |
+| **Sonido original**: motor de cada coche con la síntesis del juego, turbo, cambios, nitro, derrapes, golpes, sirenas y bocinas — [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.5 |
+| **Carrera rápida y pantalla partida** de 2 jugadores (original) y 3-4 (ampliación), varias pantallas, un mando por jugador — [doc 19](docs/es/19-carrera-rapida-y-multijugador.md) | ✅ v0.5 |
+| Películas, música, mapa de la carrera profesional, choques entre coches, helicóptero | 🔜 |
 
 ## Carrera rápida y pantalla partida
 

@@ -37,6 +37,10 @@ Written to `native-engine/.build/shots/` (never committed):
 | `carside.png`, `car34.png` | The car from the side and three-quarter view (`--carcam`) |
 | `carwheel.png` | Front wheel close-up: rim, disc and caliper |
 | `aerial.png` | The whole city from 900 m (far level) |
+| `garage/mainmenu-1920.png`, `-2940.png` | Main menu with the front-end garage and the BMW (`--ui-test MainMenu`) |
+| `garage/safehouse-1920-1-fuera/2-dentro/3-aparcado.png` | Driving into safehouse 1: roller door, interior and menu (`--garage-test zone_safehouse_1`) |
+| `garage/customshop-paint-1920-3-aparcado.png`, `customshop-rims-…` | Shop: paint and rims fitted to the car |
+| `garage/carlot-1920-3-aparcado.png` | Car lot with price and logos |
 
 ## Build and run
 
