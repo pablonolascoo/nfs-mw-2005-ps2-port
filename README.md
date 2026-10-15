@@ -1,187 +1,221 @@
-# NFS Most Wanted (2005) · PS2 → native
+# Rockport Native · Need for Speed: Most Wanted (2005)
 
-[Español](README.es.md) · English
+**Español** · [English](README.en.md)
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.4)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
-<img src="site/img/blacklist-grid.jpg" alt="The 15 Blacklist cars with their exclusive liveries" width="100%">
+**Proyecto abierto de decompilación e ingeniería inversa** del *Need for Speed: Most Wanted* (2005) de **PlayStation 2**. Leemos tu propia ISO, entendemos cada formato y cada sistema del juego (con ayuda de la decomp [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw)) y lo volvemos a montar como **juego nativo**, fiel al original: misma ciudad, mismos coches, misma interfaz, mismo tono cálido de PS2.
 
-| Race with the original HUD | Police pursuit |
+Y después, **lo ampliamos**: una expansión que continúa la historia como si la hubiera hecho el mismo estudio en 2006.
+
+> **No incluye datos del juego.** Necesitas tu propio disco (PAL SLES-53559 o NTSC-U SLUS-21351). Todo se genera en tu equipo a partir de tu ISO. Proyecto de fans sin ánimo de lucro, sin relación con Electronic Arts.
+
+## Tres partes, un objetivo
+
+| | Qué | Estado |
+|---|---|---|
+| 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ muy avanzada |
+| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.4) |
+| 🗺️ **Expansión «Rust Belt»** | 4 distritos nuevos, Lista Negra 2, coches clásicos, la historia continúa | 🧭 diseñada, [ver abajo](#la-ampliación-rust-belt) |
+
+### Plataformas
+| Plataforma | Estado | Cómo |
+|---|---|---|
+| **macOS** (Apple Silicon) | ✅ **jugable** · `.dmg` en [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest) | Swift + Metal, a pantalla completa y a la resolución de tu pantalla |
+| **Windows** | 🔜 posible | El conversor (`tools/`, TypeScript + Bun) ya funciona en Windows. Falta un motor con DirectX 12 o Vulkan que lea los mismos datos |
+| **iPhone / iPad** | 🔜 posible | Mismo Metal y mismos mandos que en Mac; habría que adaptar los controles táctiles y la memoria |
+| **Android / Linux** | 💡 idea | Vulkan + los mismos datos convertidos |
+
+Los datos convertidos (glTF, PNG, JSON) son abiertos y no dependen de la plataforma: cualquiera puede escribir su motor encima. ¿Te animas con Windows o con móvil? Mira [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### La expansión, en una imagen
+
+<img src="docs/expansion/valle.jpg" alt="Vista del valle industrial de la expansión Rust Belt" width="100%">
+
+Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockport: **Millbrook**, **Acerías del Río**, **Puerto de Mercancías** y **Sierra Alta**. Una nueva Lista Negra de 15, coches clásicos (Countach, Testarossa, 959…), persecuciones nuevas y la historia que sigue. [Plano, bocetos e historia →](#la-ampliación-rust-belt)
+
+## En imágenes
+
+<img src="site/img/blacklist-grid.jpg" alt="Los 15 coches de la Lista Negra con sus pinturas exclusivas" width="100%">
+
+| Carrera con el HUD original | Persecución con la policía |
 |---|---|
-| <img src="site/img/carrera.jpg" alt="Sprint race with the original HUD and the event barriers"> | <img src="site/img/persecucion.jpg" alt="Pursuit with the original HUD and radar"> |
-| **Race results** | **Blacklist screen** |
-| <img src="site/img/resultados.jpg" alt="Original results screen"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
+| <img src="site/img/carrera.jpg" alt="Carrera sprint con el HUD original y las vallas de la prueba"> | <img src="site/img/persecucion.jpg" alt="Persecución con el HUD original y el radar"> |
+| **Resultados de la carrera** | **Pantalla de la Lista Negra** |
+| <img src="site/img/resultados.jpg" alt="Pantalla de resultados original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
-Open research and tools to turn your own **PlayStation 2** copy of *Need for Speed: Most Wanted* (2005) into open formats (glTF/PNG/JSON), as a base for **native ports to any platform**, macOS first.
-
-> **No game data is included.** You need your own disc. Everything here reads your ISO and writes derived files locally. This project is not affiliated with Electronic Arts.
-
-## What works today
-| Area | Status |
+## Qué funciona hoy
+| Área | Estado |
 |---|---|
-| Disc container (ZDIR/ZZDATA), file names | ✅ 95 % of files named |
-| Compression HUFF / JDLZ / RAWW | ✅ byte-exact |
-| PS2 geometry (VIF packets, strip restarts) | ✅ 181,535 strips decoded, 0 errors |
-| PS2 textures PSMT8 / PSMT4 (GS swizzle) | ✅ |
-| Whole Rockport: 718 sections, 106,714 objects, 5.8 M triangles | ✅ exported to glTF |
-| Cars with textures, paint, glass, lights and 4 wheels (TireOffsets) | ✅ |
-| **Native macOS engine (Swift + Metal)**: full screen, screen resolution, 60 fps, PS2 tone, drivable car — [native-engine/](native-engine/README.en.md) | ✅ first version |
-| Research web viewer (Three.js) | ✅ |
-| Decompilation (dbalatoni13/nfsmw) builds on Apple Silicon | ✅ with Rosetta 2 |
-| Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
-| Frontend interiors (garages, car lot, tuning shop) | ✅ exported |
-| Whole city at 60 fps (HLOD tiles, texture arrays, workers, dynamic resolution) | ✅ |
-| Drivable car on the real city (arcade prototype, 60 fps) | ✅ |
-| Garages without loading screens: real door opens, interior already loaded, park, showcase, drive out | ✅ |
-| Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
-| Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
-| **Game's own driving physics** (decomp), 4 cameras, controllers (Xbox, PS3/PS4/PS5, PS2 via USB) with light bar and touchpad — [doc 13](docs/en/13-driving-physics.md), [doc 15](docs/en/15-controllers.md) | ✅ v0.2 |
-| **Traffic, police and pursuits** with the game's tables: heat, backup, formations, roadblocks — [doc 14](docs/en/14-traffic-and-police.md) | ✅ v0.2 |
-| **The game's original interface** at native resolution: title, main menu, career, pause and MW HUD, Spanish/English text from your disc — [doc 17](docs/en/17-interface.md) | ✅ v0.3 |
-| **Story cars with their exact liveries**: classic silver/blue BMW M3 GTR, Razor's Mustang and all 15 Blacklist cars (82 preset rides, vinyls composited like the game) — [doc 10](docs/en/10-cars.md) | ✅ v0.3 |
-| **Police radio** from your disc (own MicroTalk decoder), event-driven, through the PS4/PS5 pad speaker or the Mac; configurable light bar — [doc 15](docs/en/15-controllers.md), [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.3 |
-| Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
-| **Playable races and Blacklist**: sprint, circuit, knockout, drag, speedtrap, tollbooth and challenges; rivals with the game's AI and cars; 15 → 1 progression, pink slips, district padlocks and save game — [doc 18](docs/en/18-races-and-blacklist.md) | ✅ v0.4 |
-| **100 % original HUD** with the game's radar, race screens, results, Blacklist and pursuit endings — [doc 17](docs/en/17-interface.md) | ✅ v0.4 |
-| Garages in the native engine, engine sound, movies, car-to-car collisions | 🔜 |
+| Contenedor del disco (ZDIR/ZZDATA) y nombres | ✅ 95 % de archivos con nombre |
+| Compresión HUFF / JDLZ / RAWW | ✅ exacta byte a byte |
+| Geometría PS2 (paquetes VIF, cortes de tira) | ✅ 181.535 tiras, 0 errores |
+| Texturas PS2 PSMT8 / PSMT4 (swizzle del GS) | ✅ |
+| Rockport entero: 718 secciones, 106.714 objetos, 5,8 M triángulos | ✅ exportado a glTF |
+| Coches con texturas, pintura, cristales, pilotos y 4 ruedas (TireOffsets) | ✅ |
+| **Motor nativo de macOS (Swift + Metal)**: pantalla completa, resolución de la pantalla, 60 fps, tono PS2, coche conducible — [native-engine/](native-engine/README.md) | ✅ primera versión |
+| Visor web de investigación (Three.js) | ✅ |
+| Descompilación (dbalatoni13/nfsmw) en Apple Silicon | ✅ con Rosetta 2 |
+| Base de datos del juego (VLT): 6.287 colecciones, 255 eventos, Blacklist, 15 zonas de garaje/tienda | ✅ |
+| Interiores del menú (garajes, concesionario, taller) | ✅ exportados |
+| Ciudad entera a 60 fps (casillas HLOD, arrays de texturas, workers, resolución dinámica) | ✅ |
+| Garajes sin pantallas de carga en el visor de investigación: se abre la puerta real, interior ya cargado, aparcas y sales conduciendo | ✅ |
+| Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
+| Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
+| **Física de conducción del juego original** (decomp), 4 cámaras, mandos (Xbox, PS3/PS4/PS5, PS2 por USB) con barra de luz y táctil — [doc 13](docs/es/13-fisica-conduccion.md), [doc 15](docs/es/15-mandos.md) | ✅ v0.2 |
+| **Tráfico, policía y persecuciones** con las tablas del juego: notoriedad, refuerzos, formaciones, controles — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ v0.2 |
+| **Interfaz original del juego** a resolución nativa: «Pulsa START», menú principal, carrera, pausa y HUD de MW, con los textos en castellano de tu disco — [doc 17](docs/es/17-interfaz.md) | ✅ v0.3 |
+| **Coches de la historia con su pintura exacta**: BMW M3 GTR gris con franjas azules, Mustang de Razor y los 15 de la Lista Negra (82 coches preparados, vinilos montados como el juego) — [doc 10](docs/es/10-coches.md) | ✅ v0.3 |
+| **Radio de la policía** de tu disco (decodificador MicroTalk propio), según lo que pasa, por el altavoz del mando PS4/PS5 o el Mac; barra de luz configurable — [doc 15](docs/es/15-mandos.md), [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.3 |
+| Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
+| **Carreras y Lista Negra jugables**: sprint, circuito, eliminación, drag, radar, peaje y desafíos; rivales con la IA del juego y sus coches; progresión 15 → 1, coches de rosa, candados de distrito y partida guardada — [doc 18](docs/es/18-carreras-y-lista-negra.md) | ✅ v0.4 |
+| **HUD 100 % original** con radar del juego, pantallas de carrera, resultados, Lista Negra y final de persecución — [doc 17](docs/es/17-interfaz.md) | ✅ v0.4 |
+| Garajes en el motor nativo, sonido de motor, películas, choques entre coches | 🔜 |
 
-## Play on your Mac
-1. Download `Rockport-<version>.dmg` from [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) and drag **Rockport** to Applications.
-2. Open it (first time: right-click → Open, it is not notarised yet).
-3. Choose your PS2 ISO. It detects **PAL SLES-53559** or **NTSC-U SLUS-21351** and converts the game in about 5 minutes.
-4. The game starts full screen at your screen's resolution. Converted data stays in `~/Library/Application Support/Rockport/`.
+## Jugar en tu Mac
+1. Descarga `Rockport-<versión>.dmg` de [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) y arrastra **Rockport** a Aplicaciones.
+2. Ábrelo (la primera vez: clic derecho → Abrir; aún no está notarizado).
+3. Elige tu ISO de PS2. Detecta **PAL SLES-53559** o **NTSC-U SLUS-21351** y convierte el juego en alrededor de 1 minuto.
+4. El juego arranca a pantalla completa y a la resolución de tu pantalla. Los datos convertidos quedan en `~/Library/Application Support/Rockport/`.
 
-Build the `.dmg` yourself: `native-engine/scripts/make-dmg.sh` (needs Xcode tools and Bun). Details: [native-engine/README.en.md](native-engine/README.en.md).
+Montar el `.dmg` tú mismo: `native-engine/scripts/make-dmg.sh` (necesita las herramientas de Xcode y Bun). Detalle: [native-engine/README.md](native-engine/README.md).
 
-## The "Rust Belt" expansion
+## La ampliación «Rust Belt»
 
-A fan-made expansion **as if it were 2006**. It unlocks after beating the original Blacklist and continues the story with a **Blacklist 2** of 15 rivals with unique cars. Same look: Rust Belt, autumn and the warm PS2 tone.
+Una expansión hecha por fans **como si fuera de 2006**. Se desbloquea al vencer a la Lista Negra original y continúa la historia con una **Lista Negra 2** de 15 rivales con coches únicos. Misma estética: Rust Belt, otoño y el tono cálido de PS2.
 
-<img src="docs/expansion/valle.jpg" alt="Industrial valley of the expansion" width="100%">
+<img src="docs/expansion/valle.jpg" alt="Vista del valle industrial de la expansión" width="100%">
 
-| Map: real Rockport + 4 new districts | Districts |
+| Plano: Rockport real + 4 distritos nuevos | Distritos |
 |---|---|
-| <img src="docs/expansion/mapa-expansion.svg" alt="Expansion map" width="420"> | **1 · Millbrook**: working-class town, new safehouse (Blacklist 2 #15–#11)<br>**2 · River Steelworks**: blast furnaces and rail yards (#10–#6)<br>**3 · Freight Harbor**: cranes and containers (#5–#2)<br>**4 · High Ridge**: mountain pass and dam (#1)<br><br>Linked by the **I-99** interstate. Classic cars such as the Countach, Testarossa or 959. |
+| <img src="docs/expansion/mapa-expansion.svg" alt="Plano de la expansión" width="420"> | **1 · Millbrook**: pueblo obrero, nuevo refugio (Lista Negra 2 #15–#11)<br>**2 · Acerías del Río**: altos hornos y vías de tren (#10–#6)<br>**3 · Puerto de Mercancías**: grúas y contenedores (#5–#2)<br>**4 · Sierra Alta**: puerto de montaña y presa (#1)<br><br>Unidos por la interestatal **I-99**. Coches clásicos como el Countach, el Testarossa o el 959. |
 
-| River Steelworks | Freight Harbor | High Ridge | Bridge and I-99 |
+| Acerías del Río | Puerto de Mercancías | Sierra Alta | Puente e I-99 |
 |---|---|---|---|
-| <img src="docs/expansion/acerias.jpg" alt="Steelworks"> | <img src="docs/expansion/puerto.jpg" alt="Harbor"> | <img src="docs/expansion/sierra-alta.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
+| <img src="docs/expansion/acerias.jpg" alt="Acerías"> | <img src="docs/expansion/puerto.jpg" alt="Puerto"> | <img src="docs/expansion/sierra-alta.jpg" alt="Sierra Alta"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Puente"> |
 
-Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md). AI mood sketches (not game assets).
+Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md). Bocetos de ambiente hechos con IA (no son recursos del juego).
 
-## User guide
+## Guía de uso
 
-### First launch
-1. Open **Rockport** from Applications. First time: right-click → **Open** (the app is not signed by Apple yet).
-2. Click **CHOOSE MY PS2 ISO** and pick your copy. It detects PAL **SLES-53559** or NTSC-U **SLUS-21351** on its own.
-3. Wait for the bar (a few minutes). When it finishes, the game starts full screen at your screen's resolution.
-4. Press **C** (or **Menu / Options** on a pad) to switch from the free camera to the car.
+### Primer arranque
+1. Abre **Rockport** desde Aplicaciones. La primera vez: clic derecho → **Abrir** (la app aún no está firmada por Apple).
+2. Pulsa **ELEGIR MI ISO DE PS2** y selecciona tu copia. Detecta sola PAL **SLES-53559** o NTSC-U **SLUS-21351**.
+3. Espera a la barra (alrededor de 1 minuto). Al terminar, el juego arranca a pantalla completa y a la resolución de tu pantalla.
+4. Pulsa **C** (o **Menú / Options** en el mando) para pasar de la cámara libre al coche.
 
-### Controls
+### Controles
 
-| Action | Xbox | PlayStation | Keyboard |
+| Acción | Xbox | PlayStation | Teclado |
 |---|---|---|---|
-| Throttle (analog) | RT | R2 | W / ↑ |
-| Brake and reverse (analog) | LT | L2 | S / ↓ |
-| Steer | left stick | left stick | A D / ← → |
-| Handbrake | A or RB | ✕ or R1 | Space |
-| Nitrous | B | ○ | N or Shift |
-| Look back (hold) | LB or L3 | L1 or L3 | X |
-| Change camera (4 game views) | Y · d-pad → / ← | △ · d-pad → / ← | V |
-| Reset the car onto the road | X or View | □ or Share / Create | R |
-| Shift up / down | d-pad ↑ / ↓ | d-pad ↑ / ↓ | E / Q |
-| Free camera / photo mode | Menu | Options / Start | C |
-| Release mouse · Quit | — | — | Tab · Esc |
+| Acelerar (analógico) | RT | R2 | W / ↑ |
+| Frenar y marcha atrás (analógico) | LT | L2 | S / ↓ |
+| Girar | stick izquierdo | stick izquierdo | A D / ← → |
+| Freno de mano | A o RB | ✕ o R1 | Espacio |
+| Nitro | B | ○ | N o Mayús |
+| Mirar atrás (mantener) | LB o L3 | L1 o L3 | X |
+| Cambiar de cámara (4 vistas del juego) | Y · cruceta → / ← | △ · cruceta → / ← | V |
+| Recolocar el coche en la calle | X o Ver | □ o Share / Create | R |
+| Subir / bajar marcha | cruceta ↑ / ↓ | cruceta ↑ / ↓ | E / Q |
+| Cámara libre / modo foto | Menú | Options / Start | C |
+| Soltar el ratón · Salir | — | — | Tab · Esc |
 
-- Gears are automatic, as in the game. Use the d-pad to shift by hand whenever you want.
-- The right stick can also throttle (↑) and brake (↓).
-- The warm, yellowish PS2 tone is **always** on: it is part of the game.
+- El cambio es automático, como en el juego. La cruceta sirve para cambiar a mano cuando quieras.
+- Con el stick derecho también puedes acelerar (↑) y frenar (↓).
+- El tono cálido y amarillento de PS2 va **siempre** puesto: es parte del juego.
 
-### PS4 (DualShock 4) and PS5 (DualSense) extras
+### Extras de PS4 (DualShock 4) y PS5 (DualSense)
 
-| Extra | What it does |
+| Extra | Qué hace |
 |---|---|
-| Light bar | Takes your car's colour. During a pursuit it flashes red and blue |
-| Swipe → / ← on the touchpad | Next / previous camera |
-| Press the touchpad (hold) | Look back while held |
-| Short tap on the touchpad | 1-second glance back |
-| Two fingers on the touchpad | Free camera (photo mode) and back to the car |
-| Adaptive triggers (PS5 only) | L2 resists when braking and buzzes when the wheels lock. R2 is almost free, shakes at the rev limiter and goes loose with nitrous |
-| Rumble | Follows tyre grip, the rev limiter, nitrous and hits |
+| Barra de luz | Toma el color de tu coche. En una persecución parpadea en rojo y azul |
+| Deslizar el dedo → / ← en el panel táctil | Cámara siguiente / anterior |
+| Pulsar el panel táctil (mantener) | Mirar atrás mientras lo mantienes |
+| Toque corto en el panel | Vistazo atrás de 1 segundo |
+| Dos dedos en el panel | Cámara libre (modo foto) y vuelta al coche |
+| Gatillos adaptativos (solo PS5) | L2 ofrece resistencia al frenar y vibra si las ruedas se bloquean. R2 casi libre, tiembla en el corte de inyección y se suelta con el nitro |
+| Vibración | Según el agarre de las ruedas, el corte de inyección, el nitro y los golpes |
 
-### Pursuits
-- **Top left**: heat level (HEAT, 1 to 5) and number of cops.
-- **Bottom**: the **EVADE ← → BUSTED** bar.
-  - Going slowly with a cop on you fills it towards **BUSTED**: you get arrested.
-  - Once they lose sight of you, **COOLDOWN** starts. Stay hidden until **EVADED** appears.
-- **To escape**: break line of sight (corners, tunnels, alleys) and use the game's hiding spots (under bridges, car parks). Cops can't see you there.
-- **From heat 2** there are roadblocks, some with spike strips. Find the gap or take another street.
-- **Cops chase you if** you speed past them, hit traffic or ram a patrol car.
+### Persecuciones
+- **Arriba a la izquierda**: nivel de notoriedad (HEAT, de 1 a 5) y número de policías.
+- **Abajo**: la barra **EVADE ← → BUSTED**.
+  - Si vas lento con un policía encima, se llena hacia **BUSTED**: te arrestan.
+  - Si les pierdes de vista, empieza el **COOLDOWN**. Aguanta sin que te vean y saldrá **EVADED**.
+- **Para escapar**: corta la línea de visión (esquinas, túneles, callejones) y busca escondites del juego (bajo puentes, aparcamientos). Ahí la policía no te ve.
+- **Desde la notoriedad 2** aparecen controles de carretera, algunos con pinchos. Busca el hueco o cambia de calle.
+- **Te persiguen si** vas muy rápido delante de ellos, chocas con el tráfico o embistes a un coche patrulla.
 
-### Supported controllers
-- **No install needed**, wired or Bluetooth: Xbox One and Series, PS4, PS5, Switch Pro and MFi pads.
-- **Wired only**: PS3 (DualShock 3) and PS2 pads through a USB adapter.
-- **Xbox 360**: macOS needs the free [360Controller](https://github.com/360Controller/360Controller) driver. The game tells you if it is missing.
-- Plug and unplug at any time. Full details: [docs/en/15-controllers.md](docs/en/15-controllers.md).
+### Mandos compatibles
+- **Sin instalar nada**, por cable o Bluetooth: Xbox One y Series, PS4, PS5, Switch Pro y mandos MFi.
+- **Solo por cable**: PS3 (DualShock 3) y mandos de PS2 con adaptador USB.
+- **Xbox 360**: macOS necesita el driver gratuito [360Controller](https://github.com/360Controller/360Controller). El juego te avisa si falta.
+- Se pueden conectar y desconectar en cualquier momento. Detalle completo: [docs/es/15-mandos.md](docs/es/15-mandos.md).
 
-### Troubleshooting
-| Problem | Fix |
+### Problemas frecuentes
+| Problema | Solución |
 |---|---|
-| "Cannot be opened because the developer cannot be verified" | Right-click the app → **Open** → **Open** |
-| A PS3, PS2 or generic pad does nothing | System Settings › Privacy & Security › **Input Monitoring** → enable Rockport |
-| I want to convert my ISO again | Delete `~/Library/Application Support/Rockport/<ID>/` and open the app |
-| I updated the app | If the data is from an older version, it is reconverted automatically from the same ISO |
-| Uninstall | Delete **Rockport** from Applications and the `~/Library/Application Support/Rockport/` folder |
+| «No se puede abrir porque no se ha verificado el desarrollador» | Clic derecho en la app → **Abrir** → **Abrir** |
+| Un mando PS3, PS2 o genérico no responde | Ajustes del Sistema › Privacidad y seguridad › **Monitorización de entrada** → activa Rockport |
+| Quiero volver a convertir mi ISO | Borra `~/Library/Application Support/Rockport/<ID>/` y abre la app |
+| Actualicé la app | Si los datos son de una versión anterior, se reconvierten solos con la misma ISO |
+| Desinstalar | Borra **Rockport** de Aplicaciones y la carpeta `~/Library/Application Support/Rockport/` |
 
-## Quick start (research tools)
-**One PAL ISO (SLES-53559) is enough for the whole project** (SLUS-21351 also works).
+## Inicio rápido (herramientas de investigación)
+**Con una sola ISO PAL (SLES-53559) basta para todo el proyecto** (también vale SLUS-21351).
 ```bash
-# requirements: Bun and your own ISO
+# requisitos: Bun y tu propia ISO
 cd tools && bun install
-bun run build-all /path/to/your.iso        # everything in ~6 min → map-data/<disc>/
-cd ../viewer && bun install && bunx vite    # http://localhost:5181 → «Cargar ciudad completa» → «Conducir»
+bun run build-all /ruta/a/tu.iso          # todo en ~6 min → map-data/<disco>/
+cd ../viewer && bun install && bunx vite   # http://localhost:5181 → «Cargar ciudad completa» → «Conducir»
 ```
-Step by step:
+Paso a paso:
 ```bash
 cd tools && bun install
 bun src/cli/inventory.ts ../original/SLES-53559.iso SLES-53559
-bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 tiles 400 3   # all of Rockport as 60-fps tiles (~1 min)
+bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 tiles 400 3   # Rockport entero en casillas a 60 fps (~1 min)
 bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 interior CAREER_SAFEHOUSE CAR_LOT CUSTOMIZATION_SHOP
 bun src/cli/vlt-dump.ts  ../original/SLES-53559.iso SLES-53559                # gameplay.json + zones.json
 bun src/cli/convert.ts   ../original/SLES-53559.iso SLES-53559 car BMWM3GTRE46
-bun src/cli/topdown.ts   ../original/SLES-53559.iso SLES-53559 4096          # top-down PNG map
+bun src/cli/topdown.ts   ../original/SLES-53559.iso SLES-53559 4096          # plano cenital PNG
 cd ../viewer && bun install && bunx vite                                    # http://localhost:5181
 ```
 
-## Documentation
-| Topic | English | Español |
-|---|---|---|
-| Disc identification | [docs/en/00](docs/en/00-disc-identification.md) | [docs/es/00](docs/es/00-identificacion-disco.md) |
-| Decomp compatibility | [docs/en/01](docs/en/01-sles53559-compatibility.md) | [docs/es/01](docs/es/01-compatibilidad-sles53559.md) |
-| PS2 formats | [docs/en/02](docs/en/02-ps2-formats.md) | [docs/es/02](docs/es/02-formatos-ps2.md) |
-| Rockport world | [docs/en/03](docs/en/03-rockport-world-ps2.md) | [docs/es/03](docs/es/03-mundo-rockport-ps2.md) |
-| Porting architecture | [docs/en/04](docs/en/04-port-architecture.md) | [docs/es/04](docs/es/04-arquitectura-port.md) |
-| Driving and garages | [docs/en/07](docs/en/07-driving-and-garages.md) | [docs/es/07](docs/es/07-conduccion-y-garajes.md) |
-| Mods and expansions | [docs/en/08](docs/en/08-mods.md) | [docs/es/08](docs/es/08-mods.md) |
-| Gameplay database (VLT): zones, races, Blacklist | [docs/en/05](docs/en/05-vlt-attributes.md) | [docs/es/05](docs/es/05-vlt-atributos.md) |
-| Viewer performance | [docs/en/06](docs/en/06-performance.md) | [docs/es/06](docs/es/06-rendimiento.md) |
-| Road network and collision | [docs/en/09](docs/en/09-road-network.md) | [docs/es/09](docs/es/09-red-de-carreteras.md) |
-| Cars: replacement textures, paint, wheels | [docs/en/10](docs/en/10-cars.md) | [docs/es/10](docs/es/10-coches.md) |
-| "Rust Belt" expansion: map, sketches, story | [docs/en/12](docs/en/12-rust-belt-expansion.md) | [docs/es/12](docs/es/12-expansion-rust-belt.md) |
-| Generated data catalog (which file answers what) | [docs/en/11](docs/en/11-data-catalog.md) | [docs/es/11](docs/es/11-catalogo-de-datos.md) |
-| **Project context: start here to resume work** | [CONTEXT.md](CONTEXT.md) | [CONTEXT.md](CONTEXT.md) |
+## Documentación
+Cada documento existe en español (`docs/es/`) y en inglés (`docs/en/`). Para retomar el proyecto: **[CONTEXT.md](CONTEXT.md)**.
 
-Every claim is tagged **[V]** verified on real data, **[D]** from the decomp's debug types, **[I]** inferred, or **[H]** hypothesis.
+| # | Tema | Español | English |
+|---|---|---|---|
+| 00 | Identificación del disco | [es](docs/es/00-identificacion-disco.md) | [en](docs/en/00-disc-identification.md) |
+| 01 | Compatibilidad con la decomp | [es](docs/es/01-compatibilidad-sles53559.md) | [en](docs/en/01-sles53559-compatibility.md) |
+| 02 | Formatos de PS2 | [es](docs/es/02-formatos-ps2.md) | [en](docs/en/02-ps2-formats.md) |
+| 03 | El mundo de Rockport | [es](docs/es/03-mundo-rockport-ps2.md) | [en](docs/en/03-rockport-world-ps2.md) |
+| 04 | Arquitectura del port | [es](docs/es/04-arquitectura-port.md) | [en](docs/en/04-port-architecture.md) |
+| 05 | Base de datos del juego (VLT) | [es](docs/es/05-vlt-atributos.md) | [en](docs/en/05-vlt-attributes.md) |
+| 06 | Rendimiento | [es](docs/es/06-rendimiento.md) | [en](docs/en/06-performance.md) |
+| 07 | Conducción y garajes | [es](docs/es/07-conduccion-y-garajes.md) | [en](docs/en/07-driving-and-garages.md) |
+| 08 | Mods | [es](docs/es/08-mods.md) | [en](docs/en/08-mods.md) |
+| 09 | Red de carreteras y colisión | [es](docs/es/09-red-de-carreteras.md) | [en](docs/en/09-road-network.md) |
+| 10 | Coches, pinturas y vinilos | [es](docs/es/10-coches.md) | [en](docs/en/10-cars.md) |
+| 11 | Catálogo de datos generados | [es](docs/es/11-catalogo-de-datos.md) | [en](docs/en/11-data-catalog.md) |
+| 12 | Expansión «Rust Belt» | [es](docs/es/12-expansion-rust-belt.md) | [en](docs/en/12-rust-belt-expansion.md) |
+| 13 | Física de conducción | [es](docs/es/13-fisica-conduccion.md) | [en](docs/en/13-driving-physics.md) |
+| 14 | Tráfico, policía y persecuciones | [es](docs/es/14-trafico-y-policia.md) | [en](docs/en/14-traffic-and-police.md) |
+| 15 | Mandos | [es](docs/es/15-mandos.md) | [en](docs/en/15-controllers.md) |
+| 16 | Audio y voces | [es](docs/es/16-audio-y-voces.md) | [en](docs/en/16-audio-and-voices.md) |
+| 17 | Interfaz original | [es](docs/es/17-interfaz.md) | [en](docs/en/17-interface.md) |
+| 18 | Carreras y Lista Negra | [es](docs/es/18-carreras-y-lista-negra.md) | [en](docs/en/18-races-and-blacklist.md) |
 
-## Layout
-`tools/` format readers and converters (TypeScript/Bun, platform-independent) · `viewer/` Three.js viewer · `docs/` research · `inventory/` per-disc inventories (hashes and sizes only).
+Cada afirmación lleva **[V]** verificado en datos reales, **[D]** sacado de la decomp, **[I]** inferido o **[H]** hipótesis.
 
-## Credits
-- [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) (CC0): PS2 debug types, chunk IDs, LZ/HUFF source.
-- [TsyVM/MWEncyclopedia](https://github.com/TsyVM/MWEncyclopedia): PC format reference.
-- GS memory tables follow the public GS documentation (same as PCSX2).
+## Estructura
+`tools/` lectores de formatos y conversores (TypeScript + Bun, multiplataforma) · `native-engine/` el juego nativo de macOS (Swift + Metal) · `viewer/` visor web de investigación · `docs/` investigación · `mods/` mods de datos · `site/` página del proyecto.
 
-## License
-MIT (code and docs). See [LICENSE](LICENSE).
+## Créditos
+- [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) (CC0): la decompilación que hace posible entender los sistemas del juego.
+- [TsyVM/MWEncyclopedia](https://github.com/TsyVM/MWEncyclopedia): referencia de formatos de PC.
+- Las tablas de memoria del GS siguen la documentación pública (como PCSX2).
+
+## Licencia
+MIT (código y documentación). Ver [LICENSE](LICENSE).
