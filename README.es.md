@@ -2,13 +2,15 @@
 
 Español · [English](README.md)
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/menu.jpg" alt="Rockport en el motor nativo de macOS (Metal)" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-**[⬇️ Descargar para Mac (v0.3)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Página del proyecto: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Guía de uso](#guía-de-uso) · [Hoja de ruta y expansión](ROADMAP.md) · [Colaborar](CONTRIBUTING.md) · [Contexto del proyecto](CONTEXT.md)
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.3)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La ampliación</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
-| Red de carreteras sobre la ciudad | Garaje sin pantallas de carga |
+<img src="site/img/blacklist-grid.jpg" alt="Los 15 coches de la Lista Negra con sus pinturas exclusivas" width="100%">
+
+| Interfaz original del juego | Persecución con la policía |
 |---|---|
-| <img src="site/img/carreteras.jpg" alt="Red de carreteras decodificada"> | <img src="site/img/garaje.jpg" alt="Interior del concesionario"> |
+| <img src="site/img/menu.jpg" alt="Menú principal original"> | <img src="site/img/persecucion.jpg" alt="Persecución en el motor nativo"> |
 
 Investigación y herramientas abiertas para convertir tu propia copia de **PlayStation 2** de *Need for Speed: Most Wanted* (2005) en formatos abiertos (glTF/PNG/JSON). Es la base para **ports nativos a cualquier plataforma**, empezando por macOS.
 
@@ -48,6 +50,22 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 4. El juego arranca a pantalla completa y a la resolución de tu pantalla. Los datos convertidos quedan en `~/Library/Application Support/Rockport/`.
 
 Montar el `.dmg` tú mismo: `native-engine/scripts/make-dmg.sh` (necesita las herramientas de Xcode y Bun). Detalle: [native-engine/README.md](native-engine/README.md).
+
+## La ampliación «Rust Belt»
+
+Una expansión hecha por fans **como si fuera de 2006**. Se desbloquea al vencer a la Lista Negra original y continúa la historia con una **Lista Negra 2** de 15 rivales con coches únicos. Misma estética: Rust Belt, otoño y el tono cálido de PS2.
+
+<img src="docs/expansion/valle.jpg" alt="Vista del valle industrial de la expansión" width="100%">
+
+| Plano: Rockport real + 4 distritos nuevos | Distritos |
+|---|---|
+| <img src="docs/expansion/mapa-expansion.svg" alt="Plano de la expansión" width="420"> | **1 · Millbrook**: pueblo obrero, nuevo refugio (Lista Negra 2 #15–#11)<br>**2 · Acerías del Río**: altos hornos y vías de tren (#10–#6)<br>**3 · Puerto de Mercancías**: grúas y contenedores (#5–#2)<br>**4 · Sierra Alta**: puerto de montaña y presa (#1)<br><br>Unidos por la interestatal **I-99**. Coches clásicos como el Countach, el Testarossa o el 959. |
+
+| Acerías del Río | Puerto de Mercancías | Sierra Alta | Puente e I-99 |
+|---|---|---|---|
+| <img src="docs/expansion/acerias.jpg" alt="Acerías"> | <img src="docs/expansion/puerto.jpg" alt="Puerto"> | <img src="docs/expansion/sierra-alta.jpg" alt="Sierra Alta"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Puente"> |
+
+Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md). Bocetos de ambiente hechos con IA (no son recursos del juego).
 
 ## Guía de uso
 

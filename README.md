@@ -2,13 +2,15 @@
 
 [Español](README.es.md) · English
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/menu.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
 
-**[⬇️ Download for Mac (v0.3)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [User guide](#user-guide) · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.3)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
-| Road network over the city | Garage without loading screens |
+<img src="site/img/blacklist-grid.jpg" alt="The 15 Blacklist cars with their exclusive liveries" width="100%">
+
+| The game's original interface | Police pursuit |
 |---|---|
-| <img src="site/img/carreteras.jpg" alt="Decoded road network"> | <img src="site/img/garaje.jpg" alt="Car lot interior"> |
+| <img src="site/img/menu.jpg" alt="Original main menu"> | <img src="site/img/persecucion.jpg" alt="Pursuit in the native engine"> |
 
 Open research and tools to turn your own **PlayStation 2** copy of *Need for Speed: Most Wanted* (2005) into open formats (glTF/PNG/JSON), as a base for **native ports to any platform**, macOS first.
 
@@ -48,6 +50,22 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 4. The game starts full screen at your screen's resolution. Converted data stays in `~/Library/Application Support/Rockport/`.
 
 Build the `.dmg` yourself: `native-engine/scripts/make-dmg.sh` (needs Xcode tools and Bun). Details: [native-engine/README.en.md](native-engine/README.en.md).
+
+## The "Rust Belt" expansion
+
+A fan-made expansion **as if it were 2006**. It unlocks after beating the original Blacklist and continues the story with a **Blacklist 2** of 15 rivals with unique cars. Same look: Rust Belt, autumn and the warm PS2 tone.
+
+<img src="docs/expansion/valle.jpg" alt="Industrial valley of the expansion" width="100%">
+
+| Map: real Rockport + 4 new districts | Districts |
+|---|---|
+| <img src="docs/expansion/mapa-expansion.svg" alt="Expansion map" width="420"> | **1 · Millbrook**: working-class town, new safehouse (Blacklist 2 #15–#11)<br>**2 · River Steelworks**: blast furnaces and rail yards (#10–#6)<br>**3 · Freight Harbor**: cranes and containers (#5–#2)<br>**4 · High Ridge**: mountain pass and dam (#1)<br><br>Linked by the **I-99** interstate. Classic cars such as the Countach, Testarossa or 959. |
+
+| River Steelworks | Freight Harbor | High Ridge | Bridge and I-99 |
+|---|---|---|---|
+| <img src="docs/expansion/acerias.jpg" alt="Steelworks"> | <img src="docs/expansion/puerto.jpg" alt="Harbor"> | <img src="docs/expansion/sierra-alta.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
+
+Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md). AI mood sketches (not game assets).
 
 ## User guide
 
