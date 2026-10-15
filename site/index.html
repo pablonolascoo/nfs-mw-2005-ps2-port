@@ -7,7 +7,7 @@
 <meta name="description" content="Port nativo para macOS de Need for Speed: Most Wanted (2005) construido desde tu propia ISO de PS2. Código abierto, sin datos del juego." />
 <meta property="og:title" content="Rockport Native" />
 <meta property="og:description" content="NFS: Most Wanted (2005), nativo en macOS, desde tu propia ISO de PS2." />
-<meta property="og:image" content="https://rockport-native.vercel.app/img/nativo.jpg" />
+<meta property="og:image" content="https://rockport-native.vercel.app/img/bmw.jpg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -107,6 +107,9 @@
   .gal figure:hover img { transform: scale(1.03); }
   .gal figcaption { position: absolute; left: 0; bottom: 0; background: rgba(10,11,9,.86); padding: 6px 10px; font-size: 12px; border-left: 3px solid var(--amber); }
 
+  .bl-sheet { margin: 14px 0 0; position: relative; border: 1px solid var(--line); }
+  .bl-sheet img { display: block; width: 100%; height: auto; filter: sepia(.12) saturate(1.05); }
+  .bl-sheet figcaption { position: absolute; left: 0; bottom: 0; background: rgba(10,11,9,.86); padding: 6px 10px; font-size: 12px; border-left: 3px solid var(--amber); }
   /* Expansión */
   .exp { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; }
   .file { border: 1px solid var(--amber-dim); padding: 22px; background: linear-gradient(180deg, rgba(255,178,26,.05), transparent 40%); }
@@ -171,8 +174,8 @@
     <p class="lede rise">
       <span data-es>Need for Speed: Most Wanted (2005), funcionando de forma nativa en macOS con Metal. Lo construyes tú desde <b>tu propia ISO de PS2</b>: el instalador detecta si es PAL (SLES-53559) o NTSC-U (SLUS-21351) y convierte el juego en tu Mac.</span>
       <span data-en>Need for Speed: Most Wanted (2005), running natively on macOS with Metal. You build it from <b>your own PS2 ISO</b>: the installer detects PAL (SLES-53559) or NTSC-U (SLUS-21351) and converts the game on your Mac.</span>
-      <small data-es>Proyecto abierto de ingeniería inversa. No incluye ni distribuye datos del juego. Versión 0.1 · Mac con Apple Silicon, macOS 14+.</small>
-      <small data-en>Open reverse-engineering project. It does not include or distribute game data. Version 0.1 · Apple Silicon Mac, macOS 14+.</small>
+      <small data-es>Proyecto abierto de ingeniería inversa. No incluye ni distribuye datos del juego. Versión 0.3 · Mac con Apple Silicon, macOS 14+.</small>
+      <small data-en>Open reverse-engineering project. It does not include or distribute game data. Version 0.3 · Apple Silicon Mac, macOS 14+.</small>
     </p>
     <div class="cta rise">
       <a class="btn solid" href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest"><i class="ph-bold ph-download-simple"></i> <span data-es>Descargar para Mac</span><span data-en>Download for Mac</span></a>
@@ -180,8 +183,8 @@
       <a class="btn ghost" href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/blob/main/ROADMAP.md"><i class="ph-bold ph-map-trifold"></i> <span data-es>Hoja de ruta</span><span data-en>Roadmap</span></a>
     </div>
     <div class="shot rise">
-      <img src="img/nativo.jpg" width="1600" height="900" alt="Rockport en el motor nativo de macOS con el BMW M3 GTR" />
-      <div class="hud"><span data-es>Motor nativo · Metal · 60 fps</span><span data-en>Native engine · Metal · 60 fps</span><span data-es>Captura real, sin retoques</span><span data-en>Real capture, untouched</span></div>
+      <img src="img/hud.jpg" width="1600" height="900" alt="HUD original de Most Wanted en el motor nativo, con el BMW M3 GTR" />
+      <div class="hud"><span data-es>Motor nativo · HUD original · 60 fps</span><span data-en>Native engine · original HUD · 60 fps</span><span data-es>Captura real, sin retoques</span><span data-en>Real capture, untouched</span></div>
       <div class="heat" aria-hidden="true">Heat <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
     </div>
   </div>
@@ -235,9 +238,10 @@
       <h2><span data-es>Rockport,<br />pieza a pieza</span><span data-en>Rockport,<br />piece by piece</span></h2>
       <div class="gal">
         <figure><img src="img/persecucion.jpg" loading="lazy" alt="Persecución policial en el motor nativo" /><figcaption data-es>Persecución en el motor nativo · notoriedad 5</figcaption><figcaption data-en>Pursuit in the native engine · heat 5</figcaption></figure>
-        <figure><img src="img/nativo-coche.jpg" loading="lazy" alt="BMW M3 GTR en el motor nativo" /><figcaption data-es>BMW M3 GTR · motor nativo</figcaption><figcaption data-en>BMW M3 GTR · native engine</figcaption></figure>
-        <figure><img src="img/nativo-calle.jpg" loading="lazy" alt="Calle de Rockport en el motor nativo" /><figcaption data-es>Motor nativo: calle de Rockport</figcaption><figcaption data-en>Native engine: a Rockport street</figcaption></figure>
+        <figure><img src="img/bmw.jpg" loading="lazy" alt="BMW M3 GTR con su pintura clásica gris y azul" /><figcaption data-es>BMW M3 GTR con su pintura de la historia</figcaption><figcaption data-en>BMW M3 GTR in its story livery</figcaption></figure>
+        <figure><img src="img/menu.jpg" loading="lazy" alt="Menú principal original del juego" /><figcaption data-es>Menú principal original, en castellano</figcaption><figcaption data-en>Original main menu, in Spanish</figcaption></figure>
       </div>
+      <figure class="bl-sheet"><img src="img/blacklist.jpg" loading="lazy" alt="Los 15 coches de la Lista Negra con sus pinturas exclusivas" /><figcaption data-es>La Lista Negra al completo, con sus pinturas exclusivas sacadas del disco</figcaption><figcaption data-en>The whole Blacklist, with exclusive liveries from the disc</figcaption></figure>
     </div>
   </section>
 

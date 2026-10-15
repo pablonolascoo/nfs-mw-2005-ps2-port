@@ -2,9 +2,9 @@
 
 [Español](README.es.md) · English
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/menu.jpg" alt="Rockport running in the native macOS engine (Metal)" width="100%"></a>
 
-**[⬇️ Download for Mac (v0.1)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [User guide](#user-guide) · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
+**[⬇️ Download for Mac (v0.3)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Project page: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [User guide](#user-guide) · [Roadmap & expansion](ROADMAP.en.md) · [Contribute](CONTRIBUTING.md) · [Project context](CONTEXT.md)
 
 | Road network over the city | Garage without loading screens |
 |---|---|
@@ -34,7 +34,10 @@ Open research and tools to turn your own **PlayStation 2** copy of *Need for Spe
 | Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
 | Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
 | **Game's own driving physics** (decomp), 4 cameras, controllers (Xbox, PS3/PS4/PS5, PS2 via USB) with light bar and touchpad — [doc 13](docs/en/13-driving-physics.md), [doc 15](docs/en/15-controllers.md) | ✅ v0.2 |
-| **Traffic, police and pursuits** with the game's tables: heat, backup, formations, roadblocks, MW-style HUD — [doc 14](docs/en/14-traffic-and-police.md) | ✅ v0.2 |
+| **Traffic, police and pursuits** with the game's tables: heat, backup, formations, roadblocks — [doc 14](docs/en/14-traffic-and-police.md) | ✅ v0.2 |
+| **The game's original interface** at native resolution: title, main menu, career, pause and MW HUD, Spanish/English text from your disc — [doc 17](docs/en/17-interface.md) | ✅ v0.3 |
+| **Story cars with their exact liveries**: classic silver/blue BMW M3 GTR, Razor's Mustang and all 15 Blacklist cars (82 preset rides, vinyls composited like the game) — [doc 10](docs/en/10-cars.md) | ✅ v0.3 |
+| **Police radio** from your disc (own MicroTalk decoder), event-driven, through the PS4/PS5 pad speaker or the Mac; configurable light bar — [doc 15](docs/en/15-controllers.md), [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.3 |
 | Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
 | Playable races and Blacklist, garages in the native engine, in-game audio | 🔜 |
 

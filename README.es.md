@@ -2,9 +2,9 @@
 
 Español · [English](README.md)
 
-<a href="https://rockport-native.vercel.app"><img src="site/img/nativo.jpg" alt="Rockport en el motor nativo de macOS (Metal)" width="100%"></a>
+<a href="https://rockport-native.vercel.app"><img src="site/img/menu.jpg" alt="Rockport en el motor nativo de macOS (Metal)" width="100%"></a>
 
-**[⬇️ Descargar para Mac (v0.1)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Página del proyecto: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Guía de uso](#guía-de-uso) · [Hoja de ruta y expansión](ROADMAP.md) · [Colaborar](CONTRIBUTING.md) · [Contexto del proyecto](CONTEXT.md)
+**[⬇️ Descargar para Mac (v0.3)](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest)** · **🌐 Página del proyecto: [rockport-native.vercel.app](https://rockport-native.vercel.app)** · [Guía de uso](#guía-de-uso) · [Hoja de ruta y expansión](ROADMAP.md) · [Colaborar](CONTRIBUTING.md) · [Contexto del proyecto](CONTEXT.md)
 
 | Red de carreteras sobre la ciudad | Garaje sin pantallas de carga |
 |---|---|
@@ -34,7 +34,10 @@ Investigación y herramientas abiertas para convertir tu propia copia de **PlayS
 | Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
 | Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
 | **Física de conducción del juego original** (decomp), 4 cámaras, mandos (Xbox, PS3/PS4/PS5, PS2 por USB) con barra de luz y táctil — [doc 13](docs/es/13-fisica-conduccion.md), [doc 15](docs/es/15-mandos.md) | ✅ v0.2 |
-| **Tráfico, policía y persecuciones** con las tablas del juego: notoriedad, refuerzos, formaciones, controles, HUD de MW — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ v0.2 |
+| **Tráfico, policía y persecuciones** con las tablas del juego: notoriedad, refuerzos, formaciones, controles — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ v0.2 |
+| **Interfaz original del juego** a resolución nativa: «Pulsa START», menú principal, carrera, pausa y HUD de MW, con los textos en castellano de tu disco — [doc 17](docs/es/17-interfaz.md) | ✅ v0.3 |
+| **Coches de la historia con su pintura exacta**: BMW M3 GTR gris con franjas azules, Mustang de Razor y los 15 de la Lista Negra (82 coches preparados, vinilos montados como el juego) — [doc 10](docs/es/10-coches.md) | ✅ v0.3 |
+| **Radio de la policía** de tu disco (decodificador MicroTalk propio), según lo que pasa, por el altavoz del mando PS4/PS5 o el Mac; barra de luz configurable — [doc 15](docs/es/15-mandos.md), [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.3 |
 | Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
 | Carreras y Lista Negra jugables, garajes en el motor nativo, audio dentro del juego | 🔜 |
 
