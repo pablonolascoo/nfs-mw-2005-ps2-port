@@ -39,6 +39,9 @@ Written to `native-engine/.build/shots/` (never committed):
 | `aerial.png` | The whole city from 900 m (far level) |
 | `garage/mainmenu-1920.png`, `-2940.png` | Main menu with the front-end garage and the BMW (`--ui-test MainMenu`) |
 | `garage/safehouse-1920-1-fuera/2-dentro/3-aparcado.png` | Driving into safehouse 1: roller door, interior and menu (`--garage-test zone_safehouse_1`) |
+| `garage2/ref8-menu-principal.png`, `ref9/ref10-refugio-mis-coches.png` | Menu scenes with every disc prop, comparable with the game's screenshots |
+| `garage2/entrada-refugio1-*.png` (and `-taller2`, `-concesionario1`) | Driving in with the drivable scene: apron, bay with walls and ceiling, menu |
+| `garage2/refugio1-mis-coches-swap-0…6.png`, `concesionario1-swap-…` | Car swap without a loading screen (`--garage-swap-test`) |
 | `garage/customshop-paint-1920-3-aparcado.png`, `customshop-rims-…` | Shop: paint and rims fitted to the car |
 | `garage/carlot-1920-3-aparcado.png` | Car lot with price and logos |
 
@@ -101,6 +104,7 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--quickrace-test [--split N] [--screenshot base.png]` | Headless: walks the Quick Race screens (and "Press START") up to the start, one capture per screen |
 | `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Headless: run the event with the autopilot; positions, times, `-start/-mid/-results/-finish` captures and JSON |
 | `--garage-test <zone> [--garage-mode drive\|inside\|list] [--garage-screen S] [--screenshot base.png]` | Headless: enters a garage (doc 07 §3.4) |
+| `--garage-scene <kind> [--fe-angle A] [--scene-car C]` · `--garage-swap-test <zone> [--scene-car C]` | Headless: front-end scene with any camera · animated car swap (doc 07 §5) |
 | `--career-test [--save path]` · `--race-audit` | Headless: simulated Blacklist 15 → 1 · routes of every event against `RaceLength` |
 | `--physics-test [CAR] [--physics-trace]` | Window-less: game physics on a flat plane: 0–100, top speed, braking, cornering, handbrake, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Pad light bar mode for this session (not saved). Also `ROCKPORT_LIGHTBAR` |
@@ -340,7 +344,7 @@ Notes:
 ## Seamless garages and the menu background (2026-10-15)
 
 - **Menu background like the game**: "Press START", the main menu and the career menu show the front-end garage
-  (`PLATFORMCRIB`: industrial rooftop with cranes and the sky dome) with the player's car (the career car with its tuning; by
+  (`PLATFORMCRIB`: night industrial yard with water towers, sheds, forklift and the sky dome) with the player's car (the career car with its tuning; by
   default the story BMW M3 GTR), placed like `GarageMainScreen` and with the `GLOBAL\FE_ATTRIB.BIN` cameras
   (`SelectCarCameraMover`: entry → final → each screen's angle, with its camera roll) [D][V].
 - **Garages without loading screens** (`Garage/`): the game's 15 garages. Drive slowly up to the real door: the building is cut
@@ -353,6 +357,12 @@ Notes:
   strips** (downtown skyscrapers, sky, background mountains) appear.
 - **Icon carousel**: the centre is `OPTION_MASTER` (assembly), which is also hidden: no more overlapping icons; orange icons in
   game; arrows dim at the ends. Blacklist with its requirements panel and bounty/cash.
+- **Complete scenes** (data format 10): the converter exports every `BACKDROP*` the game draws; the `BACKDROP_CAST_SHADOW_MAP*`
+  solids are the props (menu water towers and forklift, safehouse tyres, barrels and boxes, shop car covers), not shadows.
+  Safehouse floor reflection separately.
+- **Drivable scenes** (`Garage/GarageScenes.swift`, `garage-scenes` step): bay measured from the world collision; walls, ceiling,
+  beams, frame and apron/ramp built by us with disc textures (size and light measured in the interior), with collision; car swap
+  in My cars and the car lot without a loading screen. Edited in `tools/data/garage-layouts.json`.
 - Tests: `--garage-test <zone> [--garage-mode drive|inside|list] [--garage-screen …]`. Details:
   [doc 07](../docs/en/07-driving-and-garages.md) and [doc 17](../docs/en/17-interface.md).
 

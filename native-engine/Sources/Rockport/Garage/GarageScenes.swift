@@ -64,7 +64,7 @@ final class GarageScenes {
     /// Depuración: ROCKPORT_SCENE_OFF=1 no dibuja la escena (para comparar con el interior solo).
     static let debugOff = ProcessInfo.processInfo.environment["ROCKPORT_SCENE_OFF"]
     /// Intensidad del reflejo del suelo del escenario (ROCKPORT_REFLECTION=0…1 para probar).
-    static let reflectionTint: Float = ProcessInfo.processInfo.environment["ROCKPORT_REFLECTION"].flatMap(Float.init) ?? 0.18
+    static let reflectionTint: Float = ProcessInfo.processInfo.environment["ROCKPORT_REFLECTION"].flatMap(Float.init) ?? 0.5
     private let root: URL
     private var cache: [String: Scene?] = [:]
     private var reflections: [String: GPUMesh?] = [:]

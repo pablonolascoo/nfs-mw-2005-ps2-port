@@ -24,7 +24,8 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Qué tráfico sale en cada barrio y cómo actúa la policía según el calor? | `ai.json` (10 patrones, 21 niveles de persecución, 59 zonas) | `ai-attribs.ts` | 14 |
 | ¿Qué dice la radio de la policía en cada momento? | `radio/radio.json` + `radio/COPSPEECH.BIG` (9854 clips, 559 bancos, 139 eventos) | `radio.ts` | 16 |
 | ¿Cómo suena cada coche, el turbo, los derrapes, la sirena, los golpes? | `sound/sound.json` + `sound/<CARPETA>/*.ABK, *.GIN` (301 bancos, 2350 sonidos, 160 motores, 103 coches, 608 golpes) | `sound.ts` | 16 |
-| ¿Cómo son los interiores de garaje? | `interiors/*.glb` (5) | `convert.ts interior` | 07 |
+| ¿Cómo son los interiores de garaje? | `interiors/*.glb` (5, todos los `BACKDROP*`) + `interiors/CAREER_SAFEHOUSE.reflection.glb` | `convert.ts interior` | 07 |
+| ¿Cómo se entra conduciendo en cada garaje? | `garage-scenes/<zona>.glb/.json/.bin` + `index.json` | `garage-scenes.ts` (+ `tools/data/garage-layouts.json`) | 07 §5 |
 | ¿Vista cenital del mapa? | `rockport-plano.png` + `.json` (escala) | `topdown.ts` | 03 |
 | ¿Qué películas hay, en qué idioma, con qué subtítulos y dónde están en la ISO? | `movies.json` (32 películas × 3 idiomas, 169 frases en 12 idiomas) | `movies.ts` | 22 |
 | ¿Cajas y esferas de colisión de cada coche y de los objetos rompibles? | `bounds.json` (83 coches, 405 objetos) | `bounds.ts` | 22 |

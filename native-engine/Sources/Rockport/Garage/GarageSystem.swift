@@ -67,7 +67,9 @@ final class GarageSystem {
             }
         }
         scenes.apply(&f)
-        renderer.items = items + scenes.drawItems(stage: stage, world: world)
+        // La escena va antes: el reflejo del escenario (debajo del suelo semitransparente, que no escribe profundidad) tiene
+        // que dibujarse antes que el suelo
+        renderer.items = scenes.drawItems(stage: stage, world: world) + items
     }
 }
 

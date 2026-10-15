@@ -24,7 +24,8 @@ None of it is pushed to GitHub except small metadata JSON files. Figures are for
 | Which traffic drives in each district and how do cops behave per heat level? | `ai.json` (10 patterns, 21 pursuit levels, 59 zones) | `ai-attribs.ts` | 14 |
 | What does the police radio say at each moment? | `radio/radio.json` + `radio/COPSPEECH.BIG` (9854 clips, 559 banks, 139 events) | `radio.ts` | 16 |
 | What does each car, the turbo, the skids, the siren, the impacts sound like? | `sound/sound.json` + `sound/<FOLDER>/*.ABK, *.GIN` (301 banks, 2350 sounds, 160 engines, 103 cars, 608 impacts) | `sound.ts` | 16 |
-| Garage interiors? | `interiors/*.glb` (5) | `convert.ts interior` | 07 |
+| Garage interiors? | `interiors/*.glb` (5, every `BACKDROP*`) + `interiors/CAREER_SAFEHOUSE.reflection.glb` | `convert.ts interior` | 07 |
+| How do you drive into each garage? | `garage-scenes/<zone>.glb/.json/.bin` + `index.json` | `garage-scenes.ts` (+ `tools/data/garage-layouts.json`) | 07 §5 |
 | Top-down map? | `rockport-plano.png` + `.json` (scale) | `topdown.ts` | 03 |
 | Which movies exist, in which language, with which subtitles, and where are they in the ISO? | `movies.json` (32 movies × 3 languages, 169 phrases in 12 languages) | `movies.ts` | 22 |
 | Collision boxes/spheres of every car and breakable object? | `bounds.json` (83 cars, 405 objects) | `bounds.ts` | 22 |

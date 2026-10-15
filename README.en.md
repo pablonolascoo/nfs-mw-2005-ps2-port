@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.5)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.6)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
 **An open decompilation and reverse-engineering project** for the **PlayStation 2** *Need for Speed: Most Wanted* (2005). We read your own ISO, understand every format and game system (helped by the [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) decomp) and rebuild it as a **native game**, faithful to the original: same city, same cars, same interface, same warm PS2 tone.
 
@@ -16,8 +16,8 @@ Then **we expand it**: an expansion that continues the story as if the same stud
 
 | | What | Status |
 |---|---|---|
-| 🔬 **Decompilation** | Disc formats, database, physics, AI, interface, audio… all documented in [`docs/`](docs/en), every fact tagged ([V] verified, [D] decomp, [I] inferred, [H] hypothesis) | ✅ well advanced |
-| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.5) |
+| 🔬 **Decompilation** | Disc formats, database, physics, AI, interface, audio, movies, music, scenes… all documented in [`docs/`](docs/en), every fact tagged ([V] verified, [D] decomp, [I] inferred, [H] hypothesis) | ✅ **99.94 % of the disc understood** ([doc 21](docs/en/21-coverage.md)) |
+| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.6) |
 | 🗺️ **"Rust Belt" expansion** | 4 new districts, Blacklist 2, classic cars, the story continues | 🧭 designed, [see below](#the-rust-belt-expansion) |
 
 ### Platforms
@@ -43,14 +43,14 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | Race with the original HUD | Police pursuit |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Sprint race with the original HUD and the event barriers"> | <img src="site/img/persecucion.jpg" alt="Pursuit with the original HUD and radar"> |
-| **Original main menu, with your car** | **Customization shop, no loading screens** |
-| <img src="site/img/menu.jpg" alt="Original main menu with the BMW M3 GTR"> | <img src="site/img/taller.jpg" alt="Customization shop: painting the BMW"> |
-| **Race results** | **Blacklist screen** |
-| <img src="site/img/resultados.jpg" alt="Original results screen"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
+| **Main menu: the water-tower yard** | **Your safehouse, with the Blacklist chalkboard** |
+| <img src="site/img/menu.jpg" alt="Original main menu with the BMW M3 GTR in the night yard"> | <img src="site/img/garaje-coches.jpg" alt="The BMW M3 GTR in the safehouse"> |
+| **Customization shop, no loading screens** | **Blacklist screen** |
+| <img src="site/img/taller.jpg" alt="Customization shop: painting the BMW"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
 
 ## What works today
 
-### The game (native macOS engine, v0.5)
+### The game (native macOS engine, v0.6)
 | | Status |
 |---|---|
 | All of Rockport full screen at your screen's resolution and 60 fps, with the warm PS2 tone always on | ✅ |
@@ -63,8 +63,8 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | **Original sound**: each car's engine, turbo, shifts, nitrous, skids, impacts, sirens — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
 | **Quick Race and split screen** (2 players as the original; 3–4 and multi-display as extensions) — [doc 19](docs/en/19-quick-race-and-multiplayer.md) | ✅ |
 | **Controllers**: Xbox, PS3/PS4/PS5 and PS2 via USB, with light bar, touchpad and DualSense triggers — [doc 15](docs/en/15-controllers.md) | ✅ (untested on real hardware) |
-| The game's lighting: car reflections, shadows, fog and light shafts | 🚧 in progress |
-| Movies, music, career map, car-to-car collisions, helicopter | 🔜 |
+| **The game's lighting**: car reflections from the disc's environment maps, shadow, sky, sun and glow; garages faithful to the original — [doc 20](docs/en/20-lighting-and-effects.md) | ✅ |
+| Movies (dubbed in Spanish on the PAL disc), EA Trax music, particles and flares: **decoded**, not yet wired into the game · car-to-car collisions · helicopter | 🔜 |
 
 ### The reverse engineering
 | | Status |
@@ -196,22 +196,36 @@ cd ../viewer && bun install && bunx vite                                    # ht
 ```
 
 ## Documentation
-| Topic | English | Español |
-|---|---|---|
-| Disc identification | [docs/en/00](docs/en/00-disc-identification.md) | [docs/es/00](docs/es/00-identificacion-disco.md) |
-| Decomp compatibility | [docs/en/01](docs/en/01-sles53559-compatibility.md) | [docs/es/01](docs/es/01-compatibilidad-sles53559.md) |
-| PS2 formats | [docs/en/02](docs/en/02-ps2-formats.md) | [docs/es/02](docs/es/02-formatos-ps2.md) |
-| Rockport world | [docs/en/03](docs/en/03-rockport-world-ps2.md) | [docs/es/03](docs/es/03-mundo-rockport-ps2.md) |
-| Porting architecture | [docs/en/04](docs/en/04-port-architecture.md) | [docs/es/04](docs/es/04-arquitectura-port.md) |
-| Driving and garages | [docs/en/07](docs/en/07-driving-and-garages.md) | [docs/es/07](docs/es/07-conduccion-y-garajes.md) |
-| Mods and expansions | [docs/en/08](docs/en/08-mods.md) | [docs/es/08](docs/es/08-mods.md) |
-| Gameplay database (VLT): zones, races, Blacklist | [docs/en/05](docs/en/05-vlt-attributes.md) | [docs/es/05](docs/es/05-vlt-atributos.md) |
-| Viewer performance | [docs/en/06](docs/en/06-performance.md) | [docs/es/06](docs/es/06-rendimiento.md) |
-| Road network and collision | [docs/en/09](docs/en/09-road-network.md) | [docs/es/09](docs/es/09-red-de-carreteras.md) |
-| Cars: replacement textures, paint, wheels | [docs/en/10](docs/en/10-cars.md) | [docs/es/10](docs/es/10-coches.md) |
-| "Rust Belt" expansion: map, sketches, story | [docs/en/12](docs/en/12-rust-belt-expansion.md) | [docs/es/12](docs/es/12-expansion-rust-belt.md) |
-| Generated data catalog (which file answers what) | [docs/en/11](docs/en/11-data-catalog.md) | [docs/es/11](docs/es/11-catalogo-de-datos.md) |
-| **Project context: start here to resume work** | [CONTEXT.md](CONTEXT.md) | [CONTEXT.md](CONTEXT.md) |
+Every document exists in English (`docs/en/`) and Spanish (`docs/es/`). To resume the project: **[CONTEXT.md](CONTEXT.md)**.
+
+| # | Topic | English | Español |
+|---|---|---|---|
+| 00 | Disc identification | [en](docs/en/00-disc-identification.md) | [es](docs/es/00-identificacion-disco.md) |
+| 01 | Decomp compatibility | [en](docs/en/01-sles53559-compatibility.md) | [es](docs/es/01-compatibilidad-sles53559.md) |
+| 02 | PS2 formats | [en](docs/en/02-ps2-formats.md) | [es](docs/es/02-formatos-ps2.md) |
+| 03 | The Rockport world | [en](docs/en/03-rockport-world-ps2.md) | [es](docs/es/03-mundo-rockport-ps2.md) |
+| 04 | Port architecture | [en](docs/en/04-port-architecture.md) | [es](docs/es/04-arquitectura-port.md) |
+| 05 | Game database (VLT) | [en](docs/en/05-vlt-attributes.md) | [es](docs/es/05-vlt-atributos.md) |
+| 06 | Performance | [en](docs/en/06-performance.md) | [es](docs/es/06-rendimiento.md) |
+| 07 | Driving and garages | [en](docs/en/07-driving-and-garages.md) | [es](docs/es/07-conduccion-y-garajes.md) |
+| 08 | Mods | [en](docs/en/08-mods.md) | [es](docs/es/08-mods.md) |
+| 09 | Road network and collision | [en](docs/en/09-road-network.md) | [es](docs/es/09-red-de-carreteras.md) |
+| 10 | Cars, paints and vinyls | [en](docs/en/10-cars.md) | [es](docs/es/10-coches.md) |
+| 11 | Generated data catalog | [en](docs/en/11-data-catalog.md) | [es](docs/es/11-catalogo-de-datos.md) |
+| 12 | "Rust Belt" expansion | [en](docs/en/12-rust-belt-expansion.md) | [es](docs/es/12-expansion-rust-belt.md) |
+| 13 | Driving physics | [en](docs/en/13-driving-physics.md) | [es](docs/es/13-fisica-conduccion.md) |
+| 14 | Traffic, police and pursuits | [en](docs/en/14-traffic-and-police.md) | [es](docs/es/14-trafico-y-policia.md) |
+| 15 | Controllers | [en](docs/en/15-controllers.md) | [es](docs/es/15-mandos.md) |
+| 16 | Audio and voices | [en](docs/en/16-audio-and-voices.md) | [es](docs/es/16-audio-y-voces.md) |
+| 17 | Original interface | [en](docs/en/17-interface.md) | [es](docs/es/17-interfaz.md) |
+| 18 | Races and Blacklist | [en](docs/en/18-races-and-blacklist.md) | [es](docs/es/18-carreras-y-lista-negra.md) |
+| 19 | Quick Race and multiplayer | [en](docs/en/19-quick-race-and-multiplayer.md) | [es](docs/es/19-carrera-rapida-y-multijugador.md) |
+| 20 | Lighting and effects | [en](docs/en/20-lighting-and-effects.md) | [es](docs/es/20-iluminacion-y-efectos.md) |
+| 21 | Disc coverage (what is decoded) | [en](docs/en/21-coverage.md) | [es](docs/es/21-cobertura.md) |
+| 22 | Movies, subtitles and collision | [en](docs/en/22-movies-subtitles-and-collision.md) | [es](docs/es/22-peliculas-subtitulos-y-colision.md) |
+| 23 | In-engine scenes (NIS) | [en](docs/en/23-nis-scenes.md) | [es](docs/es/23-escenas-nis.md) |
+| 24 | Particles, flares and world data | [en](docs/en/24-effects-lights-and-world.md) | [es](docs/es/24-efectos-luces-y-mundo.md) |
+| 25 | Music and mixing | [en](docs/en/25-music-and-mixing.md) | [es](docs/es/25-musica-y-mezcla.md) |
 
 Every claim is tagged **[V]** verified on real data, **[D]** from the decomp's debug types, **[I]** inferred, or **[H]** hypothesis.
 

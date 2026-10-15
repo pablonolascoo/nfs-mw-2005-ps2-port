@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.5)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.6)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
 **Proyecto abierto de decompilación e ingeniería inversa** del *Need for Speed: Most Wanted* (2005) de **PlayStation 2**. Leemos tu propia ISO, entendemos cada formato y cada sistema del juego (con ayuda de la decomp [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw)) y lo volvemos a montar como **juego nativo**, fiel al original: misma ciudad, mismos coches, misma interfaz, mismo tono cálido de PS2.
 
@@ -16,8 +16,8 @@ Y después, **lo ampliamos**: una expansión que continúa la historia como si l
 
 | | Qué | Estado |
 |---|---|---|
-| 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ muy avanzada |
-| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.5) |
+| 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio, películas, música, escenas… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ **99,94 % del disco entendido** ([doc 21](docs/es/21-cobertura.md)) |
+| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.6) |
 | 🗺️ **Expansión «Rust Belt»** | 4 distritos nuevos, Lista Negra 2, coches clásicos, la historia continúa | 🧭 diseñada, [ver abajo](#la-ampliación-rust-belt) |
 
 ### Plataformas
@@ -43,14 +43,14 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | Carrera con el HUD original | Persecución con la policía |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Carrera sprint con el HUD original y las vallas de la prueba"> | <img src="site/img/persecucion.jpg" alt="Persecución con el HUD original y el radar"> |
-| **Menú principal original, con tu coche** | **Taller de tuneo sin pantallas de carga** |
-| <img src="site/img/menu.jpg" alt="Menú principal original con el BMW M3 GTR"> | <img src="site/img/taller.jpg" alt="Taller de tuneo: pintura del BMW"> |
-| **Resultados de la carrera** | **Pantalla de la Lista Negra** |
-| <img src="site/img/resultados.jpg" alt="Pantalla de resultados original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
+| **Menú principal: el patio de los depósitos de agua** | **Tu refugio, con la pizarra de la Lista Negra** |
+| <img src="site/img/menu.jpg" alt="Menú principal original con el BMW M3 GTR en el patio nocturno"> | <img src="site/img/garaje-coches.jpg" alt="El BMW M3 GTR en el refugio"> |
+| **Taller de tuneo sin pantallas de carga** | **Pantalla de la Lista Negra** |
+| <img src="site/img/taller.jpg" alt="Taller de tuneo: pintura del BMW"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
 ## Qué funciona hoy
 
-### El juego (motor nativo de macOS, v0.5)
+### El juego (motor nativo de macOS, v0.6)
 | | Estado |
 |---|---|
 | Rockport entero a pantalla completa, a la resolución de tu pantalla y a 60 fps, con el tono cálido de PS2 siempre puesto | ✅ |
@@ -63,8 +63,8 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | **Sonido original**: motor de cada coche, turbo, cambios, nitro, derrapes, golpes, sirenas — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
 | **Carrera rápida y pantalla partida** (2 jugadores como el original; 3-4 y varias pantallas como ampliación) — [doc 19](docs/es/19-carrera-rapida-y-multijugador.md) | ✅ |
 | **Mandos** Xbox, PS3/PS4/PS5 y PS2 por USB, con barra de luz, táctil y gatillos del DualSense — [doc 15](docs/es/15-mandos.md) | ✅ (sin probar con hardware real) |
-| Iluminación del juego: reflejos del coche, sombras, niebla y luces volumétricas | 🚧 en curso |
-| Películas, música, mapa de la carrera profesional, choques entre coches, helicóptero | 🔜 |
+| **Iluminación del juego**: reflejos del coche con los mapas de entorno del disco, sombra, cielo, sol y resplandor; garajes fieles al original — [doc 20](docs/es/20-iluminacion-y-efectos.md) | ✅ |
+| Películas (dobladas al castellano en el disco PAL), música EA Trax, partículas y destellos: **descifrados**, falta conectarlos al juego · choques entre coches · helicóptero | 🔜 |
 
 ### La ingeniería inversa
 | | Estado |
@@ -220,6 +220,12 @@ Cada documento existe en español (`docs/es/`) y en inglés (`docs/en/`). Para r
 | 17 | Interfaz original | [es](docs/es/17-interfaz.md) | [en](docs/en/17-interface.md) |
 | 18 | Carreras y Lista Negra | [es](docs/es/18-carreras-y-lista-negra.md) | [en](docs/en/18-races-and-blacklist.md) |
 | 19 | Carrera rápida y multijugador | [es](docs/es/19-carrera-rapida-y-multijugador.md) | [en](docs/en/19-quick-race-and-multiplayer.md) |
+| 20 | Iluminación y efectos | [es](docs/es/20-iluminacion-y-efectos.md) | [en](docs/en/20-lighting-and-effects.md) |
+| 21 | Cobertura del disco (qué está descifrado) | [es](docs/es/21-cobertura.md) | [en](docs/en/21-coverage.md) |
+| 22 | Películas, subtítulos y colisión | [es](docs/es/22-peliculas-subtitulos-y-colision.md) | [en](docs/en/22-movies-subtitles-and-collision.md) |
+| 23 | Escenas con el motor (NIS) | [es](docs/es/23-escenas-nis.md) | [en](docs/en/23-nis-scenes.md) |
+| 24 | Partículas, destellos y datos del mundo | [es](docs/es/24-efectos-luces-y-mundo.md) | [en](docs/en/24-effects-lights-and-world.md) |
+| 25 | Música y mezcla | [es](docs/es/25-musica-y-mezcla.md) | [en](docs/en/25-music-and-mixing.md) |
 
 Cada afirmación lleva **[V]** verificado en datos reales, **[D]** sacado de la decomp, **[I]** inferido o **[H]** hipótesis.
 

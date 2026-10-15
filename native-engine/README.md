@@ -41,6 +41,9 @@ Se generan en `native-engine/.build/shots/` (no se suben a git):
 | `garage/safehouse-1920-1-fuera/2-dentro/3-aparcado.png` | Entrar conduciendo en el refugio 1: persiana, interior y menú (`--garage-test zone_safehouse_1`) |
 | `garage/customshop-paint-1920-3-aparcado.png`, `customshop-rims-…` | Taller: pintura y llantas montadas en el coche |
 | `garage/carlot-1920-3-aparcado.png` | Concesionario con precio y logotipos |
+| `garage2/ref8-menu-principal.png`, `ref9/ref10-refugio-mis-coches.png` | Escenarios del menú con todos los objetos del disco, comparables con las capturas del juego (`--ui-test MainMenu`, `--garage-scene career_safehouse --fe-angle career_car_select`) |
+| `garage2/entrada-refugio1-1-fuera/2-dentro/3-aparcado.png` (y `-taller2`, `-concesionario1`) | Entrar conduciendo con la escena conducible: umbral, nave con paredes y techo, menú |
+| `garage2/refugio1-mis-coches-swap-0…6.png`, `concesionario1-swap-…` | Cambio de coche sin pantalla de carga (`--garage-swap-test`) |
 
 ## Cómo se compila y se arranca
 
@@ -101,6 +104,7 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--quickrace-test [--split N] [--screenshot base.png]` | Sin ventana: recorre las pantallas de la carrera rápida (y «Pulsa START») hasta la salida, con una captura de cada una |
 | `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Sin ventana: corre la prueba con piloto automático; posiciones, tiempos, capturas `-start/-mid/-results/-finish` y JSON |
 | `--garage-test <zona> [--garage-mode drive\|inside\|list] [--garage-screen S] [--screenshot base.png]` | Sin ventana: entra en un garaje (doc 07 §3.4) |
+| `--garage-scene <tipo> [--fe-angle A] [--scene-car C]` · `--garage-swap-test <zona> [--scene-car C]` | Sin ventana: escenario del frontend con cualquier cámara · cambio de coche animado (doc 07 §5) |
 | `--career-test [--save ruta]` · `--race-audit` | Sin ventana: Lista Negra simulada 15 → 1 · rutas de todas las pruebas frente a `RaceLength` |
 | `--physics-test [COCHE] [--physics-trace]` | Sin ventana: física del juego en un plano: 0–100, punta, frenada, curva, freno de mano, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Modo de la barra de luz del mando en esta sesión (no se guarda). También `ROCKPORT_LIGHTBAR` |
@@ -322,7 +326,7 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 ## Garajes sin carga y fondo de los menús (2026-10-15)
 
 - **Fondo de los menús como el juego**: «Pulsa START», el menú principal y el de la carrera muestran el garaje del frontend
-  (`PLATFORMCRIB`: azotea industrial con grúas y cúpula del cielo) con el coche del jugador (el de la partida con su tuneo; por
+  (`PLATFORMCRIB`: patio industrial de noche con depósitos de agua, casetas, carretilla y cúpula del cielo) con el coche del jugador (el de la partida con su tuneo; por
   defecto el BMW M3 GTR de la historia), colocado como `GarageMainScreen` y con la cámara de `GLOBAL\FE_ATTRIB.BIN`
   (`SelectCarCameraMover`: entrada → final → ángulo de cada pantalla, con su giro de cámara) [D][V].
 - **Garajes sin pantallas de carga** (`Garage/`): los 15 garajes del juego. Al llegar despacio a la puerta real, el edificio se
@@ -336,8 +340,14 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
   los garajes y **5 071 tiras del mundo** (rascacielos del centro, cielo, montañas del fondo).
 - **Carrusel de iconos**: el centro es `OPTION_MASTER` (ensamblador), que además se oculta: ya no se solapan iconos; iconos en
   naranja dentro del juego; flechas que se apagan en los extremos. Lista Negra con su panel de requisitos y recompensa/dinero.
-- Pruebas: `--garage-test <zona> [--garage-mode drive|inside|list] [--garage-screen …]`. Detalle:
-  [doc 07](../docs/es/07-conduccion-y-garajes.md) y [doc 17](../docs/es/17-interfaz.md).
+- **Escenarios completos** (formato de datos 10): el conversor saca todos los `BACKDROP*` que dibuja el juego; los
+  `BACKDROP_CAST_SHADOW_MAP*` son los objetos (depósitos de agua y carretilla del menú, neumáticos, bidones y cajas del refugio,
+  fundas del taller), no sombras. Reflejo del suelo del refugio aparte.
+- **Escenas conducibles** (`Garage/GarageScenes.swift`, paso `garage-scenes`): nave medida con la colisión del mundo, paredes,
+  techo, vigas, marco y umbral/rampa hechos por nosotros con texturas del disco (tamaño y luz medidos en el interior), con su
+  colisión; cambio de coche en «Mis coches» y el concesionario sin pantalla de carga. Se editan en `tools/data/garage-layouts.json`.
+- Pruebas: `--garage-test <zona> [--garage-mode drive|inside|list] [--garage-screen …]`, `--garage-scene`, `--garage-swap-test`.
+  Detalle: [doc 07](../docs/es/07-conduccion-y-garajes.md) y [doc 17](../docs/es/17-interfaz.md).
 
 ## Carrera rápida y pantalla partida (2026-10-15)
 
