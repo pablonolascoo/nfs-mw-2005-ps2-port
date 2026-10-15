@@ -248,3 +248,13 @@ ROCKPORT_FE_DUMP=dump.txt $R …                    # what is drawn: hash, textu
 ROCKPORT_MM_DEBUG=1 ROCKPORT_MM_NORTH=1 $R …      # radar: position and pieces; north up
 ```
 Screenshots in `native-engine/.build/shots/hud/` (1920×1080 and 2940×1912).
+
+## App icon (v0.7.1)
+
+- **What:** the app ships its own icon (night asphalt and an "R"; `native-engine/scripts/app-icon.swift`), with nothing from EA. That is the one shown in the DMG.
+- **Once your disc is installed**, the app builds the game's icon and sets it in the Dock, Finder, Spotlight and Launchpad (`Sources/Rockport/AppIcon.swift`).
+  - Background: texture `ENDGAME` (hash `8e197c10`, `GLOBAL/GLOBALB.LZC`, 512×512): the BMW M3 GTR. [V]
+  - Logo: texture `MW_LOGO` (hash `0cd55e13`, `GLOBAL/GLOBALA.BUN`, 256×64). [V]
+- **Aspect ratio:** `ENDGAME` is square on the disc, but the game draws it at **900×512** (object size in `GameWon` and `RapSheet*_ENDGAME`). [V] The crop keeps that ratio so the car is not distorted. The logo is drawn at 4:1, its natural ratio (512×128 in `MainMenu`/`loading_boot`). [V]
+- **Where:** saved to `<data>/icon.png`; `icon.applied` avoids redoing it on every launch. Applied with `NSWorkspace.setIcon` (this leaves an `Icon` file inside Rockport.app; the app still opens).
+- **Test without opening the game:** `Rockport --make-icon <data folder> out.png`.

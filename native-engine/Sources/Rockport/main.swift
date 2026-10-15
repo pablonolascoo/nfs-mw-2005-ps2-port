@@ -107,6 +107,7 @@ struct Options {
                 """)
                 exit(0)
             case "--audit": break   // se atiende en el arranque (runAudit)
+            case "--make-icon": i += 2   // AppIcon.swift: icono con la imagen del juego
             case "--physics-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }   // runPhysicsTest
             case "--physics-trace": break
             case "--traffic-test", "--traffic-max", "--heat", "--test-plan": i += 1   // AIEngine.swift (AIOptions)
@@ -336,6 +337,8 @@ if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     runTrafficTest(options, seconds: secs)
 } else if CommandLine.arguments.contains("--audit") {
     runAudit(options)
+} else if CommandLine.arguments.contains("--make-icon") {
+    _ = AppIcon.runCLI()
 } else if options.screenshot != nil || options.bench {
     runHeadless(options)
 } else {

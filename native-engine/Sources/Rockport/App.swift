@@ -56,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         let data: GameData
         do { data = try GameData(root: root) } catch { fatal("No se pudo leer \(root.path)/world.json: \(error)") }
         print("Rockport · datos: \(root.path) · \(data.world.tiles.count) casillas · GPU: \(device.name)")
+        AppIcon.apply(root: root)   // icono con la imagen del juego, sacada de tu disco (AppIcon.swift)
 
         let screen = NSScreen.main ?? NSScreen.screens[0]
         window = NSWindow(contentRect: screen.frame, styleMask: [.borderless], backing: .buffered, defer: false, screen: screen)
