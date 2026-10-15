@@ -85,6 +85,8 @@ final class FEPackageRT {
     var onGameMessage: ((UInt32, FEObj?) -> Void)?
     var currentButton: FEObj?
     var visible = true
+    /// Dibujar estirado a todo el ancho (FELayout stretch).
+    var stretch = false
     var age = 0
 
     init?(name: String, assets: FEAssets) {
@@ -98,6 +100,12 @@ final class FEPackageRT {
         }
         for o in all {
             if let p = o.def.parent, let g = byGuid[p] { o.parent = g; g.children.append(o) } else { roots.append(o) }
+        }
+        // Objetos «solo PC» (bandera 8): el juego la pasa de los grupos a sus hijos y los deja invisibles al cargar
+        // (FEngTransferFlagsToChildren + FEngHidePCObjects [D: FEObjectCallbacks.cpp]); FEngSetVisible ya no los enciende
+        func pcOnly(_ o: FEObj) { o.flags |= 8 | 1; for c in o.children { pcOnly(c) } }
+        for o in all where o.flags & 8 != 0 { pcOnly(o) }
+        for o in all {
             // Script INIT a tiempo 0 [D: ReadObjectChunk]
             o.script = o.findScript(FEH.initScript) ?? o.def.scripts.first
             o.time = 0

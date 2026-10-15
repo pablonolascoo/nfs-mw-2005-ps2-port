@@ -390,20 +390,20 @@ final class Car {
         return f
     }
 
-    func place(_ p: float3, yaw: Float, collision: CollisionWorld) { place(p, yaw: yaw, ground: collision) }
+    func place(_ p: float3, yaw: Float, collision: CollisionWorld, probe: Float = 50) { place(p, yaw: yaw, ground: collision, probe: probe) }
 
-    func place(_ p: float3, yaw: Float, ground: PhysicsGround) {
+    func place(_ p: float3, yaw: Float, ground: PhysicsGround, probe: Float = 50) {
         if vehicle == nil, let s = specs {
             // Caja del cuerpo de la física = caja del modelo (x ancho, y alto, z largo) [I: PVehicle.cpp sin decompilar]
             vehicle = PVehicle(specs: s, dimension: V3(bodyHalf.y, bodyHalf.z, bodyHalf.x), ground: ground)
         }
         position = p; self.yaw = yaw; speed = 0; vz = 0
         if let v = vehicle {
-            v.place(world: p, yaw: yaw)
+            v.place(world: p, yaw: yaw, probe: probe)
             prevPos = v.rb.position; prevRot = v.rb.orientation; renderPos = prevPos; renderRot = prevRot
             accumulator = 0
             syncFromPhysics()
-        } else if let g = ground.ground(x: p.x, y: p.y, z: p.z + 50, step: 0) { position.z = g.z }
+        } else if let g = ground.ground(x: p.x, y: p.y, z: p.z + probe, step: 0) { position.z = g.z }
     }
 
     /// Recoloca el coche parado donde está, mirando hacia donde mira (tecla R / botón del mando).

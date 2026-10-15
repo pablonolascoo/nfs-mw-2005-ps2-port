@@ -127,6 +127,8 @@ func runTrafficTest(_ o: Options, seconds: Double) {
     let engine: Engine
     do { engine = try Engine(device: device, data: data, outputFormat: .bgra8Unorm) } catch { fputs("motor: \(error)\n", stderr); exit(1) }
     guard let ai = engine.ai, let air = engine.aiRenderer else { fputs("IA no disponible (faltan roads.json o ai.json)\n", stderr); exit(1) }
+    // HUD original del juego (UI/FEHud.swift) sobre la prueba, con el coche de prueba como jugador; --no-ui lo quita
+    if !o.noUI, let ui = engine.enableUI(outputFormat: .bgra8Unorm) { ui.startHUDOnly() }
     if let g = o.grade { engine.renderer.gradeStrength = g }
     let (W, H) = o.size
     engine.aspect = Float(W) / Float(H)

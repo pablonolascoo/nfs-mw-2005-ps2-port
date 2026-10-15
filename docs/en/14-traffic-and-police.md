@@ -158,7 +158,7 @@ Same as `WRoadNav` (`World/Common/WRoadNetwork.cpp`):
 | `TrafficManager.swift` | Spawning, per-district pattern, despawning |
 | `PoliceManager.swift` | Patrol, pursuit, heat, busted, evade, formations, roadblocks |
 | `AIRender.swift` | Instanced drawing (one call per model and material), brake lights, flares, sawhorses |
-| `HUDPursuit.swift` | MW HUD: heat, EVADE/BUSTED bar, COOLDOWN, BUSTED/EVADED |
+| `HUDPursuit.swift` | Custom debug HUD (only `--debug-hud`); the game uses the original HUD (doc 17 §8) |
 | `AIEngine.swift` | Engine hook and the `--traffic-test` run |
 
 Small hooks: `Engine.swift` (`ai`, `aiRenderer`, `setupAI`, `updateAI` before drawing), `Renderer.swift` (`overlays`: three draw points),

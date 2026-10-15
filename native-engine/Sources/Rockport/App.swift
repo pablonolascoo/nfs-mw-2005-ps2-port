@@ -77,8 +77,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         // Interfaz original del juego (UI/): «Pulsa START» → menú principal → carrera → zona libre con el HUD del juego.
         // --drive (o --no-ui) entra directamente a conducir.
         if !options.noUI, let ui = engine.enableUI(outputFormat: view.colorPixelFormat) {
-            if options.drive { ui.startGame() } else { ui.showSplash() }
+            if options.drive || RaceTestOptions.value("--race") != nil || CommandLine.arguments.contains("--career") { ui.startGame() } else { ui.showSplash() }
         } else if options.drive { engine.toggleMode() }
+        // Carreras y Lista Negra (Race/, Career/): marcadores del mundo, carrera rápida y carrera profesional
+        engine.enableRaces()
+        if CommandLine.arguments.contains("--career") { Career.shared.start() }
+        if let ev = RaceTestOptions.value("--race") { QuickRace.shared.start(eventID: ev, engine: engine) }
         view.delegate = self
         window.contentView = view
         window.makeKeyAndOrderFront(nil)

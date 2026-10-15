@@ -10,13 +10,13 @@ extension Engine {
     func enableUI(outputFormat: MTLPixelFormat) -> FEUI? {
         if let ui { return ui }
         guard let u = FEUI(engine: self, outputFormat: outputFormat) else {
-            fputs("Interfaz: faltan los datos de frontend/ (reconvierte con tools/: paso «frontend»). Se usa el HUD mínimo.\n", stderr)
+            fputs("Interfaz: faltan los datos de frontend/ (reconvierte con tools/: paso «frontend»). Sin HUD.\n", stderr)
             return nil
         }
         ui = u
         renderer.overlays.append(u)
-        // El HUD original sustituye al HUD propio de persecución
-        aiRenderer?.hud.enabled = u.hud == nil
+        // El HUD original sustituye al HUD propio de persecución (HUDPursuit.swift), que solo queda con --debug-hud
+        aiRenderer?.hud.enabled = PursuitHUD.debugEnabled
         return u
     }
 
@@ -46,11 +46,22 @@ extension Engine {
         yaw = atan2(d.y, d.x); pitch = asin(max(-1, min(1, d.z)))
     }
 
-    /// Datos del HUD [D: interfaces ITachometer, ISpeedometer, INos, IHeatMeter, IPursuitBoard].
+    /// Datos del HUD [D: interfaces ITachometer, ISpeedometer, INos, IHeatMeter, IPursuitBoard, IMinimap].
+    /// En la prueba sin ventana `--traffic-test` el «jugador» es el coche de prueba (AITestDriver).
     func ui_hudInput() -> HudInput {
         var h = HudInput()
         h.kmh = ui?.assets.language != "english"
-        if let car {
+        if let tp = AITestDriver.current {
+            // Coche de prueba de la IA: velocidad y posición reales; marcha y vueltas de un cambio de 6 marchas de ejemplo [I]
+            let v = tp.v
+            h.speed = v.speed
+            let kmh = v.speed * 3.6
+            let g = min(6, 1 + Int(kmh / 45))
+            h.gear = kmh < 1 ? 1 : g + 1
+            h.rpm = kmh < 1 ? 1000 : 2500 + (kmh - Float(g - 1) * 45) / 45 * 4500
+            h.playerPos = SIMD2(v.pos.x, v.pos.y)
+            h.playerDir = SIMD2(v.fwd.x, v.fwd.y)
+        } else if let car {
             h.speed = car.speed
             h.rpm = car.rpm
             if let e = car.vehicle?.specs.engine { h.redline = e.RED_LINE; h.maxRpm = e.MAX_RPM }
@@ -58,6 +69,15 @@ extension Engine {
             h.shifting = car.vehicle?.engine.isGearChanging ?? false
             h.nos = car.nosCapacity
             h.nosEngaged = car.isNOSEngaged
+            h.playerPos = SIMD2(car.position.x, car.position.y)
+            h.playerDir = simd_length(SIMD2(car.forward.x, car.forward.y)) > 0.01 ? simd_normalize(SIMD2(car.forward.x, car.forward.y)) : SIMD2(1, 0)
+        }
+        if let ai {
+            h.bustedCount = ai.stats.busted
+            h.evadedCount = ai.stats.evaded
+            for c in ai.vehicles where c.kind == .cop {
+                h.cops.append(HudBlip(pos: SIMD2(c.pos.x, c.pos.y), dir: SIMD2(c.fwd.x, c.fwd.y), inPursuit: c.copRole == .pursuit))
+            }
         }
         if let pm = ai?.police {
             h.heat = pm.heat
@@ -69,13 +89,14 @@ extension Engine {
                 h.cooldownRequired = lv?.evadeTimeout ?? 60
                 h.cooldownRemaining = (1 - pm.evade) * h.cooldownRequired
             } else {
-                // meter: −0,5 (evasión) … +0,5 (arresto); el temporizador de arresto (0…5 s) manda cuando corre
+                // medidor: −0,5 (evasión) … +0,5 (arresto); el temporizador de arresto (0…5 s) manda cuando corre
                 let bust = pm.bustTimer / PoliceManager.bustedTimeout
                 h.timeUntilBusted = bust > 0.01 ? min(0.99, 0.5 + bust * 0.5) : max(-0.99, min(0.99, pm.meter * 2))
             }
             h.pursuitSeconds = pm.pursuitTime
             h.copsEngaged = pm.copsInPursuit
             h.costToState = pm.costToState
+            h.infractions = pm.infractions.count
         }
         return h
     }

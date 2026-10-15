@@ -77,14 +77,21 @@ fragment float4 fe_sdf(O in [[stage_in]], texture2d<float> t [[texture(0)]], sam
 /// Marco de la interfaz en la pantalla: lienzo 640×480 escalado con su aspecto y centrado.
 struct FELayout {
     let width: Float, height: Float, scale: Float, ox: Float, oy: Float
-    init(width: Int, height: Int) {
+    /// Escala horizontal (igual a `scale` salvo en los paquetes estirados).
+    let scaleX: Float
+    /// `stretch`: lienzo estirado a todo el ancho como el modo panorámico anamórfico del PS2 (solo paquetes a pantalla
+    /// completa que no tienen versión WS_, p. ej. BUSTED_OVERLAY).
+    init(width: Int, height: Int, stretch: Bool = false) {
         self.width = Float(width); self.height = Float(height)
         scale = min(Float(width) / 640, Float(height) / 480)
-        ox = (Float(width) - 640 * scale) / 2; oy = (Float(height) - 480 * scale) / 2
+        scaleX = stretch ? max(scale, Float(width) / 640) : scale
+        ox = (Float(width) - 640 * scaleX) / 2; oy = (Float(height) - 480 * scale) / 2
     }
+    /// Media anchura visible en unidades del lienzo (320 en 4:3; 426,7 en 16:9).
+    var visibleHalfWidth: Float { width / scale / 2 }
     /// Coordenadas FEng (origen en el centro del lienzo) → NDC.
     func ndc(_ p: SIMD2<Float>) -> SIMD2<Float> {
-        let x = ox + (p.x + 320) * scale, y = oy + (p.y + 240) * scale
+        let x = ox + (p.x + 320) * scaleX, y = oy + (p.y + 240) * scale
         return SIMD2(x / width * 2 - 1, 1 - y / height * 2)
     }
 }
@@ -92,11 +99,13 @@ struct FELayout {
 final class FERenderer {
     struct Vtx { var pos: SIMD2<Float>; var uv: SIMD2<Float>; var muv: SIMD2<Float>; var color: SIMD4<Float> }
     enum Mode { case image, masked, sdf }
-    struct Draw { var start: Int; var count: Int; var tex: MTLTexture; var mask: MTLTexture?; var mode: Mode; var additive: Bool; var wrap: Bool }
+    struct Draw { var start: Int; var count: Int; var tex: MTLTexture; var mask: MTLTexture?; var mode: Mode; var additive: Bool; var wrap: Int }
 
     let device: MTLDevice
     private var pImage: [Bool: MTLRenderPipelineState] = [:], pMasked: [Bool: MTLRenderPipelineState] = [:], pSDF: MTLRenderPipelineState!
-    private let clampS: MTLSamplerState, wrapS: MTLSamplerState
+    private let clampS: MTLSamplerState
+    /// Muestreadores por modo de repetición (TilableUV: bit 0 U, bit 1 V).
+    private var wrapS: [MTLSamplerState] = []
     private var ring: [MTLBuffer] = []
     private var ringIndex = 0
     private static let maxVerts = 120_000
@@ -124,14 +133,16 @@ final class FERenderer {
         sd.minFilter = .linear; sd.magFilter = .linear; sd.mipFilter = .linear
         sd.sAddressMode = .clampToEdge; sd.tAddressMode = .clampToEdge
         clampS = device.makeSamplerState(descriptor: sd)!
-        sd.sAddressMode = .repeat; sd.tAddressMode = .repeat
-        wrapS = device.makeSamplerState(descriptor: sd)!
+        for w in 0..<4 {
+            sd.sAddressMode = w & 1 != 0 ? .repeat : .clampToEdge; sd.tAddressMode = w & 2 != 0 ? .repeat : .clampToEdge
+            wrapS.append(device.makeSamplerState(descriptor: sd)!)
+        }
         for _ in 0..<3 { ring.append(device.makeBuffer(length: FERenderer.maxVerts * MemoryLayout<Vtx>.stride, options: .storageModeShared)!) }
     }
 
     // MARK: Recolección (FEngine::Render + cFEngRender::Render*)
 
-    private struct Item { var z: Float; var order: Int; var obj: FEObj; var m: float4x4; var color: SIMD4<Float> }
+    struct Item { var z: Float; var order: Int; var obj: FEObj; var m: float4x4; var color: SIMD4<Float> }
 
     /// Matriz local de un objeto [D: MakeRenderMatrix]. `extraScale` solo para textos coreanos/chinos.
     static func local(_ o: FEObj) -> float4x4 {
@@ -143,13 +154,16 @@ final class FERenderer {
         return m * float4x4(scale: SIMD3(s.x, s.y, s.z == 0 ? 1 : s.z))
     }
 
-    private func collect(_ pkg: FEPackageRT) -> [Item] {
+    func collect(_ pkg: FEPackageRT) -> [Item] {
         var items: [Item] = []
         var order = 0
         func visit(_ o: FEObj, _ pm: float4x4, _ pc: SIMD4<Float>, _ inGroup: Bool) {
             let c = o.color
-            if c.w <= 0 { return }                                // Col.a == 0 → no se dibuja (ni el grupo) [D]
-            if o.flags & 9 != 0 { return }                        // invisible (bit 0) o solo PC (bit 3) [D: FEngIsVisible, RenderObject]
+            if c.w <= 0 { return }                                // Col.a == 0 → no se dibuja (ni el grupo) [D: RenderGroup/RenderObject]
+            // La bandera de invisible de un GRUPO no oculta a sus hijos: FEngine::RenderGroup solo mira el alfa; la visibilidad
+            // se comprueba objeto a objeto al dibujar (FEngSetAllObjectsInPackageVisibility deja todos los grupos invisibles y
+            // el HUD solo vuelve a encender las hojas que registra) [D: FEngine.cpp, FEngInterfaceFEObjects.cpp]
+            if o.type != 5 && o.flags & 9 != 0 { return }         // invisible (bit 0) o solo PC (bit 3) [D: FEngIsVisible]
             let col = inGroup ? SIMD4<Float>((pc * c + 128) / 256).rounded(.down) : c
             let m = pm * FERenderer.local(o)
             if o.type == 5 {
@@ -157,6 +171,7 @@ final class FERenderer {
                 return
             }
             let anchor = pm * SIMD4(o.pivot + o.pos, 1)
+            if anchor.z <= 0 { return }                           // Sorter.AddObject solo si z > 0 [D: FEngine::RenderObject]
             order += 1
             items.append(Item(z: anchor.z, order: order, obj: o, m: m, color: col))
         }
@@ -181,7 +196,7 @@ final class FERenderer {
         verts.append(contentsOf: [v[0], v[1], v[2], v[0], v[2], v[3]])
     }
 
-    private func addDraw(_ tex: MTLTexture, mask: MTLTexture? = nil, mode: Mode, additive: Bool, wrap: Bool, start: Int) {
+    private func addDraw(_ tex: MTLTexture, mask: MTLTexture? = nil, mode: Mode, additive: Bool, wrap: Int, start: Int) {
         let n = verts.count - start
         guard n > 0 else { return }
         if let last = draws.last, last.tex === tex, last.mask === mask, last.mode == mode, last.additive == additive, last.wrap == wrap, last.start + last.count == start {
@@ -193,7 +208,9 @@ final class FERenderer {
         let o = it.obj
         guard let t = pkg.assets.texture(o.handle) else { return }
         let ul = o.uvTL, lr = o.uvBR
-        let wrap = (o.def.imageFlags ?? 0) & 3 != 0 || max(ul.x, ul.y, lr.x, lr.y) > 1.001 || min(ul.x, ul.y, lr.x, lr.y) < -0.001
+        // Repetición: la de la textura (TextureInfo::TilableUV); los UV fuera de 0…1 sin ella se recortan al borde, así funcionan
+        // los barridos de LEAVE/APPEAR (p. ej. OUTRUN_BACKING). Datos antiguos sin el campo: como antes [V: UV > 1 ⇒ If].
+        let wrap = t.wrap ?? ((o.def.imageFlags ?? 0) & 3 != 0 || max(ul.x, ul.y, lr.x, lr.y) > 1.001 || min(ul.x, ul.y, lr.x, lr.y) < -0.001 ? 3 : 0)
         let start = verts.count
         if o.type == 9, o.data.count >= 37 {
             // Imagen con color por vértice: el juego usa solo VertexColors (b,g,r,a) [D: RenderCBVImage]
@@ -248,14 +265,14 @@ final class FERenderer {
                     let s2 = verts.count
                     quad(m, L, x0: g.x, y0: -Float(t.height) * 0.5, x1: g.x + Float(t.width), y1: Float(t.height) * 0.5,
                          uv0: SIMD2(0, 0), uv1: SIMD2(1, 1), colors: [it.color])
-                    addDraw(t.tex, mode: .image, additive: false, wrap: false, start: s2)
+                    addDraw(t.tex, mode: .image, additive: false, wrap: 0, start: s2)
                 }
                 continue
             }
             let s2 = verts.count
             quad(m, L, x0: g.x, y0: g.y, x1: g.x + g.w, y1: g.y + g.h,
                  uv0: SIMD2(g.u / tw, g.v / th), uv1: SIMD2((g.u + g.uw + 1) / tw, (g.v + g.h) / th), colors: [it.color])
-            addDraw(font.texture, mode: font.isSDF ? .sdf : .image, additive: false, wrap: false, start: s2)
+            addDraw(font.texture, mode: font.isSDF ? .sdf : .image, additive: false, wrap: 0, start: s2)
         }
         _ = start
     }
@@ -264,9 +281,11 @@ final class FERenderer {
 
     /// Dibuja los paquetes (en orden: el último queda encima) sobre `target`, que ya tiene la escena.
     func encode(_ cb: MTLCommandBuffer, target: MTLTexture, packages: [FEPackageRT]) {
-        let L = FELayout(width: target.width, height: target.height)
+        let L0 = FELayout(width: target.width, height: target.height)
+        let LS = FELayout(width: target.width, height: target.height, stretch: true)
         verts.removeAll(keepingCapacity: true); draws.removeAll(keepingCapacity: true)
         for p in packages where p.visible {
+            let L = p.stretch ? LS : L0
             for it in collect(p) {
                 switch it.obj.type {
                 case 1, 9, 10, 11, 12: emitImage(it, p, L)
@@ -296,7 +315,7 @@ final class FERenderer {
             case .sdf: enc.setRenderPipelineState(pSDF)
             }
             enc.setFragmentTexture(d.tex, index: 0)
-            enc.setFragmentSamplerState(d.wrap ? wrapS : clampS, index: 0)
+            enc.setFragmentSamplerState(wrapS[d.wrap & 3], index: 0)
             enc.drawPrimitives(type: .triangle, vertexStart: d.start, vertexCount: d.count)
         }
         enc.endEncoding()

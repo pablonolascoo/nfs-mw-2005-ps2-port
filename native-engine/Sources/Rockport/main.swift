@@ -46,7 +46,8 @@ struct Options {
             case "--car-preset":   // preset del juego para el coche del jugador (presets.json); "ninguno" = de serie
                 if let n = next() { Config.playerPreset = ["ninguno", "none", "stock"].contains(n.lowercased()) ? nil : n }
             case "--carcam": o.carCam = next()?.split(separator: ",").compactMap { Float($0) }   // pruebas: ojo,objetivo relativos al coche
-            case "--autodrive": o.autodrive = next().flatMap(Double.init) ?? 0   // pruebas: acelera N s antes de capturar
+            case "--autodrive":   // pruebas: acelera N s antes de capturar; sin número (--race-test), piloto automático
+                if i + 1 < args.count, let v = Double(args[i + 1]) { o.autodrive = v; i += 1 }
             case "--near":   // depuración: radio del nivel con textura (m)
                 if let r = next().flatMap(Float.init) { Config.nearRadius = r; Config.maxNear = 400 }
             case "--scale": o.scale = next().flatMap(Float.init)
@@ -76,6 +77,8 @@ struct Options {
                   --no-ui              sin la interfaz del juego (arranca en cámara libre, HUD mínimo propio)
                   --ui-test <pantalla> sin ventana (con --screenshot): Splash, MainMenu, Career, Pause, HUD, Dialog o un paquete .fng
                   --ui-time <ms>       tiempo de animación de la interfaz antes de la captura (2500) · --ui-hud-demo datos de persecución
+                  --ui-test HUD-chase|HUD-cooldown|HUD-busted|HUD-evaded|Race-<tipo>|Results|Blacklist|CarWon  estados del HUD original
+                  --debug-hud          HUD propio de depuración de la persecución (no es la interfaz del juego)
                   --quit-after <s>     salir tras s segundos (pruebas)
                   --screenshot <png>   sin ventana: carga, dibuja --frames fotogramas, guarda PNG y sale
                   --size AxB           tamaño del modo sin ventana (1920x1080)
@@ -84,6 +87,10 @@ struct Options {
                   --physics-test [COCHE]  prueba de la física del juego en un plano: 0–100, punta, frenada, curva, NOS
                   --traffic-test N     sin ventana: N s de tráfico y policía con un coche de prueba; captura (--screenshot) y estadísticas
                   --traffic-max N      máximo de coches de tráfico (20) · --heat H calor inicial · --no-traffic · --no-police
+                  --race-test ID       sin ventana: corre la prueba ID (EventID «15.1.1» o colección) · --autodrive piloto automático
+                                       · --seconds N · --opponents N · --screenshot base.png (capturas -start/-mid/-finish + JSON)
+                  --career-test        sin ventana: progresión simulada de la Lista Negra (15 → 1) · --save ruta.json
+                  --race ID            (app) empieza directamente la carrera rápida ID · --career  (app) entra en la carrera profesional
                 """)
                 exit(0)
             case "--audit": break   // se atiende en el arranque (runAudit)
@@ -91,7 +98,10 @@ struct Options {
             case "--physics-trace": break
             case "--traffic-test", "--traffic-max", "--heat", "--test-plan": i += 1   // AIEngine.swift (AIOptions)
             case "--no-traffic", "--no-police": break
+            case "--race-test", "--opponents", "--save", "--race": i += 1   // Race/RaceTests.swift, App.swift
+            case "--career-test", "--career", "--race-audit": break
             case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
+            case "--debug-hud": break   // HUDPursuit.swift: HUD propio de depuración (el juego usa el original, UI/FEHud.swift)
             case "--radio-log", "--audio-devices", "--radio-test", "--pad-audio-test", "--lightbar-test": break   // Audio/AudioTests.swift
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
@@ -268,6 +278,12 @@ let options = Options.parse(CommandLine.arguments)
 if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     let a = CommandLine.arguments
     runPhysicsTest(options, carName: i + 1 < a.count && !a[i + 1].hasPrefix("-") ? a[i + 1] : Config.playerCar)
+} else if let ev = RaceTestOptions.raceTest {
+    runRaceTest(options, eventKey: ev)
+} else if RaceTestOptions.careerTest {
+    runCareerTest(options)
+} else if RaceTestOptions.raceAudit {
+    runRaceAudit(options)
 } else if let secs = AIOptions.trafficTest {
     runTrafficTest(options, seconds: secs)
 } else if CommandLine.arguments.contains("--audit") {

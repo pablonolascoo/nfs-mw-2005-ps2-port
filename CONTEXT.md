@@ -49,6 +49,7 @@
 | 15 | Mandos | [es](docs/es/15-mandos.md) | [en](docs/en/15-controllers.md) |
 | 16 | Audio y voces | [es](docs/es/16-audio-y-voces.md) | [en](docs/en/16-audio-and-voices.md) |
 | 17 | Interfaz original (FEng): menús, HUD, fuentes, textos | [es](docs/es/17-interfaz.md) | [en](docs/en/17-interface.md) |
+| 18 | Carreras y Lista Negra (rutas, vallas, IA de carrera, carrera profesional) | [es](docs/es/18-carreras-y-lista-negra.md) | [en](docs/en/18-races-and-blacklist.md) |
 
 ## 3b. Producto final (lo que queremos entregar)
 - Un `Rockport.dmg` en *Releases* de GitHub. Al abrirlo pide la ISO, detecta PAL (SLES-53559) o NTSC-U (SLUS-21351) por `SYSTEM.CNF` y convierte los datos en `~/Library/Application Support/Rockport/<ID>/`.
@@ -91,11 +92,14 @@ Hecho:
 - **v0.2**: física de conducción del juego (decomp), 4 cámaras, mandos con barra de luz/táctil/gatillos, tráfico y policía con persecuciones, controles y HUD; tono PS2 fijo; datos versionados (`DATA_FORMAT` en `tools/src/cli/install.ts` = `Config.dataFormat`): si la app es más nueva que los datos, reconvierte con la misma ISO.
 - **Coches del juego (presets)**: los 82 presets de `GLOBALB.BUN` (Lista Negra 1–15, BMW de la historia) → `presets.json` + vinilos; la piel se compone como `CarSkin.cpp` en el motor nativo (`CarSkin.swift`) y en el visor. El jugador sale con el BMW M3 GTR plata y azul; `--car-preset` / `?preset=` (doc 10 §8).
 - **Interfaz original** (doc 17): paquetes FEng descifrados; «Pulsa START», menú principal, carrera, pausa y HUD del juego a resolución nativa (SDF para letras, bicúbica para imágenes).
+- **HUD 100 % original** (doc 17 §8): lógica de `FEngHud` (todo invisible y cada elemento enciende lo suyo), radar con los mapas `MINI_MAP*.BIN` del disco calibrados con `TrackInfo` 2000, persecución completa (la barra naranja rayada era el fondo de «REFUERZOS» mal recortado), arresto con la cámara de la policía, evasión con «BOLSA CONSEGUIDA», modo panorámico; API `RaceHUD` para carreras (cuenta atrás, posición, vueltas, tabla, resultados, Lista Negra con retratos de `RIVALS.BIN`). `HUDPursuit.swift` solo con `--debug-hud`.
 - Audio del disco extraído (doc 16). Las voces de la historia solo existen en inglés; la radio de la policía, en castellano/inglés/italiano. No se clonan voces sin permiso de los actores.
 - **Radio de la policía en el juego**: decodificador MicroTalk propio (TS + Swift, igual a vgmstream ±1), tablas `.IDX/.EVT` leídas, frases por evento de la persecución, paso `radio` del conversor → `radio/` (doc 16 §5–6). Suena por el altavoz del mando (USB; Bluetooth por informes HID Opus/SBC sin probar con hardware) o el Mac con filtro de escáner. **Barra de luz** como opción de tuneo con colores de persecución (doc 15 §7–8).
 
+- **Carreras y Lista Negra** (doc 18): paso `races` → `races.json` (254 pruebas, bins, hitos + radares de la zona libre, 1 376 vallas `TrackPathBarrier` de `L2RA.BUN` 0x0003414D), `DATA_FORMAT` 4. Ruta por la red cerrada por las vallas (mediana 0,997 de `RaceLength`), rivales con la física y la IA de carrera del juego (AIActionRace/AIVehiclePid, «glue»), los 7 tipos de prueba, carrera profesional 15 → 1 con partida `save.json`, candados por bin. **Colisión**: los objetos de grupos ocultos (891 instancias con `GroupNumber`) eran muros invisibles; ahora van en `collision/groups/`. Pruebas: `--race-test`, `--career-test`, `--race-audit`.
+
 Siguiente, por orden:
-1. Carreras y Lista Negra jugables (rutas: `TrackPathManager` + eventos de `gameplay.json`), menús mínimos al estilo MW.
+1. Conectar Carrera/Carrera rápida del menú a `Career.shared` / `QuickRace.shared` (interfaz); garaje, tienda, NIS y atajos de carrera.
 2. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
 3. Audio dentro del juego: motores, sirenas, películas (la radio de la policía ya suena: falta probar el altavoz del mando con hardware).
 4. Choques del juego original (coche contra coche y muros), daños, pinchos; helicóptero.
@@ -111,4 +115,5 @@ Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, 8 hash
 - Layout: `tools/` readers and converters (Bun/TS), `viewer/` Three.js WebGPU prototype, `mods/` data-only mods, `docs/en` research 00–11 (table above), `map-data/<ID>/` generated output (not committed).
 - Build everything: `cd tools && bun run build-all ../original/SLES-53559.iso`; then `cd viewer && bun run dev`.
 - What each generated file answers: [docs/en/11-data-catalog.md](docs/en/11-data-catalog.md).
-- Next steps: real collision in driving (road layer already in the viewer), garages for building-less safehouses, aftermarket rims, playable races, game physics and audio from the decomp, native Metal engine, road/district editor, story/sequel mods.
+- Races and Blacklist playable in the native engine (doc 18): `races.json`, barrier-closed routes, game racer AI, 7 event types, career 15 → 1 with save; hidden-group collision moved to `collision/groups/` (was invisible walls).
+- Next steps: real collision in driving (road layer already in the viewer), garages for building-less safehouses, aftermarket rims, game physics and audio from the decomp, native Metal engine, road/district editor, story/sequel mods.

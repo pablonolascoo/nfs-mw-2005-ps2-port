@@ -9,19 +9,23 @@
 //   frontend/fonts/<nombre>.json     métricas de glifos (la textura del atlas va en textures/)
 //   frontend/fonts/<nombre>.sdf.png  campo de distancias del atlas (8 bits, ×4) para dibujar letras nítidas a cualquier tamaño
 //   frontend/strings/<idioma>.json   textos del idioma: {hash: texto}
+//   frontend/minimaps/<MAPA>.png     radar del HUD: los 64 trozos (MINI_MAP_CHOPn, 128×128) de TRACKS\L2RA\<MAPA>.BIN en una
+//                                    rejilla de 8×8 (trozo n en x = n%8·128, y = ⌊n/8⌋·128); index.json con la calibración del
+//                                    mapa (TrackInfo 2000 de GLOBALB: esquina, ancho en metros) [D: FeMinimap.cpp, TrackInfo.hpp]
 import { mkdirSync } from "node:fs";
 import { outDir } from "../lib/paths";
 import { GameDisc } from "../lib/zdir";
 import { lzDecompress } from "../lib/lz";
 import { readTexturePack, type Texture } from "../lib/tex-ps2";
 import { encodePng } from "../lib/png";
+import { parseChunks, walk } from "../lib/bchunk";
 import { hex8 } from "../lib/hash";
 import { findFEngChunks, parseFEPackage, parseFont, parseLanguage, feHash, type FEFont, type FEPackage } from "../lib/feng";
 
 const [iso, id] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("Uso: bun src/cli/frontend.ts <iso> <ID>"); process.exit(1); }
 const out = `${outDir(id)}/frontend`;
-for (const d of ["packages", "textures", "fonts", "strings"]) mkdirSync(`${out}/${d}`, { recursive: true });
+for (const d of ["packages", "textures", "fonts", "strings", "minimaps"]) mkdirSync(`${out}/${d}`, { recursive: true });
 const disc = await GameDisc.open(iso);
 
 async function read(name: string) {
@@ -36,7 +40,7 @@ async function read(name: string) {
 const PACKAGE_FILES = ["FRONTEND\\FRONTB.LZC", "GLOBAL\\GLOBALA.BUN", "GLOBAL\\GLOBALB.LZC", "GLOBAL\\INGAMEB.LZC", "GLOBAL\\WIDESCREEN_GLOBAL.BUN"];
 // Packs de texturas de la interfaz (los mismos archivos + HUD, fuentes por idioma, tarjetas) [V]
 const TEXTURE_FILES = [...PACKAGE_FILES, "GLOBAL\\INGAMEA.BUN", "LANGUAGES\\LANGUAGETEXTURES.BIN", "GLOBAL\\HUDTEXRACE.BIN", "GLOBAL\\HUDTEXSPLIT.BIN",
-  "GLOBAL\\HUDTEXDRAG.BIN", "GLOBAL\\HUDTEXDRAGSPLIT.BIN", "GLOBAL\\CARDTEXTURES.BIN", "GLOBAL\\DYNTEX.BIN", ...[...Array(11)].map((_, i) => `GLOBAL\\HUDS_CUSTOM_${String(i).padStart(2, "0")}.BIN`)];
+  "GLOBAL\\HUDTEXDRAG.BIN", "GLOBAL\\HUDTEXDRAGSPLIT.BIN", "GLOBAL\\CARDTEXTURES.BIN", "GLOBAL\\DYNTEX.BIN", "GLOBAL\\RIVALS.BIN", ...[...Array(11)].map((_, i) => `GLOBAL\\HUDS_CUSTOM_${String(i).padStart(2, "0")}.BIN`)];
 // Idioma por disco: PAL → castellano (SLES-53559 lleva el texto en español [V]); NTSC-U → inglés. El inglés va siempre de reserva.
 const LANGS = id.startsWith("SLUS") ? ["ENGLISH"] : ["SPANISH", "ENGLISH"];
 
@@ -92,15 +96,16 @@ for (const { pk } of packages) {
 for (const f of fonts.values()) { if (textures.has(f.textureHash)) needed.add(f.textureHash); else missing.set(f.textureHash, `fuente ${f.texture}`); }
 // Texturas que el código del HUD elige por nombre (FEngSetTextureHash): se exportan todas las de los packs del HUD y del juego.
 // Iconos de menú que pone el código (MAIN_ICON_*, INGAME_ICON_*…): se exportan todos los packs de interfaz.
-for (const [h, t] of textures) if (/HUD|INGAME|GLOBALA|GLOBALB|FRONTB|WIDESCREEN/.test(t.source)) needed.add(h);
+for (const [h, t] of textures) if (/HUD|INGAME|GLOBALA|GLOBALB|FRONTB|WIDESCREEN|RIVALS/.test(t.source)) needed.add(h);
 // DYNTEX: rótulos por idioma que el código pone a mano (BUSTED_SPA, EVADED_ENG…), consejos de carga y mandos [V: DYNTEX.BIN]
-for (const [h, t] of textures) if (t.source.includes("DYNTEX") && /^(BUSTED|EVADED|DEFEATED|IMPOUNDED|TIP_|LOADING_CONTROLLER_PS2)/.test(t.name)) needed.add(h);
+for (const [h, t] of textures) if (t.source.includes("DYNTEX") && /^(BUSTED|EVADED|DEFEATED|IMPOUNDED|TIP_|LOADING_CONTROLLER_PS2|INGAME_ICON|MILESTONE|RACE_ICON|EVENT_ICON)/.test(t.name)) needed.add(h);
 
-const texIndex: Record<string, { name: string; w: number; h: number; blend: number; source: string }> = {};
+const texIndex: Record<string, { name: string; w: number; h: number; blend: number; wrap: number; source: string }> = {};
 for (const h of needed) {
   const t = textures.get(h)!;
   await Bun.write(`${out}/textures/${hex8(h)}.png`, encodePng(t.rgba, t.width, t.height));
-  texIndex[hex8(h)] = { name: t.name, w: t.width, h: t.height, blend: t.alphaBlend, source: t.source };   // blend = AlphaBlendType (2 = aditiva)
+  // blend = AlphaBlendType (2 = aditiva); wrap = TilableUV (bit 0 repite U, bit 1 repite V; 0 = recortar al borde) [D: TextureInfo 0x4F]
+  texIndex[hex8(h)] = { name: t.name, w: t.width, h: t.height, blend: t.alphaBlend, wrap: t.tilableUV & 3, source: t.source };
 }
 
 // 5) Fuentes: métricas + campo de distancias del atlas
@@ -117,12 +122,56 @@ for (const { pk, source } of packages) {
   await Bun.write(`${out}/packages/${pk.name.replace(/\.fng$/i, "")}.json`, JSON.stringify({ ...pk, resources, source }));
 }
 
+// 7) Radar del HUD: mapas troceados (chunks 0x3A100 = cabecera LZ + pack de texturas con un trozo) [D: ChoppedMiniMapManager]
+const minimaps: Record<string, { file: string; chops: number }> = {};
+{
+  // Nombre = «MINI_MAP_» + id del evento con «.» → «_» (ChooseMinimapTextureName + FixDot) [D]; se prueban por hash
+  const names = ["MINI_MAP", "MINI_MAP_UNLOCK_1", "MINI_MAP_UNLOCK_2", "MINI_MAP_13_4_1_0"];
+  for (let a = 1; a <= 25; a++) for (let b = 0; b <= 12; b++) {
+    names.push(`MINI_MAP_${a}_${b}_0`);
+    for (let c = 1; c <= 70; c++) for (const r of ["", "_R"]) names.push(`MINI_MAP_${a}_${b}_${c}${r}`);
+  }
+  for (const name of names) {
+    const e = disc.find(`TRACKS\\L2RA\\${name}.BIN`);
+    if (!e) continue;
+    const b = await disc.readEntry(e);
+    const atlas = new Uint8Array(1024 * 1024 * 4);
+    let n = 0;
+    for (const c of parseChunks(b)) {
+      if (c.id !== 0x3a100) continue;
+      try {
+        const tp = readTexturePack(lzDecompress(b.subarray(c.dataOffset, c.dataOffset + c.size)));
+        for (const t of tp.textures) {
+          const m = /_CHOP(\d+)$/.exec(t.name);
+          if (!m || t.width !== 128 || t.height !== 128) continue;
+          const k = +m[1], ox = (k % 8) * 128, oy = Math.floor(k / 8) * 128;
+          for (let y = 0; y < 128; y++) atlas.set(t.rgba.subarray(y * 512, y * 512 + 512), ((oy + y) * 1024 + ox) * 4);
+          n++;
+        }
+      } catch (err) { console.warn(`radar ${name}: ${(err as Error).message}`); }
+    }
+    if (!n) continue;
+    await Bun.write(`${out}/minimaps/${name}.png`, encodePng(atlas, 1024, 1024));
+    minimaps[name] = { file: `minimaps/${name}.png`, chops: n };
+  }
+  // Calibración del mapa: TrackInfo (0x120 B) del circuito 2000 en GLOBALB, chunk 0x34201 [D: TrackInfo.hpp][V]
+  let calib: { upperLeft: number[]; widthMetres: number; rotation: number } | null = null;
+  const g = await read("GLOBAL\\GLOBALB.LZC");
+  if (g) for (const [c] of walk(parseChunks(g))) if (c.id === 0x34201) {
+    const dv = new DataView(g.buffer, g.byteOffset + c.dataOffset, c.size);
+    for (let o = 0; o + 0x120 <= c.size; o += 0x120) if (dv.getInt16(o + 0x8a, true) === 2000)
+      calib = { upperLeft: [dv.getFloat32(o + 0xac, true), dv.getFloat32(o + 0xb0, true)], widthMetres: dv.getFloat32(o + 0xb4, true), rotation: dv.getUint16(o + 0xb8, true) };
+  }
+  await Bun.write(`${out}/minimaps/index.json`, JSON.stringify({ track: 2000, calibration: calib, chopsPerSide: 8, chopSize: 128, maps: minimaps }, null, 1));
+}
+
 await Bun.write(`${out}/index.json`, JSON.stringify({
   format: 1, disc: id, languages: LANGS.map(l => l.toLowerCase()), strings: stringsIndex, virtualScreen: [640, 480],
   packages: packages.map(p => ({ name: p.pk.name, file: `packages/${p.pk.name.replace(/\.fng$/i, "")}.json`, source: p.source, objects: p.pk.objects.length })),
   fonts: [...fonts.values()].map(f => ({ name: f.name, hash: hex8(f.hash), file: `fonts/${f.name.toLowerCase()}.json`, texture: hex8(f.textureHash), height: f.height })),
   textures: texIndex, missingTextures: Object.fromEntries([...missing].map(([h, n]) => [hex8(h), n])),
 }, null, 1));
+console.log(`Radar: ${Object.keys(minimaps).length} mapas`);
 console.log(`Interfaz: ${packages.length} paquetes, ${fonts.size} fuentes, ${needed.size} texturas (${missing.size} sin encontrar), textos ${JSON.stringify(stringsIndex)} → ${out}`);
 
 /**

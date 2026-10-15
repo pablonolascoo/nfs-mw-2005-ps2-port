@@ -18,6 +18,9 @@ final class CollisionWorld {
     let root: URL
     let size: Float = 400
     private var tiles: [String: Tile?] = [:]
+    /// Muros añadidos en tiempo de juego: vallas activas de la prueba y candados de la historia (TrackPathBarrier,
+    /// Race/RaceWorld.swift). Planta (a, b) y alturas como los muros de las casillas.
+    var dynamicWalls: [(a: SIMD2<Float>, b: SIMD2<Float>, zMin: Float, zMax: Float)] = []
 
     init(root: URL) { self.root = root.appendingPathComponent("collision") }
 
@@ -88,9 +91,12 @@ final class CollisionWorld {
     /// ¿Cruza el paso de `from` a `to` (en planta) algún muro cuya altura cubra z…z+1,5?
     func hitsWall(from: float3, to: float3) -> Bool {
         let tx = Int((to.x / size).rounded(.down)), ty = Int((to.y / size).rounded(.down))
-        guard let t = tile(tx: tx, ty: ty) else { return false }
         let p = float2(from.x, from.y), r = float2(to.x - from.x, to.y - from.y)
         if simd_length_squared(r) < 1e-10 { return false }
+        for dw in dynamicWalls where !(dw.zMax < from.z + 0.3 || dw.zMin > from.z + 1.5) {
+            if RaceBarrierLines.intersect(dw.a, dw.b, p, p + r) { return true }
+        }
+        guard let t = tile(tx: tx, ty: ty) else { return false }
         let w = t.walls
         var i = 0
         while i < w.count {
@@ -116,6 +122,11 @@ extension CollisionWorld: PhysicsGround {
         let tx0 = Int(((p.x - radius) / size).rounded(.down)), tx1 = Int(((p.x + radius) / size).rounded(.down))
         let ty0 = Int(((p.y - radius) / size).rounded(.down)), ty1 = Int(((p.y + radius) / size).rounded(.down))
         let r2 = radius * radius
+        for dw in dynamicWalls {
+            let ab = dw.b - dw.a, l2 = simd_length_squared(ab)
+            let u = l2 > 0 ? max(0, min(1, simd_dot(p - dw.a, ab) / l2)) : 0
+            if simd_length_squared(dw.a + ab * u - p) <= r2 { out.append(dw) }
+        }
         for ty in ty0...ty1 { for tx in tx0...tx1 {
             guard let t = tile(tx: tx, ty: ty) else { continue }
             let w = t.walls

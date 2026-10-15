@@ -75,7 +75,7 @@ struct FEJFont: Decodable {
 struct FEJIndex: Decodable {
     struct Pkg: Decodable { let name: String; let file: String }
     struct Font: Decodable { let name: String; let hash: String; let file: String }
-    struct Tex: Decodable { let name: String; let w: Int; let h: Int; let blend: Int? }
+    struct Tex: Decodable { let name: String; let w: Int; let h: Int; let blend: Int?; let wrap: Int? }
     let format: Int
     let languages: [String]
     let packages: [Pkg]
@@ -116,7 +116,11 @@ enum FEH {
 // MARK: - Recursos
 
 /// Textura de interfaz en GPU: premultiplicada, rgba8 lineal en «espacio de pantalla» (como el GS del PS2, que mezcla en gamma).
-struct FETexture { let tex: MTLTexture; let width: Int; let height: Int; let additive: Bool }
+struct FETexture {
+    let tex: MTLTexture; let width: Int; let height: Int; let additive: Bool
+    /// TilableUV del juego: bit 0 repite U, bit 1 repite V; 0 = recortar al borde. nil = datos antiguos (sin el campo).
+    var wrap: Int? = nil
+}
 
 /// Fuente lista para dibujar: glifos por carácter y atlas de distancias (SDF) o, si falta, el mapa de bits original.
 final class FEFont {
@@ -220,10 +224,48 @@ final class FEAssets {
         var result: FETexture? = nil
         if let info = index.textures[hex], let data = try? Data(contentsOf: root.appendingPathComponent("textures/\(hex).png")),
            let img = pngDecoder.decodePNG(data), let t = upload(img, premultiply: true, label: info.name) {
-            result = FETexture(tex: t, width: img.width, height: img.height, additive: info.blend == 2)
+            result = FETexture(tex: t, width: img.width, height: img.height, additive: info.blend == 2, wrap: info.wrap)
         }
         textures[hash] = result
         return result
+    }
+
+    // MARK: Radar (TRACKS\L2RA\MINI_MAP*.BIN → frontend/minimaps/)
+
+    struct MinimapIndex: Decodable {
+        struct Calib: Decodable { let upperLeft: [Float]; let widthMetres: Float; let rotation: Int }
+        struct Map: Decodable { let file: String; let chops: Int }
+        let calibration: Calib?
+        let chopsPerSide: Int
+        let chopSize: Int
+        let maps: [String: Map]
+    }
+    private(set) lazy var minimaps: MinimapIndex? = {
+        guard let d = try? Data(contentsOf: root.appendingPathComponent("minimaps/index.json")) else { return nil }
+        return try? JSONDecoder().decode(MinimapIndex.self, from: d)
+    }()
+    private var loadedMinimaps = Set<String>()
+
+    /// Carga un mapa del radar (p. ej. «MINI_MAP» o «MINI_MAP_1_2_1») y registra sus 64 trozos como texturas
+    /// «<MAPA>_CHOPn» (ChoppedMiniMapManager::GetTextureName [D]), igual que el juego al descomprimirlos.
+    @discardableResult
+    func loadMinimap(_ name: String) -> Bool {
+        if loadedMinimaps.contains(name) { return true }
+        guard let mi = minimaps, let m = mi.maps[name], let data = try? Data(contentsOf: root.appendingPathComponent(m.file)),
+              let img = pngDecoder.decodePNG(data) else { return false }
+        let n = mi.chopsPerSide, cs = mi.chopSize
+        guard img.width == n * cs, img.height == n * cs else { return false }
+        for k in 0..<(n * n) {
+            let ox = (k % n) * cs, oy = (k / n) * cs
+            var px = [UInt8](repeating: 0, count: cs * cs * 4)
+            for y in 0..<cs { for x in 0..<(cs * 4) { px[y * cs * 4 + x] = img.rgba[((oy + y) * img.width + ox) * 4 + x] } }
+            let chop = TextureCache.Image(width: cs, height: cs, rgba: px)
+            if let t = upload(chop, premultiply: true, label: "\(name)_CHOP\(k)") {
+                textures[feHash("\(name)_CHOP\(k)")] = FETexture(tex: t, width: cs, height: cs, additive: false, wrap: 0)
+            }
+        }
+        loadedMinimaps.insert(name)
+        return true
     }
 
     func font(_ hash: UInt32) -> FEFont? {

@@ -30,6 +30,7 @@ const steps: [string, string[]][] = [
   ["Interfaz del juego (FEng: menús, HUD, fuentes, textos)", ["src/cli/frontend.ts", iso, id]],
   ["Red de carreteras", ["src/cli/roads.ts", iso, id]],
   ["Colisión por casillas", ["src/cli/collision.ts", iso, id]],
+  ["Carreras y Lista Negra (rutas, vallas, rivales)", ["src/cli/races.ts", iso, id]],
   ["Plano cenital", ["src/cli/topdown.ts", iso, id, "4096"]],
 ];
 const t0 = performance.now();

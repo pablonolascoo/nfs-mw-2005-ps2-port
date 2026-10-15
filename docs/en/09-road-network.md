@@ -160,3 +160,9 @@ Yes: this chunk is **collision geometry**. It is not the road network.
 - Why a pack is copied into section N+40 [H].
 - Race routes: they live in `TrackPathManager` and the events; `inRace`/`raceRouteForward` are computed at runtime [D].
 - Writing: the format is flat (fixed-size tables). Adding nodes/segments means recomputing `RNhd`, the UGroup sizes and the `CGcn` lists [H].
+
+## Scenery group collision (2026-10-15) [V]
+A collision instance (0x40 B) stores the scenery `GroupNumber` (u16) at +0x18. 891 instances belong to hidden-by-default
+groups (`BARRIER_SPLINE_n` barriers, `BARRIER_LOCKED_n` padlocks, `SCENERY_GROUP_DOOR`). `collision.ts` keeps them out of
+the tiles and writes `collision/groups/<n>.bin` (same NFSC v1 format); the engine only uses them while the group is active
+(doc 18 §5). They used to be invisible walls in free roam.

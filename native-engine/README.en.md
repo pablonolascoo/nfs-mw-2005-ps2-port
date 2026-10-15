@@ -91,6 +91,9 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--carcam ox,oy,oz,tx,ty,tz` | Camera fixed to the car (X forward, Y left, Z up) |
 | `--car-preset <NAME>` | Game car from `presets.json`: `M3GTRCAREERSTART` (default), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Loads every tile and checks geometry and textures |
+| `--race <ID>` · `--career` | Start a quick race directly (EventID "15.1.1") · enter the career |
+| `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Headless: run the event with the autopilot; positions, times, `-start/-mid/-results/-finish` captures and JSON |
+| `--career-test [--save path]` · `--race-audit` | Headless: simulated Blacklist 15 → 1 · routes of every event against `RaceLength` |
 | `--physics-test [CAR] [--physics-trace]` | Window-less: game physics on a flat plane: 0–100, top speed, braking, cornering, handbrake, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Pad light bar mode for this session (not saved). Also `ROCKPORT_LIGHTBAR` |
 | `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Where the police radio plays · print each line to the console |
@@ -303,6 +306,23 @@ Notes:
 - No sound, races or menus yet. Traffic and police without helicopter or physical car-to-car collisions (doc 14).
 - Wall crashes: own impulses, not the game's `RigidBody::DoBarrierCollision` (doc 13).
 - Controllers not yet tested on real hardware (doc 15).
+
+## Races and the Blacklist (2026-10-15)
+
+- **Data**: `races` step in `tools/` → `races.json` (254 events, 20 bins, 94 challenges, TrackPath barriers from `L2RA.BUN`);
+  data format 4. Collision of hidden groups (barriers, padlocks) now lives in `collision/groups/`: it used to be invisible walls
+  in free roam.
+- **Engine** (`Race/`, `Career/`): route on the road network closed by each event's barriers (median 0.997 of the game's length),
+  barriers drawn and solid, opponents with the game physics and the game's AI driver (curvature speed, throttle/steering PID,
+  skill, "glue" rubber band, NOS), all 7 event types, countdown, positions, laps, knock-outs, speed traps, tollbooths, drag with
+  manual gears and lanes, wrong way, reset, per-event police and traffic, results and rewards.
+- **Career**: Blacklist 15 → 1 with `RequiredRacesWon` / `RequiredChallenges` (milestones + open-world speed traps) /
+  `RequiredBounty`, boss races, pink slips, district padlocks per bin, save in `~/Library/Application Support/Rockport/save.json`.
+  World race markers (Return / ✕ to start).
+- **Menu API**: `Career.shared.start()` / `newGame()` / `showBlacklist()`, `QuickRace.shared.start(eventID:)`,
+  `RaceSystem.shared?.abandon()`. The HUD belongs to the UI (`UI/RaceHUD.swift`).
+- **Tests**: `--race-test <ID> --autodrive --screenshot base.png`, `--career-test`, `--race-audit`. Details and results:
+  [doc 18](../docs/en/18-races-and-blacklist.md).
 
 ## Game physics, controllers and camera (2026-10-12)
 

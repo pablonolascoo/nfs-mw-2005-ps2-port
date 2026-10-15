@@ -41,6 +41,14 @@ final class Engine {
     /// Pruebas: cámara fija relativa al coche (ojo y objetivo en metros; X adelante, Y izquierda, Z arriba desde el suelo).
     var carCam: (eye: float3, target: float3)?
 
+    // Enganches de las carreras (Race/RaceSystem.swift): mallas extra del mundo (vallas de la prueba, candados), coches
+    // extra con la física del juego (rivales), filtro de la entrada del jugador (cuenta atrás, drag, piloto automático)
+    // y un paso por fotograma tras la simulación del jugador.
+    var extraMeshes: [GPUMesh] = []
+    var extraCars: [(mesh: GPUMesh, parts: [float4x4], shadow: float4x4?)] = []
+    var driverFilter: ((inout DriverInput, inout Bool, Float) -> Void)?
+    var frameHooks: [(Float) -> Void] = []
+
     var keys = Set<UInt16>()
     var mouseDelta = float2(0, 0)
     var time: Double = 0
@@ -126,7 +134,8 @@ final class Engine {
         case .drive:
             guard let car else { mode = .fly; return }
             // Teclado + mandos (Input/), física del juego a 60 Hz (Physics/) y cámara camerainfo (Camera/)
-            let pad = GameInput.shared.poll(keys: keys)
+            var pad = GameInput.shared.poll(keys: keys)
+            driverFilter?(&pad.driver, &pad.reset, dt)
             car.update(dt: dt, input: Car.Input(driver: pad.driver), collision: collision)
             if pad.reset { car.reset() }
             if pad.nextCamera { car.camera.next(1) }
@@ -161,16 +170,20 @@ final class Engine {
         }
         let fov = mode == .drive && carCam == nil ? (car?.camera.fovY ?? Config.fovYDegrees) : Config.fovYDegrees
         let proj = float4x4.perspectiveReversedInfinite(fovY: fov * .pi / 180, aspect: aspect, near: Config.nearPlane)
-        let meshes = streamer.tiles.compactMap { $0.drawMesh }
+        let meshes = streamer.tiles.compactMap { $0.drawMesh } + extraMeshes
         var carDraw: (GPUMesh, [float4x4])? = nil
         if let car { carDraw = (car.mesh, car.partMatrices) }   // aparcado también en modo libre
-        return SceneFrame(view: view, proj: proj, camPos: eye, time: Float(time), meshes: meshes, car: carDraw, carShadow: car?.shadowMatrix)
+        var f = SceneFrame(view: view, proj: proj, camPos: eye, time: Float(time), meshes: meshes, car: carDraw, carShadow: car?.shadowMatrix)
+        f.extraCars = extraCars
+        return f
     }
 
     /// Streaming + simulación + codificación del fotograma.
     func frame(cb: MTLCommandBuffer, target: MTLTexture, dt: Float, scale: Float, now: Double) {
         ui?.update(dt: dt)
         update(dt: dt)
+        let hookDt = ui?.paused == true ? 0 : dt
+        for h in frameHooks { h(hookDt) }
         streamer.update(camera: eye, now: now)
         let f = makeFrame()
         updateAI(dt: ui?.paused == true ? 0 : dt, frame: f)

@@ -13,6 +13,7 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Dónde están las vallas de carrera y los candados? | `world.json` → `groups[752]`, `groups/*.glb` | `convert.ts tiles` | 03 |
 | ¿Dónde están garajes, concesionarios y talleres? | `zones.json` (15), `garages.json` (15) | `vlt-dump.ts`, `garages.ts` | 05, 07 |
 | ¿Qué carreras, Lista Negra e hitos hay? | `gameplay.json` → `summary` | `vlt-dump.ts` | 05 |
+| ¿Ruta, puertas, rivales, vallas y reglas de cada prueba; bins y desafíos? | `races.json` (254 pruebas), `collision/groups/<n>.bin` | `races.ts`, `collision.ts` | 18 |
 | ¿Cualquier valor de la base de datos del juego? | `gameplay.json` → `collections[6287]` | `vlt-dump.ts` | 05 |
 | ¿Por dónde van las calles y carriles? | `roads.json` | `roads.ts` | 09 |
 | ¿Dónde hay suelo y muros (colisión)? | `roads.json` → `collisionPacks[390]` (resumen) | `roads.ts` | 09 |

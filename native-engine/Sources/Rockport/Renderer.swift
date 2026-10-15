@@ -46,6 +46,8 @@ struct SceneFrame {
     var car: (mesh: GPUMesh, parts: [float4x4])?
     /// Sombra de contacto: matriz del cuadrado unidad (-1…1) bajo el coche.
     var carShadow: float4x4?
+    /// Otros coches con malla completa y física del juego (rivales de carrera, Race/): se dibujan como el del jugador.
+    var extraCars: [(mesh: GPUMesh, parts: [float4x4], shadow: float4x4?)] = []
 }
 
 final class Renderer {
@@ -253,6 +255,13 @@ final class Renderer {
             enc.setRenderPipelineState(pipelines["car"]!)
             drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, pbr: Renderer.carPBR)
         }
+        if !frame.extraCars.isEmpty {
+            enc.setRenderPipelineState(pipelines["car"]!)
+            for c in frame.extraCars where frustum.intersects(AABB(min: float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z) - 4,
+                                                                   max: float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z) + 4)) {
+                drawMeshes([c.mesh], kinds: [.opaque, .mask], model: { c.parts[$0] }, pbr: Renderer.carPBR)
+            }
+        }
         for o in overlays { o.encodeOpaque(enc, frame: frame) }   // coches de la IA (instanciados)
         enc.setDepthStencilState(depthWrite)
 
@@ -268,7 +277,8 @@ final class Renderer {
         enc.setRenderPipelineState(pipelines["shadow"]!)
         enc.setDepthBias(1, slopeScale: 2, clamp: 0.01)   // Z invertida: sesgo positivo = hacia la cámara
         drawMeshes(visible, kinds: [.shadow])
-        if let m = frame.carShadow {
+        for m in [frame.carShadow] + frame.extraCars.map(\.shadow) {
+            guard let m else { continue }
             enc.setRenderPipelineState(pipelines["blob"]!)
             var U = DrawUniforms(model: m, color: float4(1, 1, 1, 1), params: .zero)
             enc.setVertexBuffer(quadBuffer, offset: 0, index: 0)
@@ -287,6 +297,12 @@ final class Renderer {
         if let car = frame.car {
             enc.setRenderPipelineState(pipelines["carBlend"]!)
             drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, pbr: Renderer.carPBR)
+        }
+        if !frame.extraCars.isEmpty {
+            enc.setRenderPipelineState(pipelines["carBlend"]!)
+            for c in frame.extraCars where simd_distance(frame.camPos, float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z)) < 400 {
+                drawMeshes([c.mesh], kinds: [.blend, .shadow, .additive, .water], model: { c.parts[$0] }, pbr: Renderer.carPBR)
+            }
         }
         for o in overlays { o.encodeTransparent(enc, frame: frame); draws += o.drawCalls }
         enc.endEncoding()

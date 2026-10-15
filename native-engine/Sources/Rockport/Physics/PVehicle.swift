@@ -45,10 +45,12 @@ final class PVehicle {
     var restHeight: Float { rb.dimension.y + (susp.rideHeight(0) - staticCompression[0] + susp.rideHeight(1) - staticCompression[1]) * 0.5 }
 
     /// Coloca el coche parado sobre el suelo (posición del mundo del motor, rumbo en radianes, Z arriba).
-    func place(world p: float3, yaw: Float) {
+    /// `probe`: metros por encima de `p` desde los que se busca el suelo (50 = el más alto; las carreras usan poco para no
+    /// subirse a un paso elevado que cruce encima de la salida).
+    func place(world p: float3, yaw: Float, probe: Float = 50) {
         rb.orientation = simd_quatf(angle: -yaw, axis: V3(0, 1, 0))
         var gz = p.z
-        if let g = ground.ground(x: p.x, y: p.y, z: p.z + 50, step: 0) { gz = g.z }
+        if let g = ground.ground(x: p.x, y: p.y, z: p.z + probe, step: 0) { gz = g.z }
         rb.position = PM.toGame(float3(p.x, p.y, gz)) + V3(0, restHeight, 0)
         rb.linearVel = .zero; rb.angularVel = .zero; rb.force = .zero; rb.torque = .zero
         susp.reset(); engine.reset()

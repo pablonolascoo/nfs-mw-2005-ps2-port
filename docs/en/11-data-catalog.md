@@ -13,6 +13,7 @@ None of it is pushed to GitHub except small metadata JSON files. Figures are for
 | Where are race barriers and padlocks? | `world.json` → `groups[752]`, `groups/*.glb` | `convert.ts tiles` | 03 |
 | Where are safehouses, car lots and shops? | `zones.json` (15), `garages.json` (15) | `vlt-dump.ts`, `garages.ts` | 05, 07 |
 | Which races, Blacklist and milestones exist? | `gameplay.json` → `summary` | `vlt-dump.ts` | 05 |
+| Start, gates, opponents, barriers and rules of each event; bins and challenges? | `races.json` (254 events), `collision/groups/<n>.bin` | `races.ts`, `collision.ts` | 18 |
 | Any value from the game database? | `gameplay.json` → `collections[6287]` | `vlt-dump.ts` | 05 |
 | Where do streets and lanes run? | `roads.json` | `roads.ts` | 09 |
 | Where are ground and walls (collision)? | `roads.json` → `collisionPacks[390]` (summary) | `roads.ts` | 09 |

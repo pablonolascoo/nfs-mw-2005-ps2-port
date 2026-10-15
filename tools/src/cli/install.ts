@@ -12,7 +12,7 @@ import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "
 import { compiled } from "../lib/paths";
 
 /** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
-export const DATA_FORMAT = 3; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía)
+export const DATA_FORMAT = 4; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz
 
 const [mode, ...rest] = Bun.argv.slice(2);
 
@@ -34,6 +34,7 @@ if (mode === "step") {
     case "collision": await import("./collision"); break;
     case "topdown": await import("./topdown"); break;
     case "radio": await (await import("./radio")).main(Bun.argv.slice(2)); break;
+    case "races": await import("./races"); break;
     default: console.error(`Paso desconocido: ${name}`); process.exit(2);
   }
 } else if (mode === "install") {
@@ -60,6 +61,7 @@ if (mode === "step") {
     ["Interfaz del juego (menús, HUD, textos)", "frontend", [iso, id]],
     ["Red de carreteras", "roads", [iso, id]],
     ["Colisión", "collision", [iso, id]],
+    ["Carreras y Lista Negra", "races", [iso, id]],
     ["Plano de la ciudad", "topdown", [iso, id, "2048"]],
   ];
   const t0 = performance.now();

@@ -534,6 +534,9 @@ final class SuspensionRacer {
     // MARK: Paso
 
     /// SuspensionRacer::OnTaskSimulate.
+    /// Conductor de la IA (rivales de carrera): dirección directa (DoSteering sin DoHumanSteering) [D].
+    var aiDriver = false
+
     func simulate(_ dT: Float, rb: RigidBody, controls: Controls, engine: EngineRacer, ground: PhysicsGround, now: Float) {
         setCOG(rb)
         var s = computeState(rb, dT, controls, gear: engine.gear, nosBoost: engine.nosBoost)
@@ -544,7 +547,7 @@ final class SuspensionRacer {
         doAerodynamics(s, rb)
         doDriveForces(s, driveTorque: engine.driveTorque)
         driftRB = rb
-        doWheelForces(&s, rb, ground: ground, now: now, maxSpeedometer: engine.maxSpeedometer, humanSteering: true)
+        doWheelForces(&s, rb, ground: ground, now: now, maxSpeedometer: engine.maxSpeedometer, humanSteering: !aiDriver)
         wallNoseTurn = 0; wallSideTurn = 0
         doJumpStabilizer(s, rb, ground: ground)
         doSleep(s, rb)

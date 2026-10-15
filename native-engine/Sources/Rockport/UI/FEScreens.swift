@@ -127,24 +127,40 @@ final class FEScreen {
 }
 
 final class FEUI: RenderOverlay {
-    enum State { case splash, menu, game, pause }
+    enum State { case splash, menu, game, pause, modal }
     let assets: FEAssets
     let renderer: FERenderer
     unowned let engine: Engine
-    private(set) var state: State = .splash
-    private var screens: [FEScreen] = []
-    private(set) var hud: FEHud?
+    var state: State = .splash
+    var screens: [FEScreen] = []
+    /// Paquetes encima del juego que no piden botones (BUSTED_OVERLAY…), con su tiempo restante en ms.
+    var overlays: [(screen: FEScreen, ms: Int)] = []
+    /// Pantalla modal (resultados, Lista Negra, recompensas…) y qué hacer al pulsar ✕ / ○.
+    var modalAccept: (() -> Void)?
+    var modalBack: (() -> Void)?
+    var modalUpDown: ((Int) -> Void)?
+    var hud: FEHud?
+    var dragHud: FEHud?
+    /// Escenario de prueba del HUD (--ui-test HUD-chase…); nil = datos reales.
+    var hudScenario: String?
+    var scenarioFrames = 0
+    /// Contadores de arrestos/evasiones del fotograma anterior y datos de la última persecución (para las pantallas del final).
+    var lastOutcome: (busted: Int, evaded: Int)?
+    var lastPursuit: (seconds: Float, bounty: Int) = (0, 0)
+    /// Dinero del jugador para la cabecera de la Lista Negra (lo pone la carrera profesional).
+    var blacklistCash = 0
+    var pendingBust: (ms: Int, seconds: Float)?
     private let keyboard = MenuKeyboard()
     private var orbit: Float = 0
     var drawCalls: Int { 0 }
     /// Pausa: la simulación se congela.
-    var paused: Bool { state == .pause }
+    var paused: Bool { state == .pause || state == .modal }
     /// Menús delante: el juego no recibe teclado ni mando.
     var capturesInput: Bool { state != .game }
     /// En la partida, ¿se ve el HUD? (cámara libre: no)
     var hudVisible = true
     /// Pruebas: HUD con una persecución de ejemplo (calor 3,4, 4 policías, medio camino de escapar).
-    var hudDemo = false
+    var hudDemo: Bool { get { hudScenario != nil } set { hudScenario = newValue ? "HUD-chase" : nil } }
 
     init?(engine: Engine, outputFormat: MTLPixelFormat) {
         guard let a = FEAssets(dataRoot: engine.data.root, device: engine.device, queue: engine.queue),
@@ -157,7 +173,7 @@ final class FEUI: RenderOverlay {
 
     // MARK: Pantallas
 
-    private func push(_ name: String) -> FEScreen? {
+    func push(_ name: String) -> FEScreen? {
         guard let p = FEPackageRT(name: name, assets: assets) else { return nil }
         let s = FEScreen(pkg: p)
         p.onGameMessage = { [weak self, weak s] msg, obj in
@@ -184,12 +200,12 @@ final class FEUI: RenderOverlay {
         // El paquete trae objetos de la demo y del PC: fuera
         for h: UInt32 in [0x9cdb8e9a, 0x50da3fd4, 0x9e24c2d8, 0xbde7fa72, 0x9c8fc0ee, 0xe893027f, 0x78da965b, 0xc6cc55a4] { p.setVisible(p.find(h), false) }
     }
-    private func setLabelDeep(_ p: FEPackageRT, _ o: FEObj, _ label: UInt32) {
+    func setLabelDeep(_ p: FEPackageRT, _ o: FEObj, _ label: UInt32) {
         if o.type == 2 { p.setLabel(o, label) }
         for c in o.children { setLabelDeep(p, c, label) }
     }
 
-    private func iconMenu(_ name: String, title: UInt32?, options: [(UInt32, UInt32, () -> Void)], select: Int = 0) -> FEScreen? {
+    func iconMenu(_ name: String, title: UInt32?, options: [(UInt32, UInt32, () -> Void)], select: Int = 0) -> FEScreen? {
         guard let s = push(name) else { return nil }
         let sc = IconScroller(pkg: s.pkg)
         for (tex, nm, act) in options { if sc.add(tex: tex, name: nm) { s.actions.append(act) } }
@@ -210,7 +226,7 @@ final class FEUI: RenderOverlay {
         _ = iconMenu("MainMenu", title: 0xb24aae58, options: [
             (0x03704f3d, 0x5815a2b5, { [weak self] in self?.leaveTop { self?.showCareerMenu() } }),
             (0x9a962438, 0xcc8cb746, { [weak self] in self?.comingSoon(0xcc8cb746) }),
-            (0x4e6fbb02, 0x54020a7a, { [weak self] in self?.comingSoon(0x54020a7a) }),
+            (0x4e6fbb02, 0x54020a7a, { [weak self] in self?.leaveTop { self?.startQuickRace() } }),
             (0xb0c46023, 0x1afd5be6, { [weak self] in self?.comingSoon(0x1afd5be6) }),
             (0x3058fe37, 0x19a8c0af, { [weak self] in self?.comingSoon(0x19a8c0af) }),
         ])
@@ -225,9 +241,16 @@ final class FEUI: RenderOverlay {
         popAll()
         // uiCareerManager [D]: Continuar / Empezar nuevo
         _ = iconMenu("MainMenu_Sub", title: 0x5815a2b5, options: [
-            (0xC1C089CE, 0xE072DB21, { [weak self] in self?.leaveTop { self?.startGame() } }),
-            (0xE7353BE7, 0x17E18F87, { [weak self] in self?.leaveTop { self?.startGame() } }),
+            (0xC1C089CE, 0xE072DB21, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.start() } }),
+            (0xE7353BE7, 0x17E18F87, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.newGame() } }),
         ])
+    }
+
+    /// Carrera rápida: de momento una prueba al azar de las que el juego marca como AvailableQR
+    /// (la pantalla de elección de prueba del original está pendiente).
+    func startQuickRace() {
+        startGame()
+        if let e = QuickRace.shared.events.randomElement() { QuickRace.shared.start(eventID: e.eventId) }
     }
 
     func startGame() {
@@ -235,6 +258,9 @@ final class FEUI: RenderOverlay {
         state = .game
         engine.ui_startGame()
     }
+
+    /// Solo el HUD, sin tocar el coche ni la cámara (prueba sin ventana --traffic-test).
+    func startHUDOnly() { popAll(); state = .game }
 
     func showPause() {
         guard state == .game else { return }
@@ -278,6 +304,12 @@ final class FEUI: RenderOverlay {
         var m = keyboard.poll(keys: engine.keys)
         m.merge(Controllers.shared.pollMenu())
         switch state {
+        case .modal:
+            if let s = screens.last, !s.leaving {
+                if m.accept, let f = modalAccept { f() }
+                else if m.back, let f = modalBack { f() }
+                else if m.up { modalUpDown?(-1) } else if m.down { modalUpDown?(1) }
+            }
         case .game:
             if m.start { showPause() }
         case .splash:
@@ -312,15 +344,24 @@ final class FEUI: RenderOverlay {
                 if (s.leaveAge > 250 && !s.pkg.animating) || s.leaveAge > 1500, let done = s.onExit { s.onExit = nil; done() }
             }
         }
-        if let hud {
-            let visible = state == .game && hudVisible && engine.mode == .drive
-            var input = engine.ui_hudInput()
-            if hudDemo {
-                input.heat = 3.4; input.inPursuit = true; input.timeUntilBusted = -0.35; input.pursuitSeconds = 83
-                input.copsEngaged = 4; input.copsDestroyed = 2; input.copsDamaged = 3; input.costToState = 12_750
-                input.rpm = max(input.rpm, 6100); input.speed = max(input.speed, 41.7); input.gear = max(input.gear, 4); input.nos = 0.7
-            }
-            hud.update(ms: ms, input: input, visible: visible)
+        // Modo panorámico del HUD según el aspecto de la pantalla (FEngHud::SetWideScreenMode)
+        let hw = 240 * max(4.0 / 3, engine.aspect)
+        hud?.setWidescreen(visibleHalfWidth: hw); dragHud?.setWidescreen(visibleHalfWidth: hw)
+        tickPendingBust(ms: ms)
+        let hudOn = state == .game && hudVisible && overlays.isEmpty && (engine.mode == .drive || AITestDriver.current != nil)
+        var input = engine.ui_hudInput()
+        if let sc = hudScenario { input = scenarioInput(sc, input) }
+        pursuitOutcome(input)
+        // HUD_Drag en las pruebas de aceleración; HUD_SingleRace en el resto [D: HudResourceManager::GetHudFengName]
+        let drag = hud?.race?.setup.kind == .drag
+        if drag, dragHud == nil, let a = Optional(assets) { dragHud = FEHud(assets: a, kind: .drag) }
+        if drag, let d = dragHud { d.race = hud?.race }
+        hud?.update(ms: ms, input: input, visible: hudOn && !drag)
+        dragHud?.update(ms: ms, input: input, visible: hudOn && drag)
+        for (k, o) in overlays.enumerated().reversed() {
+            overlays[k].ms -= ms
+            o.screen.pkg.update(ms: ms)
+            if overlays[k].ms <= 0 { overlays.remove(at: k) }
         }
         // Fondo de los menús: vuelta lenta sobre la ciudad
         if state == .menu || state == .splash {
@@ -332,6 +373,8 @@ final class FEUI: RenderOverlay {
     var packagesToDraw: [FEPackageRT] {
         var l: [FEPackageRT] = []
         if let h = hud, h.pkg.visible { l.append(h.pkg) }
+        if let h = dragHud, h.pkg.visible { l.append(h.pkg) }
+        l.append(contentsOf: overlays.map(\.screen.pkg))
         l.append(contentsOf: screens.map(\.pkg))
         return l
     }
@@ -341,6 +384,11 @@ final class FEUI: RenderOverlay {
     func encodeOpaque(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {}
     func encodeTransparent(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {}
     func encodeScreen(_ cb: MTLCommandBuffer, target: MTLTexture) {
+        if let path = ProcessInfo.processInfo.environment["ROCKPORT_FE_DUMP"] {
+            var all = ""
+            for p in packagesToDraw { let tmp = path + ".part"; renderer.dump(p, to: tmp); all += (try? String(contentsOfFile: tmp, encoding: .utf8)) ?? "" }
+            try? all.write(toFile: path, atomically: true, encoding: .utf8)
+        }
         renderer.encode(cb, target: target, packages: packagesToDraw)
     }
 
@@ -354,6 +402,9 @@ final class FEUI: RenderOverlay {
         case "career", "mainmenu_sub": showCareerMenu()
         case "pause", "pause_main": startGame(); showPause()
         case "hud", "hud_singlerace": startGame()
+        case _ where what.lowercased().hasPrefix("hud-") || what.lowercased().hasPrefix("race-")
+                    || ["results", "blacklist", "carwon"].contains(what.lowercased()):
+            startGame(); startScenario(what)
         case "dialog": showMainMenu(); comingSoon(0x54020a7a)
         default:
             state = .menu; popAll(); _ = push(what)

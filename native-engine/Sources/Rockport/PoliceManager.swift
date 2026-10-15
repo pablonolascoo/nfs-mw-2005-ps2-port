@@ -187,6 +187,16 @@ final class PoliceManager {
         w.onPursuitChanged?(true)
     }
 
+    /// La persecución empieza ya (MForcePursuitStart [D]): desafíos de la Serie y pruebas con PursuitRace (Race/).
+    /// Usa un policía que ya esté cerca o hace aparecer uno de persecución.
+    func forcePursuit() {
+        guard !inPursuit, state != .busted, let lv = level, world.player.exists else { return }
+        lockout = 0
+        if let c = world.vehicles.filter({ $0.kind == .cop && $0.copRole != .flee }).min(by: { simd_distance($0.pos, world.player.pos) < simd_distance($1.pos, world.player.pos) }),
+           simd_distance(c.pos, world.player.pos) < 400 { startPursuit(by: c); return }
+        if spawnPursuitCop(lv), let c = world.vehicles.last(where: { $0.kind == .cop }) { startPursuit(by: c) }
+    }
+
     private func join(_ c: AIVehicle) {
         c.copRole = .pursuit
         c.lights = true

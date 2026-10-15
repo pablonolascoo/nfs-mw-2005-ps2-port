@@ -157,7 +157,7 @@ Igual que `WRoadNav` (`World/Common/WRoadNetwork.cpp`):
 | `TrafficManager.swift` | Aparición, patrón por barrio, borrado |
 | `PoliceManager.swift` | Patrulla, persecución, calor, arresto, evasión, formaciones, controles |
 | `AIRender.swift` | Dibujo instanciado (una llamada por modelo y material), pilotos de freno, destellos, caballetes |
-| `HUDPursuit.swift` | HUD de MW: calor, barra EVADE/BUSTED, COOLDOWN, BUSTED/EVADED |
+| `HUDPursuit.swift` | HUD propio de depuración (solo `--debug-hud`); el juego usa el HUD original (doc 17 §8) |
 | `AIEngine.swift` | Enganche al motor y prueba `--traffic-test` |
 
 Enganches pequeños: `Engine.swift` (`ai`, `aiRenderer`, `setupAI`, `updateAI` antes de dibujar), `Renderer.swift` (`overlays`: tres puntos de dibujo),

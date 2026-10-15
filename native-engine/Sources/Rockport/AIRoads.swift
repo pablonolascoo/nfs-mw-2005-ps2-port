@@ -137,6 +137,8 @@ final class RoadNet {
         blockedCache[i] = b ? 1 : 0
         return b
     }
+    /// Las vallas activas cambiaron (carrera o candados de la historia): recalcular `blocked` [D: CrossesBarrier al activar].
+    func resetBlocked() { blockedCache = [] }
     func trafficAllowed(_ i: Int) -> Bool { !segs[i].has(RoadSegFlags.noTraffic) && !blocked(i) }
     func copsAllowed(_ i: Int) -> Bool { !blocked(i) && (!segs[i].has(RoadSegFlags.noTraffic) != segs[i].has(RoadSegFlags.copsXorTraffic)) }
     func allowed(_ i: Int, cops: Bool) -> Bool { cops ? copsAllowed(i) : trafficAllowed(i) }

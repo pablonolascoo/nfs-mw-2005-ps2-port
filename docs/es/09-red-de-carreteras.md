@@ -160,3 +160,9 @@ Sí: este chunk es **geometría de colisión**. No es la red de carreteras.
 - Para qué sirve la copia de un pack en la sección N+40 [H].
 - Rutas de carrera: viven en `TrackPathManager` y en los eventos; `inRace`/`raceRouteForward` se calculan en tiempo de juego [D].
 - Escribir: el formato es plano (tablas de tamaño fijo). Añadir nodos/segmentos exige recalcular `RNhd`, los tamaños UGroup y las listas `CGcn` [H].
+
+## Colisión de grupos de escenario (2026-10-15) [V]
+La instancia de colisión (0x40 B) lleva en +0x18 el `GroupNumber` (u16) del grupo de escenario. 891 instancias pertenecen a
+grupos ocultos por defecto (vallas `BARRIER_SPLINE_n`, candados `BARRIER_LOCKED_n`, `SCENERY_GROUP_DOOR`). `collision.ts`
+las saca de las casillas y las escribe en `collision/groups/<n>.bin` (mismo formato NFSC v1); el motor solo las usa con el
+grupo activo (doc 18 §5). Antes eran muros invisibles en la zona libre.

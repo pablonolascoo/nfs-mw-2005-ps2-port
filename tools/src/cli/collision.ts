@@ -5,10 +5,14 @@
 //   u32 'NFSC' · u32 versión (1) · u32 nTri · u32 nMuros
 //   f32 tri[nTri × 9]   (3 vértices x, y, z en mundo, Z arriba)
 //   f32 muro[nMuros × 6] (ax, ay, bx, by, zMin, zMax): segmento vertical en planta [V: longitud = 1/invXZLength]
-import { mkdir } from "node:fs/promises";
+// Instancias de colisión de un grupo de escenario oculto por defecto (u16 GroupNumber @0x18 de la instancia ≠ 0 y el grupo
+// con ExcludeFlags 0x10: vallas de carrera BARRIER_SPLINE_n, candados BARRIER_LOCKED_n, SCENERY_GROUP_DOOR) NO van a las
+// casillas: el juego solo las activa con el grupo [V: 891 instancias en 751 grupos]. Van a collision/groups/<número>.bin
+// (mismo formato) y el motor las añade cuando activa el grupo (Race/RaceWorld.swift). Antes eran muros invisibles.
+import { mkdir, rm } from "node:fs/promises";
 import { GameDisc } from "../lib/zdir";
 import { parseChunks, walk } from "../lib/bchunk";
-import { readSectionTable } from "../lib/world-ps2";
+import { readSectionTable, readSceneryGroups } from "../lib/world-ps2";
 import { readCollisionPack, instanceToWorld } from "../lib/roads-ps2";
 import { outDir } from "../lib/paths";
 
@@ -16,6 +20,7 @@ const [iso, id, sizeArg] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("uso: bun src/cli/collision.ts <iso> <ID> [tamaño]"); process.exit(1); }
 const SIZE = Number(sizeArg ?? 400);
 const out = `${outDir(id)}/collision`;
+await rm(out, { recursive: true, force: true });   // sin casillas viejas de una conversión anterior
 await mkdir(out, { recursive: true });
 const disc = await GameDisc.open(iso);
 const l2ra = await disc.readEntry(disc.find("TRACKS\\L2RA.BUN")!);
@@ -26,6 +31,9 @@ const buckets = new Map<string, Bucket>();
 const bucket = (tx: number, ty: number) => { const k = `${tx}_${ty}`; let b = buckets.get(k); if (!b) buckets.set(k, b = { tris: [], walls: [] }); return b; };
 const span = (vals: number[]) => [Math.floor(Math.min(...vals) / SIZE), Math.floor(Math.max(...vals) / SIZE)];
 
+// Grupos ocultos por defecto (sus objetos llevan ExcludeFlags 0x10) [V: L2RA.BUN 0x00034109]
+const hiddenGroups = new Set(readSceneryGroups(l2ra).filter(g => g.members.some(m => m.excludeFlags & 0x10)).map(g => g.number));
+const groupBuckets = new Map<number, Bucket>();
 const seen = new Set<number>();
 let nTris = 0, nWalls = 0, degenerate = 0;
 for (const s of readSectionTable(l2ra)) {
@@ -37,6 +45,8 @@ for (const s of readSectionTable(l2ra)) {
     seen.add(p.sectionNumber);
     for (const inst of p.instances) {
       const a = p.articles.get(inst.article); if (!a) continue;
+      const gb = inst.groupNumber && hiddenGroups.has(inst.groupNumber)
+        ? (groupBuckets.get(inst.groupNumber) ?? groupBuckets.set(inst.groupNumber, { tris: [], walls: [] }).get(inst.groupNumber)!) : null;
       for (const st of a.strips) {
         const W = st.verts.map(v => instanceToWorld(inst, v.p));
         for (let i = 0; i + 2 < W.length; i++) {
@@ -45,6 +55,7 @@ for (const s of readSectionTable(l2ra)) {
           const uz = t[1][2] - t[0][2], vz = t[2][2] - t[0][2];
           const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
           if (cx * cx + cy * cy + cz * cz < 1e-8) { degenerate++; continue; } // tiras: triángulos de unión
+          if (gb) { gb.tris.push(...t[0], ...t[1], ...t[2]); nTris++; continue; }
           const [x0, x1] = span(t.map(q => q[0])), [y0, y1] = span(t.map(q => q[1]));
           for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) bucket(x, y).tris.push(...t[0], ...t[1], ...t[2]);
           nTris++;
@@ -53,6 +64,7 @@ for (const s of readSectionTable(l2ra)) {
       for (const br of a.barriers) {
         const A = instanceToWorld(inst, br.a), B = instanceToWorld(inst, br.b);
         const w = [A[0], A[1], B[0], B[1], Math.min(A[2], B[2]), Math.max(A[2], B[2])];
+        if (gb) { gb.walls.push(...w); nWalls++; continue; }
         const [x0, x1] = span([A[0], B[0]]), [y0, y1] = span([A[1], B[1]]);
         for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) bucket(x, y).walls.push(...w);
         nWalls++;
@@ -71,6 +83,16 @@ for (const [k, b] of buckets) {
   tiles.push({ id: k, tris: nt, walls: nw, bytes: buf.byteLength });
 }
 tiles.sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: true }));
-await Bun.write(`${out}/index.json`, JSON.stringify({ disc: id, tileSize: SIZE, format: "NFSC v1: u32 magic, u32 version, u32 nTri, u32 nWalls, f32 tri[nTri*9], f32 wall[nWalls*6] (ax, ay, bx, by, zMin, zMax)", packs: seen.size, triangles: nTris, walls: nWalls, degenerateSkipped: degenerate, tiles }, null, 1));
+await mkdir(`${out}/groups`, { recursive: true });
+const groupFiles: { number: number; tris: number; walls: number }[] = [];
+for (const [n, b] of [...groupBuckets].sort((a, b) => a[0] - b[0])) {
+  const nt = b.tris.length / 9, nw = b.walls.length / 6;
+  const buf = new ArrayBuffer(16 + (b.tris.length + b.walls.length) * 4), dv = new DataView(buf);
+  dv.setUint32(0, 0x4353464e, true); dv.setUint32(4, 1, true); dv.setUint32(8, nt, true); dv.setUint32(12, nw, true);
+  const f = new Float32Array(buf, 16); f.set(b.tris, 0); f.set(b.walls, b.tris.length);
+  await Bun.write(`${out}/groups/${n}.bin`, buf);
+  groupFiles.push({ number: n, tris: nt, walls: nw });
+}
+await Bun.write(`${out}/index.json`, JSON.stringify({ disc: id, tileSize: SIZE, format: "NFSC v1: u32 magic, u32 version, u32 nTri, u32 nWalls, f32 tri[nTri*9], f32 wall[nWalls*6] (ax, ay, bx, by, zMin, zMax)", packs: seen.size, triangles: nTris, walls: nWalls, degenerateSkipped: degenerate, tiles, groups: groupFiles }, null, 1));
 const mb = tiles.reduce((a, t) => a + t.bytes, 0) / 1048576;
-console.log(`Colisión: ${seen.size} packs · ${nTris} triángulos · ${nWalls} muros · ${degenerate} degenerados descartados · ${tiles.length} casillas · ${mb.toFixed(1)} MB → ${out}`);
+console.log(`Colisión: ${seen.size} packs · ${nTris} triángulos · ${nWalls} muros · ${degenerate} degenerados descartados · ${tiles.length} casillas · ${groupFiles.length} grupos ocultos aparte (${groupFiles.reduce((a, g) => a + g.walls, 0)} muros) · ${mb.toFixed(1)} MB → ${out}`);

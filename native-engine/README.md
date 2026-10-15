@@ -91,6 +91,9 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--carcam ox,oy,oz,tx,ty,tz` | Cámara fija respecto al coche (X adelante, Y izquierda, Z arriba) |
 | `--car-preset <NOMBRE>` | Coche del juego de `presets.json`: `M3GTRCAREERSTART` (por defecto), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Carga todas las casillas y comprueba geometría y texturas |
+| `--race <ID>` · `--career` | Empezar directamente una carrera rápida (EventID «15.1.1») · entrar en la carrera profesional |
+| `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Sin ventana: corre la prueba con piloto automático; posiciones, tiempos, capturas `-start/-mid/-results/-finish` y JSON |
+| `--career-test [--save ruta]` · `--race-audit` | Sin ventana: Lista Negra simulada 15 → 1 · rutas de todas las pruebas frente a `RaceLength` |
 | `--physics-test [COCHE] [--physics-trace]` | Sin ventana: física del juego en un plano: 0–100, punta, frenada, curva, freno de mano, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Modo de la barra de luz del mando en esta sesión (no se guarda). También `ROCKPORT_LIGHTBAR` |
 | `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Por dónde suena la radio de la policía · escribir cada frase en la consola |
@@ -241,6 +244,21 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - El jugador lleva por defecto el BMW M3 GTR de la historia (plata + franjas azules). `--car-preset RAZORMUSTANG` (o `BL2…BL15`, `ninguno` = de serie) y `--carcam` para capturas. Tráfico y policía no cambian (su `SKIN1` es una textura real del disco).
 - Detalle de formatos y la tabla de la Lista Negra: [docs/es/10-coches.md §8](../docs/es/10-coches.md).
 
+## HUD original al 100 %, radar y pantallas de carrera (2026-10-15)
+
+- El HUD es **solo** el del juego (`HUD_SingleRace` / `HUD_Drag`) con la lógica de `FEngHud`: todo invisible al crearlo y cada
+  elemento enciende solo lo que registra según `DetermineHudFeatures`. El HUD propio (`HUDPursuit.swift`) queda para `--debug-hud`.
+- **Radar** con los mapas del disco (`TRACKS\L2RA\MINI_MAP*.BIN`, 267, uno por prueba con la ruta), calibrado con `TrackInfo` 2000;
+  gira con el coche, iconos de policía (parpadeo azul/rojo en persecución), rivales y punto de control. Sin zoom por velocidad (la decomp lo deja fijo).
+- **Persecución**: tiempo, recompensa, policías, barra ARRESTADO/EVADIDO, ZONA SEGURA, C.P.E.; la barra naranja rayada era el
+  fondo de «REFUERZOS» que no se recortaba al irse (repetición de textura: ahora `TilableUV`). Arresto: «ARRESTADO» + cámara de la
+  policía (`BUSTED_OVERLAY`); evasión: «BOLSA CONSEGUIDA» (`PostRace_MilestoneRewards`).
+- **Carreras**: API `RaceHUD` (`UI/RaceHUD.swift`, `engine.raceHUD`): cuenta atrás, posición, vueltas, tiempo, tabla, radares, peajes,
+  aceleración, mensajes, resultados (`PostRace_Results`), Lista Negra (`InGameReputationOverview` con retratos de `RIVALS.BIN`) y coche ganado.
+- Modo panorámico del juego (radar a la izquierda, cuentarrevoluciones a la derecha), ajustado a 16:10.
+- `--traffic-test` dibuja el HUD original. Capturas: `--ui-test HUD-chase|HUD-cooldown|HUD-busted|HUD-evaded|Race-<tipo>|Results|Blacklist|CarWon`
+  → `.build/shots/hud/`. Necesita datos con formato 4 (paso «Interfaz del juego»). Detalle: [doc 17 §8](../docs/es/17-interfaz.md).
+
 ## Interfaz original del juego: menús y HUD (2026-10-15)
 
 - La app arranca con las **pantallas del propio juego** (paquetes FEng `.fng` del disco): «Pulsa START» → menú principal →
@@ -251,6 +269,24 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
   (SDF ×4 del conversor). Se dibuja después del tono PS2, como en el PS2.
 - Código en `Sources/Rockport/UI/`; datos del paso `frontend` de `tools/`. `--no-ui` la quita; `--ui-test <pantalla>` saca capturas
   (`.build/shots/ui/`). Formato, decisiones y lo que falta: [doc 17](../docs/es/17-interfaz.md).
+
+## Carreras y Lista Negra (2026-10-15)
+
+- **Datos**: paso `races` de `tools/` → `races.json` (254 pruebas, 20 bins, 94 desafíos, vallas de TrackPath de `L2RA.BUN`);
+  formato de datos 4. La colisión de los grupos ocultos (vallas, candados) va aparte en `collision/groups/`: antes eran muros
+  invisibles en la zona libre.
+- **Motor** (`Race/`, `Career/`): ruta por la red de carreteras cerrada por las vallas de cada prueba (mediana 0,997 de la
+  longitud del juego), vallas dibujadas y con colisión, rivales con la física del juego y el conductor de la IA del juego
+  (velocidad por curvatura, PID de gas y dirección, habilidad, rubber-banding «glue», NOS), los 7 tipos de prueba, cuenta atrás,
+  posiciones, vueltas, eliminaciones, radares, peajes, drag con cambio manual y carriles, sentido contrario, reinicio, policía y
+  tráfico por prueba, resultados y recompensas.
+- **Carrera profesional**: Lista Negra 15 → 1 con `RequiredRacesWon` / `RequiredChallenges` (hitos + radares de la zona libre)
+  / `RequiredBounty`, carreras del rival, coche ganado, candados de distrito por bin y partida en
+  `~/Library/Application Support/Rockport/save.json`. Marcadores de prueba en el mundo (Intro / ✕ para empezar).
+- **API para los menús**: `Career.shared.start()` / `newGame()` / `showBlacklist()`, `QuickRace.shared.start(eventID:)`,
+  `RaceSystem.shared?.abandon()`. El HUD lo pone la interfaz (`UI/RaceHUD.swift`).
+- **Pruebas**: `--race-test <ID> --autodrive --screenshot base.png`, `--career-test`, `--race-audit`. Detalle y resultados:
+  [doc 18](../docs/es/18-carreras-y-lista-negra.md).
 
 ## Física del juego, mandos y cámara (2026-10-12)
 
@@ -283,7 +319,7 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - **Policía** como `AICopManager` + `AIPursuit`: patrullas, detección con línea de visión, calor 1–5 (`pursuitlevels` heat_01…05), refuerzos,
   formaciones (BOX_IN, PIT, ROLLING_BLOCK, HERD, FOLLOW, STAGGER), embestidas, arresto (5 s bajo `BustSpeed` con un policía a 15 m),
   enfriamiento y evasión, controles de carretera con la tabla de montajes de la decomp y pinchos. Barra de luces roja y azul con la fórmula de `CarRender`.
-- **HUD** de MW, mínima: calor, barra EVADE/BUSTED, COOLDOWN, BUSTED/EVADED. Sin menús. El mando se pone rojo y azul en la persecución.
+- **HUD**: el original del juego (ver «HUD original al 100 %»); el HUD mínimo propio solo con `--debug-hud`. El mando se pone rojo y azul en la persecución.
 - Datos: `ai.json` (nuevo paso `ai-attribs` de `tools/`) + `roads.json` + `collision/`. Coches con su librea real del disco, dibujados con instancias.
 - Prueba sin ventana: `--traffic-test N [--heat H] [--test-plan busted|run|flee] [--screenshot x.png]` → capturas y estadísticas (`x.json`).
   Opciones: `--traffic-max N`, `--no-traffic`, `--no-police`.
