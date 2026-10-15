@@ -11,8 +11,8 @@
 | Race with the original HUD | Police pursuit |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Sprint race with the original HUD and the event barriers"> | <img src="site/img/persecucion.jpg" alt="Pursuit with the original HUD and radar"> |
-| **Original main menu** | **Blacklist screen** |
-| <img src="site/img/menu.jpg" alt="Original main menu"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
+| **Race results** | **Blacklist screen** |
+| <img src="site/img/resultados.jpg" alt="Original results screen"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
 
 Open research and tools to turn your own **PlayStation 2** copy of *Need for Speed: Most Wanted* (2005) into open formats (glTF/PNG/JSON), as a base for **native ports to any platform**, macOS first.
 

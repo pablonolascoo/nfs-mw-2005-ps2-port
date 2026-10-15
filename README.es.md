@@ -11,8 +11,8 @@ Español · [English](README.md)
 | Carrera con el HUD original | Persecución con la policía |
 |---|---|
 | <img src="site/img/carrera.jpg" alt="Carrera sprint con el HUD original y las vallas de la prueba"> | <img src="site/img/persecucion.jpg" alt="Persecución con el HUD original y el radar"> |
-| **Menú principal original** | **Pantalla de la Lista Negra** |
-| <img src="site/img/menu.jpg" alt="Menú principal original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
+| **Resultados de la carrera** | **Pantalla de la Lista Negra** |
+| <img src="site/img/resultados.jpg" alt="Pantalla de resultados original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
 Investigación y herramientas abiertas para convertir tu propia copia de **PlayStation 2** de *Need for Speed: Most Wanted* (2005) en formatos abiertos (glTF/PNG/JSON). Es la base para **ports nativos a cualquier plataforma**, empezando por macOS.
 
