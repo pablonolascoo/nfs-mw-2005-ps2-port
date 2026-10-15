@@ -655,6 +655,7 @@ final class RaceSession {
 
     /// Cajas orientadas en planta; separa y reparte el impulso por masas (la física del juego no trae choques entre coches [I]).
     private func resolveCarContacts() {
+        if system.engine.ai?.crash?.enabled == true { return }   // los choques del juego (Crash/CrashWorld.swift) ya los resuelven
         for i in racers.indices { for j in (i + 1)..<max(i + 1, racers.count) {
             let a = racers[i].car, b = racers[j].car
             guard let va = a.vehicle, let vb = b.vehicle else { continue }

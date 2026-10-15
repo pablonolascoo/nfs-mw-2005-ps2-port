@@ -75,6 +75,7 @@ final class Engine {
         collision = CollisionWorld(root: data.root)
         streamer.loadFarTiles()
         setupAI(outputFormat: outputFormat)
+        EffectsSystem.attach(self)   // partículas, destellos, niebla y tinte por zona (Effects/, doc 20 §9)
         // Punto de partida: refugio 1 (respawn de zones.json) si existe
         if let z = data.zones.first(where: { $0.zoneType == "safehouse" }), let r = z.respawn, r.position.count == 3 {
             let p = float3(r.position[0], r.position[1], r.position[2])
@@ -193,6 +194,8 @@ final class Engine {
 
     /// Streaming + simulación + codificación del fotograma.
     func frame(cb: MTLCommandBuffer, target: MTLTexture, dt: Float, scale: Float, now: Double) {
+        // Película a pantalla completa (Movies/): se queda con el fotograma entero y el juego espera
+        if Movies.shared.frame(engine: self, cb: cb, target: target, dt: dt) { return }
         ui?.update(dt: dt)
         update(dt: dt)
         let hookDt = ui?.paused == true ? 0 : dt

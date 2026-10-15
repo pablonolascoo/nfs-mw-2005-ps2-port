@@ -40,6 +40,16 @@ final class AIVehicle {
     var crashed = false
     var knock = float2(0, 0)         // empujón tras un golpe (m/s), se apaga solo
     var knockSpin: Float = 0
+    // Choques del juego (Crash/CrashAI.swift): tras un golpe fuerte el coche se desliza y gira como un cuerpo rígido en
+    // planta hasta pararse; daños (zonas, paneles DAMAGE1, vida), policía destruida o inmovilizada.
+    var dyn = false                  // en deslizamiento físico (no conduce)
+    var dynVel = float2(0, 0)        // velocidad en planta durante el deslizamiento (m/s)
+    var yawRate: Float = 0           // rad/s
+    var dynTime: Float = 0, dynCalm: Float = 0
+    var damage = DamageState()
+    var damagedByPerp = false        // IPursuitAI::GetDamagedByPerp [D]: cuenta una vez para «policías dañados»
+    var immobilized: Float = 0       // s que queda parado por un derrumbe (MBreakerStopCops) [D: mensaje; duración I]
+    var lastCrash: Float = -100
 
     // Gestión
     var offscreenTime: Float = 0
@@ -167,6 +177,7 @@ final class AIVehicle {
 
     /// Empujón tras un choque: se desliza y gira un poco, luego se para (cinemático).
     func applyKnock(collision: CollisionWorld, dt: Float) {
+        if dyn { stepDynamic(collision: collision, dt: dt); return }   // choque físico (Crash/CrashAI.swift)
         guard simd_length_squared(knock) > 0.01 || abs(knockSpin) > 0.01 else { return }
         let to = pos + float3(knock.x, knock.y, 0) * dt
         if !collision.hitsWall(from: pos, to: to) { pos = to }
@@ -176,7 +187,7 @@ final class AIVehicle {
         if let g = collision.ground(x: pos.x, y: pos.y, z: pos.z + 1.2, step: 1.5) { pos.z = g.z }
     }
 
-    var partMatrices: [float4x4] { model.partMatrices(position: pos, yaw: yaw, pitch: pitch, roll: roll, steer: steer, spin: spin) }
+    var partMatrices: [float4x4] { model.partMatrices(position: pos, yaw: yaw, pitch: pitch, roll: roll, steer: steer, spin: spin, broken: damage.brokenSlots) }
 }
 
 @inline(__always) func angleDiff(_ a: Float, _ b: Float) -> Float {

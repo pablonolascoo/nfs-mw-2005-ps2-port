@@ -17,6 +17,8 @@ struct CarConfig {
 
 final class Car {
     let mesh: GPUMesh
+    /// Nombre del modelo (cars/<NOMBRE>.glb): marcadores de luces y escapes para los efectos (Effects/).
+    let modelName: String
     /// Transformación local que centra el modelo, lo apoya en z = 0 y pone el morro hacia +X.
     let local: float4x4
     /// Por rueda: eje (espacio del modelo), caída (rad, sobre X) y si es delantera.
@@ -26,8 +28,15 @@ final class Car {
     let wheelRadius: Float
     let frontSign: Float
     let halfLength: Float, halfWidth: Float
-    /// Piezas: 0 = carrocería, 1…4 = ruedas, 5…8 = frenos (mismo orden que TireOffsets).
-    static let partCount = 9
+    /// Piezas: 0 = carrocería, 1…4 = ruedas, 5…8 = frenos (mismo orden que TireOffsets) y 9… la capa de golpes
+    /// DAMAGE0_<ZONA> de los coches de carreras (Crash/Damage.swift DamageParts.overlayZones), oculta sin daño.
+    static let partCount = 9 + DamageParts.overlayZones.count
+
+    /// Daños del juego (Crash/Damage.swift): zonas, vida y cristales rotos [D: DamageRacer, CarRender SetPlayerDamage].
+    var damage = DamageState()
+    private var glassDraws: [(index: Int, texture: MTLTexture?, color: float4)] = []
+    private var glassBroken = false
+    private let brokenGlass: () -> MTLTexture?
 
     // Estado de conducción
     var position = float3(0, 0, 0)
@@ -133,6 +142,7 @@ final class Car {
     }
 
     init?(device: MTLDevice, data: GameData, textures: TextureCache, name: String, paint: float3, config cfg: CarConfig = CarConfig(), preset: CarPreset? = nil) {
+        modelName = name
         let url = data.url("cars/\(name).glb")
         guard var file = try? GLB.load(url) else { fputs("coche: no se pudo leer \(url.path)\n", stderr); return nil }
         let attr = data.carAttribs(name)
@@ -181,6 +191,12 @@ final class Car {
             for v in p.vertices { let w = rest * float4(v.px, v.py, v.pz, 1); box.add(float3(w.x, w.y, w.z)) }
         }
         for p in shown where !(mounted && special.contains(p.nodeName)) { add(p, part: 0) }
+        // Capa de golpes DAMAGE0_FRONT/REAR/FRONTLEFT… del kit montado (oculta hasta que la zona tenga daño) [D: SetPlayerDamage]
+        for p in file.primitives {
+            guard let q = p.piece, q.kind == "dano", q.slot.hasPrefix("DAMAGE0_"), (q.kit ?? 0) == config.kit,
+                  let z = DamageParts.overlayZones.firstIndex(where: { "DAMAGE0_" + $0.slot == q.slot }) else { continue }
+            prims.append(p); parts.append(9 + z)
+        }
 
         // Alerón y toma de techo de tuneo en los marcadores SPOILER / ROOF_SCOOP de la pieza BASE [D: CarRender.cpp 3262-3316].
         if let preset {
@@ -266,6 +282,11 @@ final class Car {
         for i in m.draws.indices where m.draws[i].role == "pintura" { m.draws[i].color = float4(srgbToLinear(paint), 1) }
         if let preset { Car.dress(m, preset: preset, file: file, data: data, textures: textures) }
         mesh = m
+        // Cristales: WINDOW_FRONT (sustitución de todas las lunas) ↔ WINDOW_DAMAGE0 de GLOBALB (crash/, formato 11) [D][V]
+        glassDraws = m.draws.indices.filter { m.draws[$0].name.hasPrefix("WINDOW_") && m.draws[$0].name != "WINDOW_MASK" || m.draws[$0].name == "REAR_DEFROSTER" }
+            .map { ($0, m.draws[$0].texture, m.draws[$0].color) }
+        let glassURL = data.url("crash/WINDOW_DAMAGE0.png")
+        brokenGlass = { FileManager.default.fileExists(atPath: glassURL.path) ? textures.texture(url: glassURL, alpha: true) : nil }
         if ProcessInfo.processInfo.environment["ROCKPORT_DEBUG_CAR"] != nil {   // depuración: tramos de dibujo del coche
             for d in m.draws { print("tramo pieza \(d.part) \(d.name) \(d.kind) tex \(d.texture.map { "\($0.width)x\($0.height)" } ?? "—") tri \(d.indexCount / 3)") }
         }
@@ -359,7 +380,33 @@ final class Car {
             out[1 + i] = hub * float4x4(rotationY: wheelSpin[map[i]] * frontSign)
             out[5 + i] = hub
         }
+        damageParts(&out, world: world)
         return out
+    }
+
+    /// Capa de golpes por zona: visible con daño > 0 [D: SetCarDamageState]; matriz nula = oculta.
+    private func damageParts(_ out: inout [float4x4], world: float4x4) {
+        for (i, z) in DamageParts.overlayZones.enumerated() { out[9 + i] = damage.zones[z.zone.rawValue] > 0 ? world : float4x4(0) }
+    }
+
+    /// Aplica el estado de daños a la malla: cristales rotos con daño > 1 en cualquier zona [D: kDamageWindowThresh = 1;
+    /// el juego lo hace por luna, aquí todas comparten la textura WINDOW_FRONT] [I].
+    func applyDamageVisuals() {
+        let broken = damage.zones.contains { $0 > 1 }
+        guard broken != glassBroken else { return }
+        let tex = broken ? brokenGlass() : nil
+        if broken && tex == nil { return }
+        glassBroken = broken
+        for g in glassDraws where g.index < mesh.draws.count {
+            mesh.draws[g.index].texture = broken ? tex : g.texture
+            mesh.draws[g.index].color = broken ? float4(1, 1, 1, max(0.85, g.color.w)) : g.color
+        }
+    }
+
+    /// Reparación (garaje, reinicio de carrera): fuera daños [D: DamageVehicle::ResetDamage].
+    func repairDamage() {
+        damage = DamageState()
+        applyDamageVisuals()
     }
 
     /// Cuadrado unidad escalado al tamaño del coche, apoyado en el suelo (para la sombra de contacto).
@@ -488,6 +535,7 @@ final class Car {
             out[1 + i] = hub * float4x4(rotationY: spin * frontSign)
             out[5 + i] = hub
         }
+        damageParts(&out, world: world)
         return out
     }
 

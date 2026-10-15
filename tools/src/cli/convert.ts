@@ -19,6 +19,8 @@ import { clusterSimplify } from "../lib/simplify";
 import { carPlaceholders } from "../lib/car-textures";
 import { carPartInfo, MARKER_NAMES } from "../lib/car-parts";
 import { readLightMaterialNames } from "../lib/light-materials";
+import { walk } from "../lib/bchunk";
+import { readSmokeableSpawnerPack, skipPad } from "../lib/effects";
 import { mkdirSync, existsSync, readFileSync } from "node:fs";
 
 const [iso, disc, mode, ...names] = Bun.argv.slice(2);
@@ -42,11 +44,12 @@ async function texturesFrom(paths: string[]) {
   return map;
 }
 
-/** Para cada pieza deja solo el mejor nivel de detalle disponible (sufijo _A < _B < …). Descarta los paneles rotos (DAMAGE1+). */
+/** Para cada pieza deja solo el mejor nivel de detalle disponible (sufijo _A < _B < …). Los paneles rotos (DAMAGE1_*) se
+ *  quedan (formato 11): ocultos de serie (pieza "dano"), el motor los cambia por el DAMAGE0_* intacto al chocar
+ *  [D: VehiclePartDamage.cpp, CarRender.cpp CARSLOTID_DAMAGE_*] (doc 13 §12). */
 function bestLod(solids: Solid[]) {
   const best = new Map<string, Solid>();
   for (const s of solids) {
-    if (/_DAMAGE[1-9]/.test(s.name)) continue; // DAMAGE0 = panel intacto (policía/tráfico) o capa de golpes: se queda
     const m = /^(.*)_([A-E])$/.exec(s.name); const key = m ? m[1] : s.name;
     const cur = best.get(key);
     if (!cur || (m && cur.name.slice(-1) > m[2])) best.set(key, s);
@@ -199,7 +202,7 @@ if (mode === "tiles") {
   // (el asfalto MODULATED+SRCCOPY tiene alfa ≈ 0 y antes salía gris por defecto).
   const avg = new Map<number, [number, number, number]>();
   for (const t of textures.values()) { const opaque = alphaFor(t).alphaMode === "OPAQUE"; let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < t.rgba.length; i += 16) if (opaque || t.rgba[i + 3] > 64) { r += t.rgba[i]; g += t.rgba[i + 1]; b += t.rgba[i + 2]; n++; } if (n) avg.set(t.nameHash, [r / n / 255, g / n / 255, b / n / 255]); }
-  type Inst = { so: Solid; low: Solid; matrix: number[]; meta: Record<string, unknown>; size: number };
+  type Inst = { so: Solid; low: Solid; matrix: number[]; meta: Record<string, unknown>; size: number; smack?: boolean };
   const tiles = new Map<string, Inst[]>();
   // Grupos de escenario (bloqueos de carril, candados, puertas): sus objetos van a capas aparte.
   const l2ra = await d.readEntry(d.find("TRACKS\\L2RA.BUN")!);
@@ -210,6 +213,25 @@ if (mode === "tiles") {
   groups.forEach((g, gi) => { if (g.number !== 1) for (const m of g.members) memberOf.set(`${m.section}:${m.instance}`, gi); });
   const groupInst = new Map<number, Inst[]>();
   let hiddenSkipped = 0, mainViewExcluded = 0;
+  // Rompibles [D: Physics/SmokeableInfo.hpp; SmokeableSpawnerPack 0x00034027 → SceneryOverrideInfo 0x00034108 (s16 sección,
+  // s16 instancia, u16 ExcludeFlags)] [V: 5 952/5 952 coinciden con su instancia]. Su instancia de escenario NO va en la
+  // casilla cercana: sale aparte (smackables/<SÓLIDO>.glb + smackables.json) para que el motor la tire al chocar (doc 24 §3).
+  // En la lejana sí se queda (los grandes, ≥ 6 m: depósitos de agua, techos de gasolinera), porque de lejos no se mueve.
+  const smackKeys = new Map<string, number>(); // "sección:instancia" → id único del rompible
+  {
+    const l2dv = new DataView(l2ra.buffer, l2ra.byteOffset, l2ra.byteLength);
+    const ovc = [...walk(parseChunks(l2ra))].map(([c]) => c).find(c => c.id === 0x00034108);
+    const overrides: number[][] = [];
+    if (ovc) for (let o = skipPad(l2dv, ovc.dataOffset, ovc.dataOffset + ovc.size); o + 6 <= ovc.dataOffset + ovc.size; o += 6) overrides.push([l2dv.getInt16(o, true), l2dv.getInt16(o + 2, true)]);
+    const seen = new Set<number>();
+    for (const { buf, ch } of parsed) for (const [c] of walk(ch)) if (c.id === 0x00034027) {
+      const p = readSmokeableSpawnerPack(buf, c);
+      if (seen.has(p.section)) continue;
+      seen.add(p.section);
+      for (const sp of p.spawners) { const ov = overrides[sp.overrideInfo]; if (ov) smackKeys.set(`${ov[0]}:${ov[1]}`, sp.uniqueId); }
+    }
+  }
+  const smackList: { so: Solid; matrix: number[]; id: number; section: number; instance: number; model: string }[] = [];
   for (const { s, buf, ch } of parsed) for (const sc of readScenery(buf, ch)) for (const [k, inst] of sc.instances.entries()) {
     const info = sc.infos[inst.info], h = info && modelHash(info), so = h ? solids.get(h) : undefined;
     if (!so || !h) continue;
@@ -228,7 +250,10 @@ if (mode === "tiles") {
     const r = inst.rotation, p = inst.position;
     const target = gi !== undefined ? (groupInst.get(gi) ?? groupInst.set(gi, []).get(gi)!) : hidden ? null : (tiles.get(key) ?? tiles.set(key, []).get(key)!);
     if (!target) { hiddenSkipped++; continue; }
-    target.push({ so, low, matrix: [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, p[0], p[1], p[2], 1], size: Math.hypot(inst.bbMax[0] - inst.bbMin[0], inst.bbMax[1] - inst.bbMin[1], inst.bbMax[2] - inst.bbMin[2]), meta: { "Sección": s.name, "Modelo": info.name, "Hash modelo": hex8(h), "Instancia": k } });
+    const matrix = [r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, p[0], p[1], p[2], 1];
+    const smackId = gi === undefined ? smackKeys.get(`${sc.sectionNumber}:${k}`) : undefined;
+    if (smackId !== undefined && !smackList.some(x => x.id === smackId)) smackList.push({ so, matrix, id: smackId, section: sc.sectionNumber, instance: k, model: info.name });
+    target.push({ so, low, matrix, smack: smackId !== undefined, size: Math.hypot(inst.bbMax[0] - inst.bbMin[0], inst.bbMax[1] - inst.bbMin[1], inst.bbMax[2] - inst.bbMin[2]), meta: { "Sección": s.name, "Modelo": info.name, "Hash modelo": hex8(h), "Instancia": k } });
   }
   const written = new Set<number>();
   const out: { id: string; x: number; y: number; size: number; near: string; far: string; tris: number; farTris: number; objects: number; zMin: number; zMax: number }[] = [];
@@ -238,7 +263,7 @@ if (mode === "tiles") {
     const mats = new MaterialTable(textures, { unlit: true, external: { dir: `${outDir}/textures`, uriPrefix: "../textures/", written } });
     const meshCache = new Map<Solid, GlbMesh>();
     const meshOf = (so: Solid) => meshCache.get(so) ?? meshCache.set(so, solidToMesh(so, t => mats.get(t))).get(so)!;
-    const near = flatten(list.map((it, id) => ({ mesh: meshOf(it.so), matrix: it.matrix, id })));
+    const near = flatten(list.map((it, id) => ({ mesh: meshOf(it.so), matrix: it.matrix, id })).filter((_, id) => !list[id].smack));
     await Bun.write(`${outDir}/tiles/${key}.glb`, writeGlb([{ name: `tile ${key}`, primitives: near, extras: { Casilla: key, objetos: list.map(i => i.meta) } }], mats.materials, mats.images, `tile_${key}`));
     // Nivel lejano: una sola malla con color por vértice = color medio de textura × luz horneada.
     const farMats = new MaterialTable(new Map(), { unlit: true });
@@ -267,6 +292,22 @@ if (mode === "tiles") {
     let zMin = Infinity, zMax = -Infinity; for (const p of near) for (let i = 2; i < p.positions.length; i += 3) { zMin = Math.min(zMin, p.positions[i]); zMax = Math.max(zMax, p.positions[i]); }
     out.push({ id: key, x: tx * TILE, y: ty * TILE, size: TILE, near: `tiles/${key}.glb`, far: `tiles/${key}_far.glb`, tris, farTris, objects: list.length, zMin, zMax });
     nearTris += tris; farTrisAll += farTris;
+  }
+  // Rompibles: un GLB por sólido (en su espacio local) y la lista de instancias con su matriz del mundo.
+  mkdirSync(`${outDir}/smackables`, { recursive: true });
+  {
+    const mats = new MaterialTable(textures, { unlit: true, external: { dir: `${outDir}/textures`, uriPrefix: "../textures/", written } });
+    const glbOf = new Map<Solid, string>();
+    for (const it of smackList) {
+      if (glbOf.has(it.so)) continue;
+      const file = `smackables/${it.so.name}.glb`;
+      const prims = flatten([{ mesh: solidToMesh(it.so, t => mats.get(t)), matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], id: 0 }]);
+      await Bun.write(`${outDir}/${file}`, writeGlb([{ name: it.so.name, primitives: prims }], mats.materials, mats.images, it.so.name));
+      glbOf.set(it.so, file);
+    }
+    const objects = smackList.sort((a, b) => a.id - b.id).map(it => ({ id: it.id, section: it.section, instance: it.instance, model: it.model, solid: it.so.name, glb: glbOf.get(it.so)!, matrix: it.matrix.map(v => +v.toFixed(5)) }));
+    await Bun.write(`${outDir}/smackables.json`, JSON.stringify({ disc, source: "TRACKS\\STREAML2RA.BUN 0x00034027 + L2RA.BUN 0x00034108 (instancia de escenario de cada rompible) [D][V]", note: "matrix: columna-mayor, mundo Z arriba (local → mundo). id = SmokeableSpawner.id (effects.json smokeables[].id)", models: glbOf.size, objects }));
+    console.log(`Rompibles: ${objects.length} instancias fuera de las casillas cercanas · ${glbOf.size} modelos en smackables/`);
   }
   mkdirSync(`${outDir}/groups`, { recursive: true });
   const groupOut: { name: string; hash: string; number: number; kind: string; barrier: boolean; driveThrough: boolean; objects: number; glb: string; min: number[]; max: number[] }[] = [];

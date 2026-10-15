@@ -9,8 +9,8 @@ enum RaceMilestones {
         let b = base ?? AIStats()
         switch type {
         case "pursuit_length", "pursuit_evasion_time": return Float(pursuitTime ?? Double(police.pursuitTime))
-        case "cops_damaged": return Float(stats.playerHitsCops - b.playerHitsCops)
-        case "cops_destroyed": return 0          // sin daños de coche en el motor todavía
+        case "cops_damaged": return Float(stats.copsDamaged - b.copsDamaged)
+        case "cops_destroyed": return Float(stats.copsDestroyed - b.copsDestroyed)   // choques del juego (Crash/)
         case "bounty_in_pursuit", "cost_to_state_in_pursuit", "cost_to_state": return Float(police.costToState)
         case "roadblocks_dodged": return Float(stats.roadblocksDodged - b.roadblocksDodged)
         case "tire_spikes_dodged", "spike_strips_dodged": return Float(stats.roadblocksDodged - b.roadblocksDodged)

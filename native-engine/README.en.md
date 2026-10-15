@@ -112,6 +112,9 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Window-less: audio outputs and pads · disc radio (vs vgmstream) · pad Opus/SBC/HID reports · light bar colours |
 | `--sound-off` · `--volume 0…1` | Game sound off · master volume (also `settings.json` → `"sound"`) |
 | `--sound-dump` · `--sound-test [CAR]` · `--sound-trace` · `--sound-live [s]` | Window-less: decoded banks and engines (vs vgmstream) · scripted run rendered to `.build/sound-test/<CAR>.wav` · RPM and mix trace · real Mac output for a few seconds (silent with `--volume 0`) |
+| `--no-movies` · `--skip-intro` · `--movie NAME` · `--iso <path>` · `--lang <language>` | No movies · no boot movies (logo, PSA, attract) · play NAME at start · ISO to read them from · audio and subtitle language (also `settings.json` → `"movies"`) |
+| `--movie-test NAME\|all [--seconds N] [--realtime --mute] [--engine]` | Window-less: movie with a simulated clock → `.build/movie-test/` (screenshots, `audio.wav`, `stats.json`) · all of them · real time · inside the engine |
+| `--music-off` · `--music-volume 0…1` · `--music-test [--busted] [--project N]` · `--music-live S` | Music off · volume (also `settings.json` → `"music"`) · window-less: free roam → pursuit → evade → `.build/music-test/` · real output |
 
 ## Folder layout
 
@@ -139,6 +142,8 @@ native-engine/
 │  ├─ Camera/               chase camera with the game's camerainfo views (and the split-screen ones)
 │  ├─ Garage/               menu background and seamless garages: scene, front-end camera, menus, tuning (doc 07)
 │  ├─ Multiplayer/          split screen: controller per player, views, split HUD, several displays (doc 19)
+│  ├─ Movies/               movies read from the ISO: VideoToolbox, R3 audio, subtitles, story moments (doc 22 §13)
+│  ├─ Audio/Music*.swift    PathFinder music: EA Trax, interactive pursuit music, ambiences, mixing (doc 25 §10)
 │  └─ MathUtil.swift        matrices, boxes, frustum
 └─ .build/                  build output and screenshots (git-ignored)
 ```
@@ -337,7 +342,7 @@ Notes:
 - Car lighting is the viewer's, not the game's: the game uses environment maps [D].
 - Aftermarket roof scoops (`ROOF` pack) are not offered in the shop yet; rims and spoilers are (doc 07 §3.3).
 - The BMW driver texture (`4e8cf857`) is not on the disc: it shows dark grey, as in the viewer [V].
-- Sound: without the engines' AEMS layer or the game's mix maps (doc 16 §9). Traffic and police without helicopter or physical car-to-car collisions (doc 14).
+- Sound: without the engines' AEMS layer; sound effects still use the port's own levels (music already uses the game's mix map) (doc 16 §9, doc 25 §10.3). No options menu for music yet (only `settings.json`). Traffic and police without helicopter or physical car-to-car collisions (doc 14).
 - Wall crashes: own impulses, not the game's `RigidBody::DoBarrierCollision` (doc 13).
 - Controllers not yet tested on real hardware (doc 15).
 
@@ -427,6 +432,18 @@ Notes:
   0.2 % of one core. Split screen: `localCarsProvider` / `listenersProvider`.
 - Details and tags: [doc 16 §7–10](../docs/en/16-audio-and-voices.md). Missing: the AEMS layer (MIPS modules) and the game's mix maps.
 
+## Movies and music (2026-10-15)
+
+- **Movies** (`Movies/`, doc 22 §13): the disc's 32 movies are read **straight from the ISO** (nothing is copied); MPEG-2 video through
+  VideoToolbox (reordered to presentation order), own EA ADPCM R3 audio, synced to the audio clock, 4:3 with bars, no PS2 grade, subtitles
+  with the game's rule (in Spanish the story is dubbed; tutorials and Blacklist captions have text). Boot like the original (EA logo → PSA →
+  attract → "Press START", and the attract movie again after 30 s without input); story in the career (`STORYFMV_SAF25` and `BLACKLIST_15`
+  at the start, `BLACKLIST_<no.>` after beating each rival, the rap sheet on reaching 13, each event's `IntroMovie` / `OutroMovie`, tutorials
+  the first time). Start / ✕ / Return / Esc skip. Without the ISO the game goes on without movies.
+- **Music** (`Audio/Music*.swift`, doc 25 §10): PathFinder player with the `.MPF` graph and the decomp's `MusicFlow` and `SFXObj_PFEATrax`
+  logic: EA Trax songs in menus and free roam (FE/IG/AL lists), interactive music in pursuits with gapless transitions and router stingers,
+  per-zone ambiences, the game's mix-map levels and ducking under the police radio. Pauses during movies. Settings in `settings.json → "music"`.
+
 ## Light bar and police radio (2026-10-15)
 
 - **Light bar** (`Input/LightBarConfig.swift`): per-car tuning option —paint, custom colour, police, heat, off— saved in
@@ -458,7 +475,7 @@ Notes:
 2. **Developer ID signing and notarisation**: needs a (paid) Apple Developer account. Without it the `.dmg` works but macOS warns on first open (right-click → Open).
 3. ✅ **Gamepad** (GameController + IOKit HID) — wheels and video settings (scale, FOV) still to do.
 4. ✅ **Game physics** from the decomp and each car's VLT attributes (doc 13) — game collisions, damage and tunings still to do.
-5. **Audio** (EA SCHl/MPC) and music.
+5. ✅ **Audio, movies and music** (docs 16, 22, 25) — the engines' AEMS layer and NIS scenes still to do.
 6. ~~Seamless garages and car selection~~ (done: doc 07). The career map and the rap sheet are still missing.
 7. **Races and Blacklist** from `gameplay.json` + `roads.json`.
 8. More performance: compressed textures (ASTC/BC7), the game's section occlusion, argument buffers.

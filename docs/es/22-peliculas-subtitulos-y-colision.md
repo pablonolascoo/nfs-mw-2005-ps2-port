@@ -76,7 +76,7 @@ Bloques seguidos `{char tag[4], u32 tamaño LE (incluye los 8 B)}` hasta el fina
   ffmpeg no puede ir dentro de la app (licencia y tamaño). VideoToolbox ya lo hace en el sistema.
 - Si el jugador mueve la ISO: la app avisa y sigue sin películas (o, como opción, copia solo las del idioma elegido, ~0,76 GB).
 - Otras plataformas [I]: Windows trae decodificador MPEG-2 en Media Foundation (Windows 8+); iOS tiene el mismo VideoToolbox.
-- Aún no está en `native-engine/` (otro equipo trabaja en el motor): la pieza Swift queda descrita aquí.
+- **Hecho en el motor nativo** (`native-engine/Sources/Rockport/Movies/`): ver §13.
 
 ## 5. Colisión del juego: `CollisionGeometry::Bounds` [V][D]
 
@@ -163,7 +163,84 @@ bun src/cli/coverage.ts ../original/SLES-53559.iso SLES-53559 --docs          # 
 
 ## 12. Pendiente
 
-- Pieza Swift de reproducción (VideoToolbox + R3 + subtítulos) en el motor nativo.
+- Prólogo «D-Day» (pruebas 16.x): sus películas están mapeadas (§13.3) pero las pruebas aún no existen en el port.
+- Momento exacto de los tutoriales de persecución y recompensa (el código que los lanza no está en la decomp).
 - Usar `bounds.json` en los choques y los contornos «trough» para los reinicios.
 - Aplicar el suavizado de normales al montar coches con piezas de tuneo.
 - Nombres de 226 de los 405 objetos del mundo de `bounds.json` (el nombre completo no está en el disco: doc 24).
+
+## 13. Reproductor de películas en el motor nativo (`Movies/`)
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| Catálogo e ISO | `MovieLibrary.swift` | `movies.json`; la ISO se mapea en memoria (4 GB virtuales, solo se lee lo que suena) y cada MPC es un trozo de ella. Busca la ISO en `install.ok` («iso»), `--iso`, `ROCKPORT_ISO` y `original/<ID>.iso` del repo. Sin ISO: aviso una vez y el juego sigue sin películas |
+| Contenedor y audio | `MPCFile.swift` | Bloques MPCh/SCHl/SCDl; PTS de cada imagen = base del GOP (cabecera `00 00 01 B8`) + `temporal_reference`; audio EA ADPCM R3 portado de `lib/mpc.ts` |
+| Vídeo | `MPEG2Decoder.swift` | VideoToolbox (`kCMVideoCodecType_MPEG2Video`, BGRA compatible con Metal). Cada muestra lleva su PTS; la salida (en orden de decodificación) se reordena con una ventana pequeña |
+| Reproducción | `MoviePlayer.swift` | Carga en segundo plano, hilo de vídeo con 12 imágenes por delante, audio por AVAudioEngine a 48 kHz. **El reloj es el audio**: cada fotograma se enseña la última imagen con PTS ≤ reloj (se saltan imágenes si va tarde; nunca se espera al vídeo) |
+| Dibujo | `MovieRenderer.swift` | Negro, imagen a 4:3 con bandas, subtítulo abajo (texto blanco sobre caja oscura, como el `SubTitler`) |
+| Director | `Movies.swift` | Cola, salto, momentos del juego (§13.3), ajustes `settings.json → "movies": {"enabled", "intro"}` |
+| Pruebas | `MovieTests.swift` | `--movie-test` (§13.4) |
+
+### 13.1 Decisiones
+
+- **Sin el tono PS2** [I]: el juego dibuja las películas con su reproductor (FEng `FEMovie`), fuera de la escena y de su
+  tratamiento visual; no hay ninguna prueba de que las pasara por el tono del mundo. Se ven tal cual vienen en el MPEG-2.
+- **4:3 con bandas** [I]: 512×416 se estira a 4:3 como en la tele; en pantallas anchas, bandas a los lados. Las películas ya
+  traen bandas negras dentro de la imagen (formato panorámico dentro del 4:3) [V: capturas].
+- Mientras hay película, `Engine.frame` cede el fotograma entero: la simulación, la interfaz y los ganchos del motor esperan;
+  el sonido del juego calla y la música se pausa donde estaba («Is Movie Playing» / «NIS Play Mute» del mapa de mezcla,
+  `ESndGameState` FMV [D]).
+- **Idioma**: el de la interfaz (`frontend/index.json`, en la PAL `spanish`) o `--lang`. Audio: el doblaje de ese idioma si existe;
+  si no, el inglés [D]. Subtítulos con la regla del `SubTitler` (§3): con la PAL en castellano la historia va doblada y sin texto;
+  los tutoriales y los rótulos de la Lista Negra («Procedencia: Beacon Point») sí salen [V].
+- **Volumen** por película: `MovieVolumeArray` del juego [D] (historia 0x50, demo 0x41, logo 0x3C, tutoriales 0x37, aviso 0x32,
+  Lista Negra 0x2D, de 0x7F).
+- **Salto** con Start / ✕ (A) en el mando o Intro / Espacio / Esc. El logo de EA no se salta [D: `MovieData.Bypassable`];
+  las películas del D-Day solo tras 5 s [D: `MoviePlayer_Bypass`].
+- El audio doblado dura algo más que el vídeo en algunas películas (`STORYFMV_BLA134`: 33,66 s de audio y 32,28 s de vídeo,
+  `PSA` 12,47 / 11,24 s) [V]: la película acaba cuando acaban los dos; la última imagen se queda quieta.
+
+### 13.2 Arranque
+
+`sBootFlowPAL` [D: `FEBootFlowManager.cpp`]: `LS_EAlogo` → `LS_PSA` → `MW_LS_AttractFMV` → `MW_LS_Splash` («Pulsa START»).
+La app hace lo mismo antes de «Pulsa START» (`--skip-intro` o `settings.json → movies.intro = false` lo quitan). En «Pulsa START»,
+30 s sin tocar nada vuelven a la demo [D: `SplashScreenMovieTimeout` = 30, `DoAttract`]. `INTRO_MOVIE` y `EAHD_BUMPER` no están
+en la PAL [V].
+
+### 13.3 Cuándo sale cada película en la carrera
+
+| Momento | Película | Fuente |
+|---|---|---|
+| Carrera nueva (tras el prólogo) | `STORYFMV_SAF25` → `BLACKLIST_15` | [D] `FEAnyMovieScreen::PlaySafehouseIntroMovie` → `SafeHouseRivalBio` → `uiRepSheetRivalFlow` etapa 5 |
+| Rival vencido | `BLACKLIST_<nuevo bin>` (presentación del siguiente rival) | [D] `uiRepSheetRivalFlow::Next` etapa 5: `blacklist_%02d` con el bin actual |
+| Al llegar al bin 13 (una vez) | `STORYFMV_RAP30` (la ficha policial) | [D] etapa 6: `!HasRapSheet() && GetCurrentBin() == 13` |
+| Prueba 1.5.2 (jefe del bin 1) | `STORYFMV_BLA134` antes | [V] `gameplay.json` IntroMovie |
+| 1.8.1 (persecución épica) | `STORYFMV_HER136` antes | [V] IntroMovie |
+| 16.1.0 / 16.2.1 / 16.2.2 / 16.2.3 (D-Day) | `RAC01` / `PIN11` (y `BUS12` al ganar) / `CRO06_COH06A` / `RAZ08` | [V] IntroMovie / OutroMovie |
+| Desafío 19.8.32 (peaje) | `TOLLBOOTH_TUTORIAL` antes | [V] IntroMovie |
+| Primera prueba de aceleración / radar / peaje | `DRAG_` / `SPEEDTRAP_` / `TOLLBOOTH_TUTORIAL` | [D] `InGameAnyTutorialScreen` + `HasDone*Tutorial`; el disparo exacto [I] |
+| Primera persecución / primera recompensa | `PURSUIT_` / `BOUNTY_TUTORIAL` | [H] (el juego también los ofrece con △ en los menús, `FEAnyTutorialScreen`) |
+
+- En el menú de la Lista Negra el juego también deja ver la película de cada rival con △ (`uiRepSheetRivalBio`, `__PAD_BUTTON4__`) [D];
+  en el port aún no hay esa pantalla.
+- Lo visto se guarda en la partida (`save.json → moviesSeen`), para no repetir la ficha policial ni los tutoriales.
+- `STORYFMV_DDA01`, `EPI138`, `POL17_MOT21` y `ROC02` están en la tabla de volúmenes del juego pero **no en el disco** [V].
+
+### 13.4 Pruebas y resultados [V: M4, SLES-53559]
+
+```bash
+cd native-engine && swift build -c release
+.build/release/Rockport --movie-test all                       # 32 películas: vídeo + audio, orden de salida de VideoToolbox, tabla de IntroMovie
+.build/release/Rockport --movie-test BLACKLIST_01               # reloj simulado: capturas cada 2 s, audio.wav y stats.json en .build/movie-test/
+.build/release/Rockport --movie-test BOUNTY_TUTORIAL --lang dutch --seconds 16
+.build/release/Rockport --movie-test STORYFMV_SAF25 --realtime --mute --seconds 8   # AVAudioEngine de verdad, reloj del audio
+.build/release/Rockport --movie-test EALOGO --engine            # dentro del motor: «Pulsa START», película, vuelta a la interfaz
+```
+
+- `all`: **32/32 películas, 37 877 imágenes (1 515 s) sin un error**, en orden de presentación, a 1 640–2 050 imágenes/s (leyendo de la ISO).
+  Salida de VideoToolbox `0,3,1,2,6,4,5,9…` en todas (orden de decodificación) [V].
+- Reloj simulado (`BLACKLIST_01`): 777/777 imágenes, ninguna saltada, desfase medio 12,6 ms (el de enseñar 25 imágenes/s en una
+  pantalla de 60 Hz), máximo +20 ms. En tiempo real (`STORYFMV_SAF25`): 202 imágenes en 8 s, 0 saltadas, desfase medio 10,2 ms,
+  adelanto máximo 19,9 ms y retraso máximo 9,4 ms.
+- `--engine`: 167 fotogramas de película sin ningún gancho del juego; al acabar vuelve «Pulsa START» [V: captura].
+- Sin ISO: aviso y salida limpia («la app seguiría sin películas»).

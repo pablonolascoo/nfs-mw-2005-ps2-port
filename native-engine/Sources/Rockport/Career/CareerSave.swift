@@ -25,6 +25,8 @@ struct CareerSave: Codable {
     var bestTimes: [String: Double] = [:]
     /// Desafíos de la Serie completados.
     var challengesDone: [String] = []
+    /// Películas de la historia y tutoriales ya vistos (Movies/Movies.swift). Opcional: las partidas antiguas no lo traen.
+    var moviesSeen: [String]?
     var lastSaved: String = ""
 
     static var defaultURL: URL { DataLocator.appSupport.appendingPathComponent("save.json") }

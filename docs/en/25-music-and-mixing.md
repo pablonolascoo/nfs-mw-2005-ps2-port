@@ -228,9 +228,87 @@ How it plays (decomp, `Speech/MusicFlow.cpp` and `SFXObj_Pathfinder.cpp`) [D]:
 
 ## 9. To do
 
-- Exact meaning of actions 1, 2, 5, 8, 9, 0x0E and 4/2 (conditions, fades, variables, routers) and of routers: needs the
-  library's `PATH_*` functions (assembly only in the decomp).
-- Node bytes 0x03 (0xF8) and 0x04; exact branch condition on end nodes with 0xF8.
+- Confirm the reading in §10.2 against the `PATH_*` functions (assembly only in the decomp): conditions, fades, system variables,
+  routers (byte 0x04 = router + 1) and end nodes with 0xF8. The port's reading already plays well with all 5 projects.
+- Actions 0x0E and 4/2 (internal variables and routers) have no effect in the port.
 - Sample 44 and events 0x9B7A50, 0xD2E818, 0x4F246E, 0xB29728, 0x6DD6BB: unnamed in the decomp.
-- Player in the app (Swift): walk nodes and branches with the MusicFlow intensity; `music.json` + `.MUS` are enough.
-- Full `.FX` format and per-zone reverb; use the mix maps instead of the port's own categories.
+- Full `.FX` format and per-zone reverb; use the mix maps for the sound effects too (music already uses them).
+- `EVT_INITSWAP` (project change mid-pursuit with its stinger): what triggers it is unknown; the port changes project when
+  going back to songs, like `StartLicensedMusic` [D].
+- Song caption ("chyron", `NotifyChyron` [D]) in the HUD: console only for now.
+
+## 10. Player in the native engine
+
+| Piece | File | What it does |
+|---|---|---|
+| Data | `Audio/MusicData.swift` | `music.json`, memory-mapped `.MUS`, EA-XA v2 decoder (the one in `pathfinder.ts`), `mixmaps.json` levels, the "Ambience" layer from `effects.json` |
+| Graph | `Audio/MusicPathFinder.swift` | One track per project: branches by intensity, events with conditions and waits, routers, current part |
+| Output | `Audio/MusicOutput.swift` | Its own AVAudioEngine at 32 kHz; each track is a **gapless** chain of waves (the next is queued 0.6 s ahead) with its volume and fades |
+| Game | `Audio/MusicSystem.swift` | `SFXObj_PFEATrax` and `MusicFlow` [D]: songs, pursuit, ambiences, mix, settings |
+| Tests | `Audio/MusicTests.swift` | `--music-test`, `--music-live` |
+
+### 10.1 What plays and when [D: `SFXObj_Pathfinder.cpp`, `MusicFlow.cpp`]
+
+- **"Press START"**: event `0x01C53FC7` (SPLASH, sample 0, 30 s; at 30 s the game goes back to the attract movie, doc 22 §13.2).
+- **Menus, garages and car lot** (FE): songs from the FE list (DefPlay FE or AL). Without songs (EA Trax off or empty list): the
+  place's ambience (9 safehouse, 10 shop, 11 menu, 12 car lot).
+- **Free roam and races** (IG): songs from the IG list (IG or AL), shuffled or in order, no repeats until the list is used up
+  (`GenNextMusicTrackID`). Going from menus to the game, a song not in the new list is changed. Drag races: no songs
+  (ambience) [D: `TestToLicensed`].
+- **Pursuit** (`TestToPursuit`): police chasing or searching → the song is cut, `MusicFlow` waits 0.5 s and sends `EVT_START`.
+  Each update (30 Hz) sends intensity × 127 as the control; states change part with events 10–15. Arrest: `EVT_ENDBUSTED`;
+  end without arrest: `EVT_ENDWIN` [I: who sends 15 is not in the decomp].
+- **After the pursuit**: the ending part's stinger calls `InteractiveDone` → 40 s of the zone's ambience (`PURSUIT_TO_LIC_DELAY`)
+  → next song. The next pursuit uses the next of the 4 projects (`SwapInteractiveProjects`).
+- **Zone ambience**: the ParameterMaps "Ambience" layer at the car's position (zones 0–8, doc 24 §6.2); on a zone change, 3.5 s
+  fade out and 3 s fade in (the disc's events).
+- **Movies**: music pauses where it was and resumes afterwards.
+- **Split screen**: no interactive music (the project is not loaded, `m_Flags & 2` [D]); only songs and ambiences.
+
+### 10.2 How the graph is read (what is not in the decomp)
+
+| Thing | Reading | Tag |
+|---|---|---|
+| Branches | when a wave ends, the branch with min < control ≤ max; if none, the one with the nearest range | [V] ranges · [H] "nearest" |
+| MW_MUSIC control | 0: the game never sends it. Above 63/70 the headers of *Feels Just Like It Should* and *Feed The Addiction* would skip the song (branch straight to the end node) | [I] |
+| End nodes with byte 3 = 0xF8 | branches `{0,0}` next and `{1,127}` repeat: they repeat (ambiences loop until the game changes zone) | [H] |
+| Node −3 | fires its event when the music **reaches** it (not when queueing); −1 ends or follows its branch | [I] |
+| 4/15 | clear the queue **and cut** what plays (25 ms fade): `STOP` is only this action | [I] |
+| 4/3 | go to node: now if nothing plays; if something plays, when the current wave ends | [I] |
+| Conditions 1/x | code = operation × 16 + type: 0x9 "if ==", 0x11 "if ≠", 0xA "else if ==", 0x12 "else if ≠"; type 0xE = project variable, 0xD = system (3 = current part, 4 = something plays); 1/0x40 closes | [H: fits every event of the 5 projects] |
+| 5/12, 2/12, 8/13, 8/6, 9/0 | fade to `p0 & 0xFF` over `p1` ms · wait `p0` ms · volume `p0` · variable `p0` = `p1` · fire event `p1 << 16 \| p0` | [H] |
+| **Routers** | byte 0x04 of each pursuit wave is router + 1 (its maximum equals the router count in all 4 projects). When a target is requested and the current wave's router has a (via, target) pair, the via wave plays first | [I] |
+
+Routers explain the endings: in MW_MUS_1's LOSE part the pairs send `409` to a `LOSE_END` wave and `412` to a `WIN_END` one; in
+NEUTRAL, WIN and ELUDE the other way round. With `EVT_ENDWIN` (part ≠ LOSE → 409) and `EVT_ENDBUSTED` (part ≠ LOSE → 412) every
+ending plays the stinger that matches the layer that was playing [V: data of the 4 projects].
+
+### 10.3 Mixing [V parsing · H units]
+
+`MixData` of the MUSIC state's master channels = {i16 minimum −10000, i16 level} in millibels: songs +2 dB in game and −11 dB in
+menus, composed music 0 / −1 dB, ambience −7 dB in game and −4 dB in menus. "Speech Ducker" (MAIN state): −5.55 dB while the police
+radio talks. On top, the player's volume and a 0.5 reference against the sound effects [H]: in the tests music sits about 7 dB
+below the engine at full throttle (RMS 0.077 vs 0.176).
+
+### 10.4 Settings
+
+`settings.json → "music"`: `volume` (0–1), `interactive` (pursuit music), `eaTrax` (songs), `shuffle` (shuffled or in order) and
+`playlist` (`{"<song no.>": "FE" | "IG" | "AL" | "OFF"}`; missing ones use the game's DefPlay). API:
+`MusicSystem.shared.setVolume / setInteractive / setEATrax / setShuffle / setPlaylist(song:_:)`. At launch: `--music-off`,
+`--music-volume V`. The game's options menu is not in the port yet.
+
+### 10.5 Tests [V: M4, SLES-53559]
+
+```bash
+cd native-engine && swift build -c release
+.build/release/Rockport --music-test [--project 1…4] [--seconds N]   # free roam → pursuit → evade → ambience → song
+.build/release/Rockport --music-test --busted --seconds 140          # the same, ending in an arrest
+.build/release/Rockport --music-live 3 --music-volume 0.01           # real output (AVAudioEngine) for a few seconds
+```
+
+Output in `.build/music-test/`: `music.wav` (32 kHz) and `log.txt` (types, MusicFlow states, events, parts, waves, routers).
+Result with MW_MUS_2: song → `EVT_START` (15.5 s) → NEUTRAL (intensity capped at 0.5 for the first 30 s) → `EVT_LOSE` (police
+right behind) → `EVT_NEUTRAL` → `EVT_WIN` (fast cooldown) → `EVT_ELUDE` (hidden) → `EVT_ENDWIN` → router 19 (wave 241 → via 304)
+→ `InteractiveDone` → zone 4 ambience for 40 s → song. With an arrest (MW_MUS_1): `EVT_ENDBUSTED` → router 22 (wave 204 → via
+385, `LOSE_END`). **No gaps** between waves (only the silences at the initial cut and at the end, 0.26 and 0.39 s); 175 simulated
+seconds in 0.2 s.

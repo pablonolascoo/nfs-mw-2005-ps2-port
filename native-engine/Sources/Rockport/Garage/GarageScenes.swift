@@ -155,7 +155,8 @@ final class GarageScenes {
         }
         guard let w = world, let g = w.current, let s = scene(g.info.key), GarageScenes.debugOff == nil else { return out }
         // El umbral está en la calle: se ve siempre que el garaje esté colocado (a menos de 150 m)
-        if let a = s.apron { out.append(GarageDrawItem(mesh: a, model: s.model, clip: nil)) }
+        // Con la puerta abierta, la luz del interior sale por el hueco sobre el umbral (GarageRender.swift `spill`, doc 20 §9)
+        if let a = s.apron { out.append(GarageDrawItem(mesh: a, model: s.model, clip: nil, spill: GarageCutout.active ? GarageRenderer.thresholdSpill : nil)) }
         // El volumen interior solo con la fachada recortada (puerta abierta o dentro)
         if GarageCutout.active, let sh = s.shell { out.append(GarageDrawItem(mesh: sh, model: s.model, clip: nil, tint: GarageMods.color(g.mod.tint))) }
         return out

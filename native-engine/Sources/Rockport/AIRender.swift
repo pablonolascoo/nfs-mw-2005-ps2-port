@@ -32,7 +32,7 @@ struct VOut { float4 pos [[position]]; float3 world; float3 normal; float2 uv; f
 
 vertex VOut vs_inst(VertexIn in [[stage_in]], uint iid [[instance_id]], constant FrameUniforms& F [[buffer(1)]],
                     constant InstDraw& D [[buffer(2)]], const device float4x4* mats [[buffer(3)]], const device float4* inst [[buffer(4)]]) {
-    float4x4 m = mats[iid * 9 + uint(D.params.w)];
+    float4x4 m = mats[iid * \(AIModel.partCount) + uint(D.params.w)];
     VOut o;
     float4 w = m * float4(in.pos, 1);
     o.pos = F.viewProj * w; o.world = w.xyz;
@@ -81,6 +81,8 @@ fragment float4 fs_flare(FlareOut in [[stage_in]]) {
 private struct InstDrawU { var color: float4; var params: float4; var extra: float4; var lm: LightMaterialGPU }
 
 final class AIRenderer: RenderOverlay {
+    /// Los destellos de la barra de luces los dibuja Effects/ (LightFlares.swift, con light_flares_cg); estos quedan de reserva.
+    static var externalFlares = false
     let device: MTLDevice
     let textures: TextureCache
     unowned let world: AIWorld
@@ -151,7 +153,7 @@ final class AIRenderer: RenderOverlay {
         }
         // Anillo: una entrada por vista y fotograma en vuelo (pantalla partida: hasta 4 vistas × 3 fotogramas + margen)
         for _ in 0..<16 {
-            ring.append((device.makeBuffer(length: AIRenderer.maxInst * 9 * 64, options: .storageModeShared)!,
+            ring.append((device.makeBuffer(length: AIRenderer.maxInst * AIModel.partCount * 64, options: .storageModeShared)!,
                          device.makeBuffer(length: AIRenderer.maxInst * 16, options: .storageModeShared)!,
                          device.makeBuffer(length: AIRenderer.maxFlares * 32, options: .storageModeShared)!))
         }
@@ -196,7 +198,8 @@ final class AIRenderer: RenderOverlay {
     private func prepare(frame: SceneFrame) {
         ringIndex = (ringIndex + 1) % ring.count
         let r = ring[ringIndex]
-        let mats = r.mats.contents().bindMemory(to: float4x4.self, capacity: AIRenderer.maxInst * 9)
+        let P = AIModel.partCount
+        let mats = r.mats.contents().bindMemory(to: float4x4.self, capacity: AIRenderer.maxInst * P)
         let inst = r.inst.contents().bindMemory(to: float4.self, capacity: AIRenderer.maxInst)
         let fl = r.flares.contents().bindMemory(to: float4.self, capacity: AIRenderer.maxFlares * 2)
         batches.removeAll(keepingCapacity: true)
@@ -208,7 +211,7 @@ final class AIRenderer: RenderOverlay {
         // Agrupar por modelo
         var byModel: [ObjectIdentifier: [AIVehicle]] = [:]
         var order: [AIModel] = []
-        for v in world.vehicles + extraVehicles {
+        for v in world.vehicles + extraVehicles + world.airVehicles {
             let b = AABB(min: v.pos - float3(v.radius, v.radius, 0.5), max: v.pos + float3(v.radius, v.radius, v.model.height + 0.5))
             guard frustum.intersects(b), simd_distance(v.pos, frame.camPos) < 900 else { continue }
             let k = ObjectIdentifier(v.model)
@@ -220,16 +223,18 @@ final class AIRenderer: RenderOverlay {
             let start = n
             for v in list where n < AIRenderer.maxInst {
                 let pm = v.partMatrices
-                for k in 0..<9 { mats[n * 9 + k] = pm[k] }
+                for k in 0..<P { mats[n * P + k] = pm[k] }
                 inst[n] = float4(v.braking ? 1 : 0.15, v.kind == .cop && v.lights ? 0 : 0.35, 0, 0)
                 n += 1
                 // Sombra (DrawAmbientShadow [D]): caja del coche × 1,05 con CARSHADOW, a ras de suelo
-                if simd_distance(v.pos, frame.camPos) < 250 {
+                if simd_distance(v.pos, frame.camPos) < 250 && v.typeName != "copheli" {
                     let body = pm[0] * m.local.inverse
                     shadowQuads.append(body * float4x4(translation: float3(0, 0, 0.1)) * float4x4(scale: float3(m.halfLength * 1.2, m.halfWidth * 1.18, 1)))
                 }
                 // Destellos de la barra de luces [D: CarRender.cpp 2364-2423]
-                if v.lights, simd_distance(v.pos, frame.camPos) < 700 {
+                // Sin destellos si la barra está rota o el coche destruido (Crash/Damage.swift) [D: DAMAGE_COP_LIGHTS]
+                let barBroken = v.damage.destroyed || (v.damage.brokenSlots >> UInt32(DamageParts.index("COP_LIGHTS") ?? 0)) & 1 != 0 && v.model.hasDamageParts
+                if v.lights, !barBroken, !AIRenderer.externalFlares, simd_distance(v.pos, frame.camPos) < 700 {
                     let body = pm[0] * m.local.inverse
                     let phase = Float(v.id) * 0.7
                     let pulse = powf(cos(24 * (t + phase)), 2)
@@ -261,7 +266,7 @@ final class AIRenderer: RenderOverlay {
                 let start = n
                 for p in rb.props where p.spike == kind && n < AIRenderer.maxInst {
                     let m = float4x4(translation: p.pos) * float4x4(rotationZ: p.yaw)
-                    for k in 0..<9 { mats[n * 9 + k] = m }
+                    for k in 0..<P { mats[n * P + k] = m }
                     inst[n] = .zero; n += 1
                 }
                 if n > start { batches.append((mesh, start, n - start)) }
@@ -274,7 +279,7 @@ final class AIRenderer: RenderOverlay {
         enc.setVertexBuffer(r.inst, offset: 0, index: 4)
         for b in batches {
             enc.setVertexBuffer(b.mesh.vertexBuffer, offset: 0, index: 0)
-            enc.setVertexBuffer(r.mats, offset: b.start * 9 * 64, index: 3)
+            enc.setVertexBuffer(r.mats, offset: b.start * AIModel.partCount * 64, index: 3)
             enc.setVertexBuffer(r.inst, offset: b.start * 16, index: 4)
             for d in b.mesh.draws where d.visible && kinds.contains(d.kind) {
                 let role: Float = d.role == "piloto" ? 1 : d.role == "faro" ? 2 : 0

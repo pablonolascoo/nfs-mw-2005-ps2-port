@@ -64,7 +64,11 @@ struct AIZone {
     }
 }
 
-struct AIVehicleAttribs { let maxSpeedKmh: Float; let topSpeedMultiplier: Float; let accelerationMultiplier: Float }
+struct AIVehicleAttribs {
+    let maxSpeedKmh: Float; let topSpeedMultiplier: Float; let accelerationMultiplier: Float
+    /// RepPointsForDestroying por nivel de calor (formato 11) [D: AIPursuit::IncNumCopsDestroyed]
+    var repPointsForDestroying: [Int] = []
+}
 
 final class AITables {
     var trafficPatterns: [String: TrafficPattern] = [:]
@@ -102,7 +106,8 @@ final class AITables {
         let support = obj["pursuitSupport"] as? [String: [String: Any]] ?? [:]
         supportDelay = (obj["supportTable"] as? [String] ?? []).map { f(support[$0]?["minimumSupportDelay"]) }
         for (k, v) in obj["aiVehicle"] as? [String: [String: Any]] ?? [:] {
-            aiVehicle[k] = AIVehicleAttribs(maxSpeedKmh: f(v["maxSpeedKmh"]), topSpeedMultiplier: f(v["topSpeedMultiplier"]), accelerationMultiplier: f(v["accelerationMultiplier"]))
+            aiVehicle[k] = AIVehicleAttribs(maxSpeedKmh: f(v["maxSpeedKmh"]), topSpeedMultiplier: f(v["topSpeedMultiplier"]), accelerationMultiplier: f(v["accelerationMultiplier"]),
+                                            repPointsForDestroying: (v["repPointsForDestroying"] as? [NSNumber])?.map(\.intValue) ?? [])
         }
         for (k, v) in obj["vehicles"] as? [String: [String: Any]] ?? [:] { vehicleModel[k] = v["model"] as? String }
         for (k, v) in obj["infractions"] as? [String: Any] ?? [:] { infractions[k] = f(v) }

@@ -41,6 +41,8 @@ struct HudInput {
     var pursuitSeconds: Float = 0
     var copsEngaged = 0, copsDestroyed = 0, copsDamaged = 0
     var heliInvolved = false
+    /// Último policía destruido (colección pvehicle) y su reputación × multiplicador (SetNumCopsDestroyed) [D].
+    var lastCopDestroyedType = "", lastCopDestroyedRep = 0
     var costToState = 0
     var infractions = 0
     var kmh = true                   // castellano: km/h (LanguageHasChanged pone SpeedoUnits = 1 si no es inglés) [D]
@@ -140,7 +142,7 @@ final class FEHud {
     private var barWidths: [Float] = []
     private var coolBar, backupBacking, hidingBacking: FEObj?
     private var coolWidth: Float = 216
-    private var lastCopsEngaged = 0, lastCopsDamaged = 0
+    private var lastCopsEngaged = 0, lastCopsDamaged = 0, lastCopsDestroyed = 0
     // CostToState / Reputation
     private var ctsGroup, ctsValue, ctsTitle: FEObj?
     private var ctsOn = false, ctsFrames = 0, ctsValueShown = 0
@@ -559,6 +561,12 @@ final class FEHud {
                 }
                 if i.copsDamaged > lastCopsDamaged { pkg.setScript(copsDamaged, 0x4f90cf9b) }
                 lastCopsDamaged = i.copsDamaged
+                // PursuitBoard::SetNumCopsDestroyed [D]: mensaje «<coche> destruido +rep» con el icono COPS_TAKENOUT_ICON
+                if i.copsDestroyed > lastCopsDestroyed, let hash = FEHud.copDestroyedString[i.lastCopDestroyedType], let fmt = assets.string(hash) {
+                    let text = fmt.replacingOccurrences(of: "%$d", with: "\(i.lastCopDestroyedRep)").replacingOccurrences(of: "%d", with: "\(i.lastCopDestroyedRep)")
+                    requestMessage(text, script: 0x8ab83edb, iconTexture: feHash("COPS_TAKENOUT_ICON"), iconScript: 0x13ff94, priority: 4)
+                }
+                lastCopsDestroyed = i.copsDestroyed
                 if i.timeUntilBackup > 0 {
                     ensure(backupBacking, i.timeUntilBackup > 10 ? FEH.appear : 0x26ded57)
                     pkg.printf(backupTimer, FEHud.timeString(Double(i.timeUntilBackup)))
@@ -574,13 +582,20 @@ final class FEHud {
                 ensure(bustedBars[4], tub < -0.5 ? 0x26ded57 : FEH.initScript)
             }
         } else {
-            lastCopsEngaged = 0; lastCopsDamaged = 0
+            lastCopsEngaged = 0; lastCopsDamaged = 0; lastCopsDestroyed = 0
             if pbGroup?.isScript(FEH.appear) == true { pkg.setScript(pbGroup, FEH.leave) }
             if !(pmGroup?.isScript(FEH.leave) ?? true) && !(pmGroup?.isScript(FEH.hide) ?? true) { pkg.setScript(pmGroup, FEH.leave) }
             if pcGroup?.isScript(FEH.appear) == true || pcGroup?.isScript(0x13f51124) == true { pkg.setScript(pcGroup, FEH.leave) }
             if piGroup?.isScript(FEH.appear) == true { pkg.setScript(piGroup, FEH.leave) }
         }
     }
+
+    /// Textos LANGUAGE_HUD_COPDESTROYED_* por tipo de policía [D: FePursuitBoard.cpp 326-347; copsport usa el de copcross].
+    static let copDestroyedString: [String: UInt32] = [
+        "copcross": 0x8fe02b9f, "copsport": 0x8fe02b9f, "copmidsize": 0xf49a550a, "copghost": 0x902311da, "copgto": 0x9bfd379f,
+        "copgtoghost": 0x65e97524, "copsporthench": 0x4ee07213, "copsportghost": 0x4ed00512, "copsuv": 0x9bfd6ad3,
+        "copsuvpatrol": 0x9bfd6ad3, "copsuvl": 0x1baac57f,
+    ]
 
     private func costToState(_ i: HudInput) {
         // CostToState: aparece 120 fotogramas cada vez que sube el coste de la persecución [D]

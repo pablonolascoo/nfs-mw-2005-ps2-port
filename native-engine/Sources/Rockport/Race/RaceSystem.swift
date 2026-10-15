@@ -66,10 +66,14 @@ final class RaceSystem {
             self?.session = nil
             self?.engine.extraCars = []
             onEnd?(o)
+            // OutroMovie de la prueba (Movies/) antes de las pantallas de la carrera profesional
+            Movies.shared.raceFinished(eventId: o.event.eventId, collection: o.event.id, won: o.playerWon, career: o.context == .career)
             if o.context == .career { Career.shared.record(o) }
         }
         session = s
         s.begin()
+        // IntroMovie de la prueba y, la primera vez, el tutorial de su tipo (Movies/): la prueba espera a que acaben
+        Movies.shared.raceStarting(eventId: event.eventId, collection: event.id, kind: event.kind, career: context == .career)
         return s
     }
 

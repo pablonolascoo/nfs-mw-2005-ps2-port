@@ -112,6 +112,9 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Sin ventana: salidas de audio y mandos · radio del disco (contra vgmstream) · Opus/SBC/informes HID del mando · colores de la barra |
 | `--sound-off` · `--volume 0…1` | Sonido del juego apagado · volumen general (también en `settings.json` → `"sound"`) |
 | `--sound-dump` · `--sound-test [COCHE]` · `--sound-trace` · `--sound-live [s]` | Sin ventana: bancos y motores decodificados (contra vgmstream) · recorrido con guion renderizado a `.build/sound-test/<COCHE>.wav` · traza de RPM y mezcla · salida real del Mac unos segundos (con `--volume 0` no se oye) |
+| `--no-movies` · `--skip-intro` · `--movie NOMBRE` · `--iso <ruta>` · `--lang <idioma>` | Sin películas · sin las del arranque (logo, aviso, demo) · reproducir NOMBRE al empezar · ISO de donde leerlas · idioma de audio y subtítulos (también `settings.json` → `"movies"`) |
+| `--movie-test NOMBRE\|all [--seconds N] [--realtime --mute] [--engine]` | Sin ventana: película con reloj simulado → `.build/movie-test/` (capturas, `audio.wav`, `stats.json`) · todas · en tiempo real · dentro del motor |
+| `--music-off` · `--music-volume 0…1` · `--music-test [--busted] [--project N]` · `--music-live S` | Música apagada · volumen (también `settings.json` → `"music"`) · sin ventana: zona libre → persecución → evasión → `.build/music-test/` · salida real |
 
 ## Estructura de carpetas
 
@@ -139,6 +142,8 @@ native-engine/
 │  ├─ Camera/               cámara de persecución con las vistas camerainfo del juego (y las de pantalla partida)
 │  ├─ Garage/               fondo de los menús y garajes sin carga: escenario, cámara del frontend, menús, tuneo (doc 07)
 │  ├─ Multiplayer/          pantalla partida: mando por jugador, vistas, HUD partido, varias pantallas (doc 19)
+│  ├─ Movies/               películas leídas de la ISO: VideoToolbox, audio R3, subtítulos, momentos de la historia (doc 22 §13)
+│  ├─ Audio/Music*.swift    música PathFinder: EA Trax, persecución interactiva, ambientes, mezcla (doc 25 §10)
 │  └─ MathUtil.swift        matrices, cajas, frustum
 └─ .build/                  salida de compilación y capturas (ignorado por git)
 ```
@@ -393,6 +398,19 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
   Un solo nodo de audio; 0,2 % de un núcleo. Pantalla partida: `localCarsProvider` / `listenersProvider`.
 - Detalle y etiquetas: [doc 16 §7–10](../docs/es/16-audio-y-voces.md). Falta la capa AEMS (módulos MIPS) y los mapas de mezcla del juego.
 
+## Películas y música (2026-10-15)
+
+- **Películas** (`Movies/`, doc 22 §13): las 32 películas del disco se leen **directamente de la ISO** (sin copiar nada); vídeo MPEG-2 con
+  VideoToolbox (reordenado a orden de presentación), audio EA ADPCM R3 propio, sincronía con el reloj del audio, 4:3 con bandas, sin tono PS2,
+  subtítulos con la regla del juego (en castellano la historia va doblada; tutoriales y rótulos de la Lista Negra con texto). Arranque como el
+  original (logo de EA → aviso → demo → «Pulsa START», y la demo otra vez a los 30 s sin tocar nada); historia en la carrera profesional
+  (`STORYFMV_SAF25` y `BLACKLIST_15` al empezar, `BLACKLIST_<nº>` al vencer a cada rival, la ficha policial al llegar al 13, `IntroMovie` /
+  `OutroMovie` de cada prueba, tutoriales la primera vez). Start / ✕ / Intro / Esc la saltan. Sin ISO, el juego sigue sin películas.
+- **Música** (`Audio/Music*.swift`, doc 25 §10): reproductor PathFinder con el grafo del `.MPF` y la lógica de `MusicFlow` y `SFXObj_PFEATrax`
+  de la decomp: canciones de EA Trax en menús y zona libre (listas FE/IG/AL), música interactiva en las persecuciones con transiciones sin huecos
+  y remates por router, ambientes por zona del mapa, niveles del mapa de mezcla del juego y atenuación con la radio de la policía. Se pausa con las
+  películas. Ajustes en `settings.json → "music"`.
+
 ## Barra de luz y radio de la policía (2026-10-15)
 
 - **Barra de luz** (`Input/LightBarConfig.swift`): opción de tuneo por coche —pintura, color propio, policía, calor, apagada— guardada en
@@ -465,7 +483,7 @@ Notas:
 - La luz del coche es la del visor, no la del juego: el juego usa mapas de entorno [D].
 - Tomas de techo de tuneo (pack `ROOF`) aún no se ofrecen en el taller; llantas y alerones sí (doc 07 §3.3).
 - El conductor del BMW (`4e8cf857`) no tiene textura en el disco: sale gris oscuro, como en el visor [V].
-- Sonido: sin la capa AEMS de los motores ni los mapas de mezcla del juego (doc 16 §9). Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
+- Sonido: sin la capa AEMS de los motores; los efectos aún usan niveles propios (la música ya usa el mapa de mezcla del juego) (doc 16 §9, doc 25 §10.3). Sin menú de opciones para la música (solo `settings.json`). Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
 - Choques con muros: impulsos propios, no `RigidBody::DoBarrierCollision` del juego (doc 13).
 - Mandos sin probar aún con hardware real (doc 15).
 
@@ -475,7 +493,7 @@ Notas:
 2. **Firma Developer ID y notarización**: necesita una cuenta de Apple Developer (de pago). Sin ella, el `.dmg` funciona pero macOS avisa la primera vez (clic derecho → Abrir).
 3. ✅ **Mando** (GameController + IOKit HID) — falta volante y ajustes de vídeo (escala, FOV).
 4. ✅ **Física del juego** desde la decomp y atributos VLT de cada coche (doc 13) — faltan choques del juego, daño y reglajes.
-5. **Audio** (EA SCHl/MPC) y música.
+5. ✅ **Audio, películas y música** (docs 16, 22, 25) — faltan la capa AEMS de los motores y las escenas NIS.
 6. ~~Garajes sin carga y selección de coche~~ (hecho: doc 07). Falta el mapa de la carrera y la hoja de antecedentes.
 7. **Carreras y Lista Negra** con `gameplay.json` + `roads.json`.
 8. Rendimiento extra: texturas comprimidas (ASTC/BC7), oclusión por secciones del juego, búferes de argumentos.

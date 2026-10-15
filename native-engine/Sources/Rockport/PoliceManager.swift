@@ -63,7 +63,19 @@ final class PoliceManager {
     private var pickWeighted = false
     private(set) var costToState = 0
     private(set) var infractions = Set<String>()
+    // Choques (Crash/): policías dañados y destruidos en esta persecución [D: AIPursuit mNumCopsDamaged, mCopsDestroyed,
+    // IncNumCopsDestroyed (bonificación ×1…×3 durante DestroyCopBonusTime), CalcTotalCostToState: 5000 por destruido,
+    // 250 por dañado, 2000 por helicóptero]
+    private(set) var copsDamaged = 0, copsDestroyed = 0
+    private(set) var copDestroyedMultiplier = 1
+    private(set) var lastCopDestroyedType = "", lastCopDestroyedRep = 0
+    private var copDestroyedBonusTimer: Float = 0
+    /// Aviso: policía destruido (multiplicador de la bonificación) → HUD y sonido.
+    var onCopDestroyed: ((AIVehicle, Int) -> Void)?
     var seen = false
+    /// El helicóptero ve al jugador (Crash/Heli.swift): cuenta como visto en la persecución [D: AIVehicleHelicopter::CanSeeTarget].
+    var heliSpotting = false
+    var lastKnownPosition: float3 { lastKnown }
 
     /// Avisos: persecución sí/no (luz del mando, música…) y arresto (el motor decide qué hacer con el jugador).
     var onBusted: (() -> Void)?
@@ -78,6 +90,42 @@ final class PoliceManager {
     var inPursuit: Bool { state == .chase || state == .cooldown }
     var level: PursuitLevel? { world.tables.level(heat) }
     var copsInPursuit: Int { world.vehicles.filter { $0.kind == .cop && $0.copRole == .pursuit }.count }
+
+    /// AIPursuit::NotifyCopDamaged [D]: una vez por policía (SetDamagedByPerp).
+    func notifyCopDamaged(_ c: AIVehicle) {
+        guard !c.damagedByPerp else { return }
+        c.damagedByPerp = true
+        world.stats.copsDamaged += 1
+        if inPursuit { copsDamaged += 1; costToState += 250 }
+    }
+
+    /// AIPursuit::IncNumCopsDestroyed [D]. El coche ya está destruido (EVehicleDestroyed).
+    func notifyCopDestroyed(_ c: AIVehicle) {
+        world.stats.copsDestroyed += 1
+        c.lights = false
+        if c.copRole == .pursuit || c.copRole == .roadblock { c.copRole = .flee }
+        guard inPursuit else { onCopDestroyed?(c, 1); return }
+        if copDestroyedBonusTimer > 0 { copDestroyedMultiplier = min(3, copDestroyedMultiplier + 1) } else { copDestroyedMultiplier = 1 }
+        copDestroyedBonusTimer = level?.num("DestroyCopBonusTime", 10) ?? 10
+        copsDestroyed += 1
+        costToState += 5000
+        // RepPointsForDestroying[nivel] × multiplicador [D]
+        let reps = world.tables.aiVehicle[c.typeName]?.repPointsForDestroying ?? []
+        let lvl = max(0, min(reps.count - 1, Int(heat) - 1))
+        lastCopDestroyedType = c.typeName
+        lastCopDestroyedRep = (reps.isEmpty ? 0 : reps[lvl]) * copDestroyedMultiplier
+        onCopDestroyed?(c, copDestroyedMultiplier)
+    }
+
+    /// Helicóptero en la persecución (+2000 al coste para el estado) [D: CalcTotalCostToState mNumHeliSpawns].
+    func notifyHeliSpawned() { if inPursuit { costToState += 2000 } }
+
+    /// Daños a la propiedad (rompibles): COST_TO_STATE del smackable [D: AIPerpVehicle::OnCausedCollision].
+    func addPropertyDamage(_ cost: Int) {
+        guard inPursuit, cost > 0 else { return }
+        costToState += cost
+        infractions.insert("damage")
+    }
 
     func reportTrafficHit() { trafficHitTime = world.time; if inPursuit { costToState += 500; infractions.insert("hit_and_run") } }
     func reportCopHit(_ cop: AIVehicle, closing: Float) {
@@ -94,6 +142,7 @@ final class PoliceManager {
         guard let lv = level else { return }
         lockout -= dt
         stateTime += dt
+        copDestroyedBonusTimer -= dt
         tick += dt
         let doTick = tick >= 0.25
         if doTick { tick = 0 }
@@ -102,6 +151,7 @@ final class PoliceManager {
         // Visión de cada policía (cada 0,25 s)
         if doTick && w.player.exists {
             let hidden = w.tables.inZone("hidden", float2(w.player.pos.x, w.player.pos.y))
+            if heliSpotting && inPursuit { seen = true }
             for c in w.vehicles where c.kind == .cop && c.copRole != .flee {
                 let sees = !hidden && canSee(c, lv)
                 if c.copRole == .roadblock, simd_distance(c.pos, w.player.pos) < 60, !hidden { seen = true }
@@ -177,6 +227,7 @@ final class PoliceManager {
         bustTimer = 0; evade = 0; timeSinceSeen = 0; hiddenTime = 0; seenStreak = 0
         spawnTimer = 2; roadblockTimer = 8 + w.rng.range(0, 4); formationClock = 0
         infractions = []; costToState = 0
+        copsDamaged = 0; copsDestroyed = 0; copDestroyedMultiplier = 1; copDestroyedBonusTimer = 0
         if abs(w.player.speed) >= AITables.mph(65) { infractions.insert("speeding") }
         if rammed { infractions.insert("assault") }
         lastKnown = w.player.pos
@@ -449,6 +500,7 @@ final class PoliceManager {
         }
         var row = 0
         for c in w.vehicles where c.kind == .cop {
+            if c.copCrashStep(world: w, police: self, dt: dt) { continue }   // choque, destruido o inmovilizado (Crash/)
             let attr = w.tables.aiVehicle[c.typeName] ?? w.tables.aiVehicle["cops"]
             let cap = (attr?.maxSpeedKmh ?? 200) / 3.6
             let topMul = attr?.topSpeedMultiplier ?? 1

@@ -95,7 +95,8 @@ for (const c of byClass("pursuitsupport")) {
 const aiVehicle: Record<string, unknown> = {};
 for (const c of byClass("aivehicle")) {
   const v = vals(c);
-  aiVehicle[db.collectionName(c)] = { maxSpeedKmh: v.MAXIMUM_AI_SPEED, topSpeedMultiplier: v.TopSpeedMultiplier, accelerationMultiplier: v.AccelerationMultiplier };
+  // RepPointsForDestroying[nivel de calor] (formato 11): reputación por destruir el coche [D: AIPursuit::IncNumCopsDestroyed]
+  aiVehicle[db.collectionName(c)] = { maxSpeedKmh: v.MAXIMUM_AI_SPEED, topSpeedMultiplier: v.TopSpeedMultiplier, accelerationMultiplier: v.AccelerationMultiplier, repPointsForDestroying: v.RepPointsForDestroying ?? null };
 }
 
 const infractions: Record<string, number> = {};

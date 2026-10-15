@@ -27,6 +27,8 @@ struct PostUniforms {
     var bloomCurve = float4.zero
     var blackCurve = float4.zero
     var misc = float4.zero
+    /// Tinte de pantalla por zona (ParameterMaps «Screen Tint Midday», Effects/ZoneFog.swift): rgb normalizado por su luminancia, a = fuerza.
+    var tint = float4(1, 1, 1, 0)
 }
 
 /// Lo que hay que dibujar en un fotograma.
@@ -79,8 +81,16 @@ final class Renderer {
         if t != nil { fxTextureCache[name] = t }   // la subida es asíncrona: hasta que llegue se vuelve a pedir
         return t
     }
+    /// Depuración: ROCKPORT_WORLD_HIDE="TEXTO1,TEXTO2" no dibuja los materiales del mundo cuyo nombre contiene esos textos.
+    static let debugCam = ProcessInfo.processInfo.environment["ROCKPORT_DEBUG_CAM"] != nil
+    static let debugHide: [String]? = ProcessInfo.processInfo.environment["ROCKPORT_WORLD_HIDE"].map { $0.split(separator: ",").map(String.init) }
     /// Capas extra (tráfico y policía de AIRender.swift, HUD de persecución): se dibujan dentro de las pasadas.
     var overlays: [RenderOverlay] = []
+    /// Efectos del juego (Effects/): partículas, destellos, niebla y tinte por zona. Lo pone EffectsSystem.attach.
+    weak var effects: EffectsSystem?
+    /// Fotograma y vista que se codifican ahora (las capas simulan una vez por fotograma, en la primera vista).
+    private(set) var frameIndex = 0
+    private(set) var viewIndex = 0
 
     // Estadísticas del último fotograma
     private(set) var lastDrawCalls = 0
@@ -231,7 +241,9 @@ final class Renderer {
         enc.label = views.count == 1 ? "escena" : "escena ×\(views.count)"
         enc.setCullMode(.none)       // los materiales del juego son de doble cara
         var draws = 0, tris = 0
-        for v in views {
+        frameIndex &+= 1
+        for (vi, v) in views.enumerated() {
+            viewIndex = vi
             // Rectángulo de la vista en la textura de escena (a resolución dinámica), en píxeles enteros
             let x0 = Int((Float(rw) * v.rect.x).rounded()), y0 = Int((Float(rh) * v.rect.y).rounded())
             let x1 = Int((Float(rw) * (v.rect.x + v.rect.w)).rounded()), y1 = Int((Float(rh) * (v.rect.y + v.rect.h)).rounded())
@@ -251,6 +263,11 @@ final class Renderer {
             P.bloomTint = float4(fx.bloomTint * fx.bloomIntensity * Config.bloomGain, 1)
             P.bloomCurve = fx.bloomCurve.y; P.blackCurve = fx.blackBloomCurve.y
             P.misc = float4(fx.blackBloomIntensity, fx.desaturation * Config.desaturationScale, 0, 0)
+            // Tinte de la zona (219, 206, 87 en todo Rockport [V]) en lugar del ámbar fijo del tono PS2: misma fuerza [I]
+            if let t = effects?.screenTint, t.x + t.y + t.z > 0 {
+                let l = simd_dot(t / 255, float3(0.299, 0.587, 0.114))
+                P.tint = float4(t / 255 / max(l, 0.05), EffectsSystem.screenTintStrength)
+            }
             // Tratamiento visual: brillo a 1/4 → desenfoque horizontal → vertical
             func pass(_ dst: MTLTexture, _ name: String, _ body: (MTLRenderCommandEncoder) -> Void) {
                 let d = MTLRenderPassDescriptor()
@@ -296,7 +313,9 @@ final class Renderer {
     /// Todas las pasadas de escena de una vista (el viewport y el recorte ya están puestos).
     private func encodeScene(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) -> (draws: Int, tris: Int) {
         let viewProj = frame.proj * frame.view
-        let L = frame.lighting
+        if Renderer.debugCam { print("cámara", frame.camPos) }
+        var L = frame.lighting
+        effects?.adjust(&L, frame: frame, view: viewIndex)   // niebla por zona (ParameterMaps)
         let sunPos = fx?.sunPosition ?? float3(5300, -3550, 3000)
         let sunDir = simd_normalize(sunPos - frame.camPos)
         var lights = L.lights
@@ -325,6 +344,7 @@ final class Renderer {
         enc.setVertexBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
         enc.setFragmentBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
         var cut = GarageCutout.uniforms   // garajes sin carga: recorte del edificio (Shaders.swift `Cutout`)
+        if let t = GarageCutout.threshold() { cut.c = t; cut.on.y = 1 }
         enc.setFragmentBytes(&cut, length: MemoryLayout<CutoutUniforms>.stride, index: 3)
         var boundWrap = 3
         enc.setFragmentSamplerState(samplers[3], index: 0)
@@ -348,6 +368,7 @@ final class Renderer {
             for m in meshes {
                 var bound = false
                 for d in m.draws where d.visible && kinds.contains(d.kind) {
+                    if let h = Renderer.debugHide, h.contains(where: { $0 == "*" || d.name.contains($0) }) { continue }
                     if !bound { enc.setVertexBuffer(m.vertexBuffer, offset: 0, index: 0); bound = true }
                     var U = DrawUniforms(model: model(d.part), color: color(d), params: float4(d.kind == .mask ? d.cutoff : 0, 0, 0, 0))
                     if car {

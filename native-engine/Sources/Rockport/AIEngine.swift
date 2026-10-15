@@ -44,6 +44,7 @@ extension Engine {
             aiRenderer = r
         } catch { fputs("IA: no se pudo crear el render: \(error)\n", stderr); return }
         ai = w
+        setupCrash(w, outputFormat: outputFormat)
         print("IA: \(w.net.count) segmentos · \(w.tables.trafficPatterns.count) patrones de tráfico · \(w.tables.heatLevels.count) niveles de calor · \(w.tables.zones.count) zonas")
     }
 
@@ -70,6 +71,15 @@ extension Engine {
             o.speed = simd_dot(pl.car.velocity, pl.car.forward); o.halfLength = pl.car.halfLength; o.halfWidth = pl.car.halfWidth
             return o
         } ?? []) : []
+        // Choques del juego (Crash/): coches con física de este fotograma (jugador, pantalla partida, rivales de carrera)
+        if let crash = ai.crash {
+            var cars: [(car: Car, role: CrashBody.Role)] = []
+            if AITestDriver.current == nil, mode == .drive, let car { cars.append((car, .player)) }
+            if splitScreen?.active == true, let ss = splitScreen { for pl in ss.players.dropFirst() where pl.car !== car { cars.append((pl.car, .human)) } }
+            if let rs = RaceSystem.shared?.session?.racers { for r in rs where !r.isHuman && !cars.contains(where: { $0.car === r.car }) { cars.append((r.car, .racer)) } }
+            crash.cars = cars
+            crash.testPlayer = AITestDriver.current?.v
+        }
         let v = frame.view
         let camFwd = -float3(v.columns.0.z, v.columns.1.z, v.columns.2.z)
         ai.update(dt: dt, player: p, cameraPos: frame.camPos, cameraFwd: camFwd, viewProj: frame.proj * frame.view)

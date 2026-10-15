@@ -15,14 +15,27 @@ struct CutoutUniforms {
     /// Mundo → caja (−1…1): hueco de la puerta y volumen interior del edificio.
     var a: float4x4 = .identity
     var b: float4x4 = .identity
-    /// x > 0,5: recorte activo.
+    /// x > 0,5: recorte activo; y > 0,5: también la caja `c`.
     var on: float4 = .zero
+    /// Mundo → caja (−1…1): suelo de la calle bajo el hueco de la puerta (entre el interior y el umbral). Lo pone el Renderer
+    /// con la escena conducible (GarageCutout.threshold): sin él, ese suelo con la sombra horneada del edificio se veía como una
+    /// franja oscura abajo de la pantalla al entrar en el refugio (doc 20 §9).
+    var c: float4x4 = .identity
 }
 
 /// Recorte activo del mundo (lo pone el garaje abierto; lo lee el Renderer en cada vista).
 enum GarageCutout {
     static var uniforms = CutoutUniforms()
     static var active: Bool { uniforms.on.x > 0.5 }
+    /// Caja del suelo del hueco de la puerta (marco de la puerta de garage-scenes: x hacia fuera, origen a ras de suelo):
+    /// de 0,7 m dentro a 0,5 m fuera de la persiana, a lo ancho del hueco, del suelo −1 m a +12 cm. El interior (recortado a su
+    /// caja, que empezaba 0,3 m dentro) se alarga hasta la persiana para cubrirlo (GarageRenderer `doorReach`).
+    static func threshold() -> float4x4? {
+        guard active, let gs = GarageSystem.shared, !gs.stage.active, let s = gs.scenes.activeScene else { return nil }
+        let half = float3(0.6, s.info.shell.gapHalfWidth, 0.56)
+        let center = float3(-0.1, 0, -0.44)
+        return (s.model * float4x4(translation: center) * float4x4(scale: half)).inverse
+    }
     /// ¿Cae `p` dentro del recorte? (colisiones del edificio que se ignoran con la puerta abierta)
     static func contains(_ p: float3) -> Bool {
         guard active else { return false }
@@ -95,6 +108,9 @@ struct GarageDrawItem {
     /// Mundo → caja de recorte (−1…1); nil = sin recorte.
     var clip: float4x4?
     var tint: float3 = float3(1, 1, 1)
+    /// Umbral de la escena conducible con la puerta abierta: luz del interior que sale por el hueco [I]. x = factor de luz en
+    /// la línea `y` (m hacia fuera en el marco de la puerta; lo de antes lo cubre el interior y no se dibuja), se apaga en `z` m.
+    var spill: float3? = nil
 }
 
 // Mismo espacio de color que la escena (SceneShading.swift): se escribe codificado y se mezcla en gamma, como el GS del PS2.
@@ -102,13 +118,13 @@ struct GarageDrawItem {
 // Cs (textura × vértice, saturado a 255) × As (alfa de textura × alfa de vértice) sumado en pantalla [D: GS].
 private let garageShaderSource = scenePreludeMSL + """
 
-struct GDraw { float4x4 model; float4x4 clip; float4 color; float4 params; };   // params: x corte alfa, y recorte activo
+struct GDraw { float4x4 model; float4x4 clip; float4 color; float4 params; float4 spill; };   // params: x corte alfa, y recorte activo · spill: luz del umbral (x factor, y desde, z largo, w activa)
 struct VertexIn { float3 pos [[attribute(0)]]; float2 uv [[attribute(1)]]; half4 color [[attribute(2)]]; float4 normal [[attribute(3)]]; };
-struct VOut { float4 pos [[position]]; float3 world; float2 uv; float4 color; };
+struct VOut { float4 pos [[position]]; float3 world; float2 uv; float4 color; float3 local; };
 
 vertex VOut vs_garage(VertexIn in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant GDraw& D [[buffer(2)]]) {
     VOut o; float4 w = D.model * float4(in.pos, 1);
-    o.pos = F.viewProj * w; o.world = w.xyz; o.uv = in.uv; o.color = float4(in.color) * D.color;
+    o.pos = F.viewProj * w; o.world = w.xyz; o.uv = in.uv; o.color = float4(in.color) * D.color; o.local = in.pos;
     return o;
 }
 static void clipIt(constant GDraw& D, float3 w) {
@@ -119,7 +135,12 @@ fragment float4 fs_gopaque(VOut in [[stage_in]], constant FrameUniforms& F [[buf
     clipIt(D, in.world);
     float4 t = tex.sample(s, in.uv);
     if (D.params.x > 0 && t.a <= D.params.x) discard_fragment();
-    return float4(sceneRGB(F, t.rgb * in.color.rgb, in.world), 1);
+    float3 c = t.rgb * in.color.rgb;
+    if (D.spill.w > 0.5) {   // umbral: lo cubre el interior hasta spill.y; luego la luz del interior se apaga hacia la calle
+        if (in.local.x < D.spill.y) discard_fragment();
+        c *= mix(D.spill.x, 1.0, saturate((in.local.x - D.spill.y) / max(D.spill.z, 0.01)));
+    }
+    return float4(sceneRGB(F, c, in.world), 1);
 }
 fragment float4 fs_gblend(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant GDraw& D [[buffer(2)]],
                           texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
@@ -138,7 +159,7 @@ fragment float4 fs_gadd(VOut in [[stage_in]], constant FrameUniforms& F [[buffer
 }
 """
 
-private struct GDraw { var model: float4x4; var clip: float4x4; var color: float4; var params: float4 }
+private struct GDraw { var model: float4x4; var clip: float4x4; var color: float4; var params: float4; var spill = float4.zero }
 
 /// Capa de dibujo de los garajes (interiores, persiana) dentro de las pasadas de escena.
 final class GarageRenderer: RenderOverlay {
@@ -152,6 +173,10 @@ final class GarageRenderer: RenderOverlay {
     /// Solo se dibuja si la vista lo pide (las vistas de pantalla partida no ven el escenario del frontend).
     var enabled = true
     private(set) var drawCalls = 0
+    /// Metros que se alarga la caja del interior hacia la calle (de 0,3 m dentro de la persiana a 0,5 m fuera) [I].
+    static var doorReach: Float = 0.8
+    /// Luz del interior sobre el umbral: ×6 en lineal junto al interior (a 0,5 m de la persiana), apagándose en 1,8 m [I].
+    static var thresholdSpill = float3(6, 0.5, 1.8)
     /// Depuración: ROCKPORT_GARAGE_HIDE="NOMBRE1,NOMBRE2" oculta los materiales del interior cuyo nombre contiene esos textos.
     static let debugHide: [String]? = ProcessInfo.processInfo.environment["ROCKPORT_GARAGE_HIDE"].map { $0.split(separator: ",").map(String.init) }
 
@@ -211,12 +236,21 @@ final class GarageRenderer: RenderOverlay {
                 let w = it.model * float4(c, 1); wb.add(float3(w.x, w.y, w.z))
             }
             if !fr.intersects(wb) { continue }
+            // Interior de un garaje del mundo: su caja llega hasta la persiana (la cara +X de la caja mira a la calle) para
+            // cubrir el suelo del hueco de la puerta, que el mundo ya no dibuja (GarageCutout.threshold)
+            var clip = it.clip
+            if let c = clip, GarageCutout.threshold() != nil {
+                let B = c.inverse
+                let e = GarageRenderer.doorReach / (2 * max(simd_length(float3(B.columns.0.x, B.columns.0.y, B.columns.0.z)), 0.1))
+                clip = (B * float4x4(translation: float3(e, 0, 0)) * float4x4(scale: float3(1 + e, 1, 1))).inverse
+            }
             var bound = false
             for d in it.mesh.draws where d.visible && kinds.contains(d.kind) {
                 if let h = GarageRenderer.debugHide, h.contains(where: { d.name.contains($0) }) { continue }
                 if !bound { enc.setVertexBuffer(it.mesh.vertexBuffer, offset: 0, index: 0); bound = true }
-                var U = GDraw(model: it.model, clip: it.clip ?? .identity, color: d.color * float4(it.tint, 1),
-                              params: float4(d.kind == .mask ? d.cutoff : 0, it.clip == nil ? 0 : 1, 0, 0))
+                var U = GDraw(model: it.model, clip: clip ?? .identity, color: d.color * float4(it.tint, 1),
+                              params: float4(d.kind == .mask ? d.cutoff : 0, it.clip == nil ? 0 : 1, 0, 0),
+                              spill: it.spill.map { float4($0, 1) } ?? .zero)
                 enc.setVertexBytes(&U, length: MemoryLayout<GDraw>.stride, index: 2)
                 enc.setFragmentBytes(&U, length: MemoryLayout<GDraw>.stride, index: 2)
                 enc.setFragmentTexture(d.texture ?? textures.white, index: 0)

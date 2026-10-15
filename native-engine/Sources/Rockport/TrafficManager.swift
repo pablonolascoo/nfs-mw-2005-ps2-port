@@ -36,6 +36,7 @@ final class TrafficManager {
         // Conducción de cada coche de tráfico
         for v in world.vehicles where v.kind == .traffic {
             if v.mode == .parked { v.speed = 0; v.braking = true; v.applyKnock(collision: world.collision, dt: dt); continue }
+            if v.mode == .free { continue }   // pruebas de choques (Crash/CrashTests.swift): lo mueve el guion
             world.stepLane(v, dt: dt, cops: false, field: nil, mu: 0.6, accel: 2)
         }
     }

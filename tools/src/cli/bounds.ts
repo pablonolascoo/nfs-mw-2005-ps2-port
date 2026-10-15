@@ -14,6 +14,8 @@ import { lzDecompress } from "../lib/lz";
 import { hex8 } from "../lib/hash";
 import { parseChunks, walk } from "../lib/bchunk";
 import { readScenery } from "../lib/world-ps2";
+import { readTexturePack } from "../lib/tex-ps2";
+import { encodePng } from "../lib/png";
 
 const [iso, id] = Bun.argv.slice(2);
 if (!iso || !id) { console.error("Uso: bun src/cli/bounds.ts <iso> <ID>"); process.exit(1); }
@@ -49,4 +51,12 @@ writeFileSync(`${outDir(id)}/bounds.json`, JSON.stringify({
   units: "metros, espacio del modelo; orientación = cuaternión (x, y, z, w)", cars, world,
 }));
 const unres = [...cars, ...world].filter(c => /^[0-9a-f]{8}$/.test(c.name ?? "")).length;
-console.log(`Colisión ${id}: ${cars.length} coches (${cars.reduce((s, c) => s + c.bounds.length, 0)} volúmenes), ${world.length} objetos del mundo (${world.reduce((s, c) => s + c.bounds.length, 0)} volúmenes, ${world.reduce((s, c) => s + c.pointClouds.length, 0)} nubes); ${unres} nombres sin resolver → bounds.json`);
+// Texturas de daños (formato 11): WINDOW_DAMAGE0 sustituye a los cristales rotos (SetCarGlassDamageState) y DAMAGE0 es la
+// capa de golpes de los coches de carreras [D: CarRender.cpp 1586-1647] [V: GLOBAL\GLOBALB.BUN] → crash/*.png
+mkdirSync(`${outDir(id)}/crash`, { recursive: true });
+let dmgTex = 0;
+for (const t of readTexturePack(await read("GLOBAL\\GLOBALB.BUN")).textures) {
+  if (t.name !== "WINDOW_DAMAGE0" && t.name !== "DAMAGE0" && t.name !== "COPS_DAMAGED_ICON") continue;
+  await Bun.write(`${outDir(id)}/crash/${t.name}.png`, encodePng(t.rgba, t.width, t.height)); dmgTex++;
+}
+console.log(`Colisión ${id}: ${cars.length} coches (${cars.reduce((s, c) => s + c.bounds.length, 0)} volúmenes), ${world.length} objetos del mundo (${world.reduce((s, c) => s + c.bounds.length, 0)} volúmenes, ${world.reduce((s, c) => s + c.pointClouds.length, 0)} nubes); ${unres} nombres sin resolver → bounds.json · ${dmgTex} texturas de daños → crash/`);

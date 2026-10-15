@@ -228,9 +228,87 @@ Cómo suena (decomp, `Speech/MusicFlow.cpp` y `SFXObj_Pathfinder.cpp`) [D]:
 
 ## 9. Pendiente
 
-- Significado exacto de las acciones 1, 2, 5, 8, 9, 0x0E y 4/2 (condiciones, fundidos, variables, routers) y de los routers:
-  hacen falta las funciones `PATH_*` de la librería (solo en ensamblador en la decomp).
-- Bytes 0x03 (0xF8) y 0x04 de los nodos; condición exacta de las ramas de los nodos de fin con 0xF8.
+- Confirmar con las funciones `PATH_*` (solo en ensamblador en la decomp) la lectura de §10.2: condiciones, fundidos, variables
+  del sistema, routers (byte 0x04 = router + 1) y los nodos de fin con 0xF8. La lectura propia ya suena bien con los 5 proyectos.
+- Acciones 0x0E y 4/2 (variables internas y routers) sin efecto en el port.
 - Muestra 44 y eventos 0x9B7A50, 0xD2E818, 0x4F246E, 0xB29728, 0x6DD6BB: sin nombre en la decomp.
-- Reproductor en la app (Swift): seguir nodos y ramas con la intensidad de MusicFlow; ya basta con `music.json` + `.MUS`.
-- Formato completo de los `.FX` y aplicar la reverb por zona; usar los mapas de mezcla en lugar de las categorías propias.
+- Formato completo de los `.FX` y aplicar la reverb por zona; usar los mapas de mezcla también para los efectos (la música ya los usa).
+- `EVT_INITSWAP` (cambio de proyecto a mitad de persecución con su golpe): no se sabe qué lo dispara; el port cambia de proyecto
+  al volver a las canciones, como `StartLicensedMusic` [D].
+- Rótulo de la canción («chyron», `NotifyChyron` [D]) en el HUD: de momento solo en la consola.
+
+## 10. Reproductor en el motor nativo
+
+| Pieza | Archivo | Qué hace |
+|---|---|---|
+| Datos | `Audio/MusicData.swift` | `music.json`, `.MUS` mapeados en memoria, decodificador EA-XA v2 (el de `pathfinder.ts`), niveles de `mixmaps.json`, capa «Ambience» de `effects.json` |
+| Grafo | `Audio/MusicPathFinder.swift` | Una pista por proyecto: ramas por intensidad, eventos con condiciones y esperas, routers, parte actual |
+| Salida | `Audio/MusicOutput.swift` | AVAudioEngine propio a 32 kHz; cada pista es una cadena de ondas **sin huecos** (la siguiente se encola 0,6 s antes) con su volumen y fundidos |
+| Juego | `Audio/MusicSystem.swift` | `SFXObj_PFEATrax` y `MusicFlow` [D]: canciones, persecución, ambientes, mezcla, ajustes |
+| Pruebas | `Audio/MusicTests.swift` | `--music-test`, `--music-live` |
+
+### 10.1 Qué suena y cuándo [D: `SFXObj_Pathfinder.cpp`, `MusicFlow.cpp`]
+
+- **«Pulsa START»**: evento `0x01C53FC7` (SPLASH, la muestra 0 de 30 s; a los 30 s el juego vuelve a la demo, doc 22 §13.2).
+- **Menús, garajes y concesionario** (FE): canciones de la lista FE (DefPlay FE o AL). Sin canciones (EA Trax apagado o lista
+  vacía): ambiente del sitio (9 refugio, 10 taller, 11 menú, 12 concesionario).
+- **Zona libre y carreras** (IG): canciones de la lista IG (IG o AL), al azar o en orden, sin repetir hasta agotar la lista
+  (`GenNextMusicTrackID`). Al pasar de menús a juego, si la canción no es de la lista nueva, se cambia. Carreras de aceleración:
+  sin canciones (ambiente) [D: `TestToLicensed`].
+- **Persecución** (`TestToPursuit`): policía persiguiendo o buscando → se corta la canción, `MusicFlow` espera 0,5 s y manda
+  `EVT_START`. Cada actualización (30 Hz) manda la intensidad × 127 como control; los estados cambian de parte con los eventos
+  10–15. Arresto: `EVT_ENDBUSTED`; fin sin arresto: `EVT_ENDWIN` [I: quién manda el 15 no está en la decomp].
+- **Tras la persecución**: el remate de la parte final llama a `InteractiveDone` → 40 s del ambiente de la zona
+  (`PURSUIT_TO_LIC_DELAY`) → siguiente canción. El siguiente proyecto de persecución es el siguiente de los 4 (`SwapInteractiveProjects`).
+- **Ambiente de la zona**: capa «Ambience» de los ParameterMaps en la posición del coche (zonas 0–8, doc 24 §6.2); al cambiar de
+  zona, fundido de 3,5 s y entrada en 3 s (los eventos del disco).
+- **Películas**: la música se pausa donde estaba y sigue al acabar.
+- **Pantalla partida**: sin música interactiva (no se carga el proyecto, `m_Flags & 2` [D]); solo canciones y ambientes.
+
+### 10.2 Cómo se lee el grafo (lo que no está en la decomp)
+
+| Cosa | Lectura | Etiqueta |
+|---|---|---|
+| Ramas | al acabar una onda, la rama con mín < control ≤ máx; si ninguna, la del tramo más cercano | [V] tramos · [H] el «más cercano» |
+| Control de MW_MUSIC | 0: el juego no lo manda nunca. Con más de 63/70 las cabeceras de *Feels Just Like It Should* y *Feed The Addiction* saltarían la canción (rama directa al nodo de fin) | [I] |
+| Nodos de fin con byte 3 = 0xF8 | ramas `{0,0}` siguiente y `{1,127}` repetir: se repite (los ambientes suenan en bucle hasta que el juego cambia de zona) | [H] |
+| Nodo −3 | lanza su evento cuando la música **llega** ahí (no al encolar); −1 termina o sigue su rama | [I] |
+| 4/15 | vaciar la cola **y cortar** lo que suena (fundido de 25 ms): `STOP` es solo esta acción | [I] |
+| 4/3 | ir al nodo: ya si no suena nada; si suena, al acabar la onda actual | [I] |
+| Condiciones 1/x | código = operación × 16 + tipo: 0x9 «si ==», 0x11 «si ≠», 0xA «si no, si ==», 0x12 «si no, si ≠»; tipo 0xE = variable del proyecto, 0xD = del sistema (3 = parte actual, 4 = suena algo); 1/0x40 cierra | [H: cuadra con todos los eventos de los 5 proyectos] |
+| 5/12, 2/12, 8/13, 8/6, 9/0 | fundido a `p0 & 0xFF` en `p1` ms · esperar `p0` ms · volumen `p0` · variable `p0` = `p1` · lanzar el evento `p1 << 16 \| p0` | [H] |
+| **Routers** | el byte 0x04 de cada onda de persecución es router + 1 (el máximo coincide con el nº de routers en los 4 proyectos). Si se pide ir a un destino y el router de la onda actual tiene un par (paso, destino), antes suena la onda de paso | [I] |
+
+Los routers explican los finales: en la parte LOSE de MW_MUS_1 los pares mandan `409` a una onda `LOSE_END` y `412` a una
+`WIN_END`; en NEUTRAL, WIN y ELUDE, al revés. Con `EVT_ENDWIN` (parte ≠ LOSE → 409) y `EVT_ENDBUSTED` (parte ≠ LOSE → 412) cada
+final suena con el remate que encaja con la capa que sonaba [V: datos de los 4 proyectos].
+
+### 10.3 Mezcla [V lectura · H unidades]
+
+`MixData` de los canales maestros del estado MUSIC = {i16 mínimo −10000, i16 nivel} en milibelios: canciones +2 dB en el juego y
+−11 dB en menús, música compuesta 0 / −1 dB, ambiente −7 dB en el juego y −4 dB en menús. «Speech Ducker» (estado MAIN):
+−5,55 dB mientras habla la radio de la policía. Encima, el volumen del jugador y una referencia de 0,5 frente a los efectos [H]:
+en las pruebas, la música queda unos 7 dB por debajo del motor a fondo (RMS 0,077 frente a 0,176).
+
+### 10.4 Ajustes
+
+`settings.json → "music"`: `volume` (0–1), `interactive` (música de persecución), `eaTrax` (canciones), `shuffle` (al azar o en
+orden) y `playlist` (`{"<nº de canción>": "FE" | "IG" | "AL" | "OFF"}`; lo que falte usa el DefPlay del juego). API:
+`MusicSystem.shared.setVolume / setInteractive / setEATrax / setShuffle / setPlaylist(song:_:)`. Al arrancar: `--music-off`,
+`--music-volume V`. El menú de opciones del juego aún no está en el port.
+
+### 10.5 Pruebas [V: M4, SLES-53559]
+
+```bash
+cd native-engine && swift build -c release
+.build/release/Rockport --music-test [--project 1…4] [--seconds N]   # zona libre → persecución → evasión → ambiente → canción
+.build/release/Rockport --music-test --busted --seconds 140          # la misma, pero acaba en arresto
+.build/release/Rockport --music-live 3 --music-volume 0.01           # salida real (AVAudioEngine) unos segundos
+```
+
+Salida en `.build/music-test/`: `music.wav` (32 kHz) y `log.txt` (tipos, estados de MusicFlow, eventos, partes, ondas, routers).
+Resultado con MW_MUS_2: canción → `EVT_START` (15,5 s) → NEUTRAL (intensidad limitada a 0,5 los primeros 30 s) → `EVT_LOSE`
+(policía pegada) → `EVT_NEUTRAL` → `EVT_WIN` (enfriamiento rápido) → `EVT_ELUDE` (escondido) → `EVT_ENDWIN` → router 19
+(onda 241 → paso 304) → `InteractiveDone` → ambiente de la zona 4 durante 40 s → canción. Con arresto (MW_MUS_1): `EVT_ENDBUSTED`
+→ router 22 (onda 204 → paso 385, `LOSE_END`). **Sin huecos** entre ondas (solo los silencios del corte inicial y del final, 0,26 y
+0,39 s); 175 s simulados en 0,2 s.

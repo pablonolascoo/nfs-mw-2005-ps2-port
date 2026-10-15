@@ -87,6 +87,8 @@ struct Options {
                   --physics-test [COCHE]  prueba de la física del juego en un plano: 0–100, punta, frenada, curva, NOS
                   --traffic-test N     sin ventana: N s de tráfico y policía con un coche de prueba; captura (--screenshot) y estadísticas
                   --traffic-max N      máximo de coches de tráfico (20) · --heat H calor inicial · --no-traffic · --no-police
+                  --crash-test [ESC]   sin ventana: choques del juego (frontal, lateral, PIT, rompibles, derrumbe; all = todos) → capturas y JSON
+                  --heli-test N        sin ventana: persecución de calor 5 con helicóptero durante N s · --no-crash · --no-heli
                   --race-test ID       sin ventana: corre la prueba ID (EventID «15.1.1» o colección) · --autodrive piloto automático
                                        · --seconds N · --opponents N · --screenshot base.png (capturas -start/-mid/-finish + JSON)
                   --career-test        sin ventana: progresión simulada de la Lista Negra (15 → 1) · --save ruta.json
@@ -95,6 +97,11 @@ struct Options {
                   --split-test N       sin ventana: N jugadores con piloto automático (--race ID, --seconds S, --displays D, --screenshot base.png)
                   --quickrace-test     sin ventana: recorre las pantallas de la carrera rápida (--split N) y saca capturas
                   --sound-off · --volume V   sonido del juego apagado · volumen general 0…1
+                  --no-movies · --skip-intro · --movie NOMBRE   sin películas · sin las del arranque · (app) reproduce NOMBRE al empezar
+                  --iso <ruta> · --lang <idioma>  ISO de donde leer las películas · idioma de las películas y subtítulos
+                  --movie-test NOMBRE|all [--seconds N]  sin ventana: película con reloj simulado → .build/movie-test/ (capturas, WAV, sincronía)
+                  --music-off · --music-volume V   música apagada · volumen de la música 0…1
+                  --music-test [--seconds N]  sin ventana: zona libre → persecución → evasión con la música interactiva → .build/music-test/
                   --sound-test [COCHE] sin ventana: recorrido con guion → .build/sound-test/<COCHE>.wav · --sound-dump bancos · --sound-live S salida real
                 """)
                 exit(0)
@@ -103,10 +110,14 @@ struct Options {
             case "--physics-trace": break
             case "--traffic-test", "--traffic-max", "--heat", "--test-plan": i += 1   // AIEngine.swift (AIOptions)
             case "--no-traffic", "--no-police": break
+            case "--no-crash", "--no-heli": break   // Crash/ (choques del juego, helicóptero)
+            case "--crash-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }   // Crash/CrashTests.swift
+            case "--heli-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
             case "--race-test", "--opponents", "--save", "--race": i += 1   // Race/RaceTests.swift, App.swift
             case "--career-test", "--career", "--race-audit": break
             case "--garage-test", "--garage-mode", "--garage-screen", "--garage-select": i += 1   // Garage/GarageTests.swift
             case "--garage-scene", "--fe-angle", "--scene-car", "--garage-swap-test": i += 1   // Garage/GarageScenesTests.swift
+            case "--fx-test": i += 1   // Effects/EffectsTests.swift
             case "--split-test", "--displays", "--players", "--split": i += 1   // Multiplayer/ (pantalla partida, varias pantallas)
             case "--quickrace-test", "--multi-display-test", "--unplug-test": break
             case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
@@ -116,6 +127,8 @@ struct Options {
             case "--sound-live": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
             case "--sound-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
             case "--volume": i += 1
+            case "--no-movies", "--skip-intro", "--music-off": break        // Movies/Movies.swift, Audio/MusicSystem.swift
+            case "--iso", "--lang", "--movie", "--music-volume": i += 1     // ISO de las películas, idioma, película al arrancar, volumen de la música
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
             i += 1
@@ -289,6 +302,11 @@ if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.
 if AudioTests.handle(CommandLine.arguments) { exit(0) }
 // Pruebas del sonido del juego sin ventana (Audio/SFXTests.swift)
 if SFXTests.handle(CommandLine.arguments) { exit(0) }
+// Pruebas de los efectos (partículas, destellos) sin ventana (Effects/EffectsTests.swift)
+if EffectsTests.handle(CommandLine.arguments) { exit(0) }
+// Películas y música sin ventana (Movies/MovieTests.swift, Audio/MusicTests.swift)
+if MovieTests.handle(CommandLine.arguments) { exit(0) }
+if MusicTests.handle(CommandLine.arguments) { exit(0) }
 let options = Options.parse(CommandLine.arguments)
 if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     let a = CommandLine.arguments
@@ -309,6 +327,10 @@ if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     runQuickRaceTest(options)
 } else if RaceTestOptions.raceAudit {
     runRaceAudit(options)
+} else if let k = CrashOptions.crashTest {
+    runCrashTest(options, scenario: k)
+} else if let secs = CrashOptions.heliTest {
+    runHeliTest(options, seconds: secs)
 } else if let secs = AIOptions.trafficTest {
     runTrafficTest(options, seconds: secs)
 } else if CommandLine.arguments.contains("--audit") {

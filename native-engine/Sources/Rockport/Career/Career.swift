@@ -35,6 +35,7 @@ final class Career {
     func start() {
         save = (persist ? CareerSave.load(saveURL) : nil) ?? CareerSave()
         enter()
+        if persist { Movies.shared.careerContinue(bin: save.currentBin) }   // presentación del rival actual si no se vio (Movies/)
     }
 
     /// «Carrera profesional → Empezar de nuevo».
@@ -42,6 +43,7 @@ final class Career {
         save = CareerSave()
         if persist { save.save(saveURL) }
         enter()
+        if persist { Movies.shared.careerNewGame() }   // refugio (STORYFMV_SAF25) y primer rival (BLACKLIST_15) (Movies/)
     }
 
     private func enter() {
@@ -153,9 +155,11 @@ final class Career {
         }
         for r in b.rewards where r.type == "cash_bonus" { save.cash += Int(r.cash) }
         log("Lista Negra: ¡\(b.bossName) (nº \(b.binIndex)) vencido! Coche ganado: \(carName.isEmpty ? "—" : carName)")
-        system?.hud?.showCarWon(carName: carName, rivalName: b.bossName) {}
+        let nextBin = max(0, b.binIndex - 1)
+        // Tras la pantalla del coche ganado: presentación del siguiente rival y, en el 13, la ficha policial (Movies/)
+        system?.hud?.showCarWon(carName: carName, rivalName: b.bossName) { if self.persist { Movies.shared.rivalDefeated(newBin: nextBin) } }
         save.bossRacesWon = []
-        save.currentBin = max(0, b.binIndex - 1)
+        save.currentBin = nextBin
         if save.currentBin == 0 { log("Lista Negra completada") }
     }
 
@@ -180,7 +184,7 @@ final class Career {
                 if kmh >= m.goalEasy { save.milestonesDone.append(id); save.bounty += Int(m.bounty); log("Desafío cumplido: \(id) · \(progressText())"); if persist { save.save(saveURL) } }
             }
         }
-        if pol.inPursuit && !wasInPursuit { pursuitBase = ai.stats }
+        if pol.inPursuit && !wasInPursuit { pursuitBase = ai.stats; if persist { Movies.shared.careerPursuitStarted() } }
         if wasInPursuit && !pol.inPursuit {
             if pol.state == .evaded { pursuitEvaded(police: pol, stats: ai.stats) }
             else if pol.state == .busted || pol.state == .none { log("Persecución terminada sin evasión: no hay recompensa") }
@@ -192,6 +196,7 @@ final class Career {
     func pursuitEvaded(police: PoliceManager, stats: AIStats) {
         let earned = police.costToState
         save.bounty += earned
+        if earned > 0 && persist { Movies.shared.careerBountyEarned() }
         var done: [String] = []
         if let b = bin(), let db {
             for id in b.milestones where !save.milestonesDone.contains(id) {

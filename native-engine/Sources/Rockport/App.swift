@@ -82,6 +82,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         // Carreras y Lista Negra (Race/, Career/): marcadores del mundo, carrera rápida y carrera profesional
         engine.enableRaces()
         SFXWorld.shared.attach(engine)   // sonido del juego: motores, efectos, sirenas (Audio/SFXWorld.swift)
+        MusicSystem.shared.attach(engine)   // música: EA Trax, persecución interactiva y ambientes (Audio/MusicSystem.swift)
+        // Películas (Movies/): --movie NOMBRE, o las del arranque (logo de EA, aviso, demo) antes de «Pulsa START»
+        let lang = engine.ui?.assets.language
+        Movies.shared.gameMoments = true   // historia, tutoriales e IntroMovie de las pruebas
+        if let k = CommandLine.arguments.firstIndex(of: "--movie"), k + 1 < CommandLine.arguments.count {
+            Movies.shared.prepare(root: root, language: lang); Movies.shared.play(CommandLine.arguments[k + 1])
+        } else if engine.ui?.state == .splash { Movies.shared.playBoot(root: root, language: lang) }
         if CommandLine.arguments.contains("--career") { Career.shared.start() }
         if let ev = RaceTestOptions.value("--race") {
             // --players N (2…4): pantalla partida; primero «Pulsa START» para repartir los mandos (Multiplayer/, UI/JoinScreen.swift)

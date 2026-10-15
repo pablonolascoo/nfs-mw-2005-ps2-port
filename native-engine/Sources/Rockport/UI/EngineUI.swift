@@ -75,9 +75,11 @@ extension Engine {
         if let ai {
             h.bustedCount = ai.stats.busted
             h.evadedCount = ai.stats.evaded
-            for c in ai.vehicles where c.kind == .cop {
+            for c in ai.vehicles where c.kind == .cop && !c.damage.destroyed {
                 h.cops.append(HudBlip(pos: SIMD2(c.pos.x, c.pos.y), dir: SIMD2(c.fwd.x, c.fwd.y), inPursuit: c.copRole == .pursuit))
             }
+            // Helicóptero en el radar (HELICOPTER_ICON_GROUP) y en la persecución (Crash/Heli.swift)
+            if let b = ai.heli?.blip { h.cops.append(b); h.heliInvolved = true }
         }
         if let pm = ai?.police {
             h.heat = pm.heat
@@ -94,7 +96,12 @@ extension Engine {
                 h.timeUntilBusted = bust > 0.01 ? min(0.99, 0.5 + bust * 0.5) : max(-0.99, min(0.99, pm.meter * 2))
             }
             h.pursuitSeconds = pm.pursuitTime
-            h.copsEngaged = pm.copsInPursuit
+            h.copsEngaged = pm.copsInPursuit + (h.heliInvolved ? 1 : 0)
+            // Choques del juego (Crash/): policías dañados y destruidos [D: IPursuit GetNumCopsDamaged/Destroyed]
+            h.copsDamaged = pm.copsDamaged
+            h.copsDestroyed = pm.copsDestroyed
+            h.lastCopDestroyedType = pm.lastCopDestroyedType
+            h.lastCopDestroyedRep = pm.lastCopDestroyedRep
             h.costToState = pm.costToState
             h.infractions = pm.infractions.count
         }

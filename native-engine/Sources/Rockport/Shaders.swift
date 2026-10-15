@@ -13,12 +13,15 @@ struct DrawUniforms {
 
 // Recorte de los garajes sin carga (Garage/GarageRender.swift `CutoutUniforms`): hueco de la puerta y volumen interior
 // del edificio. Lo que cae dentro de una de las dos cajas no se dibuja.
-struct Cutout { float4x4 a; float4x4 b; float4 on; };
+struct Cutout { float4x4 a; float4x4 b; float4 on; float4x4 c; };
 static bool inCutout(constant Cutout& C, float3 w) {
     if (C.on.x < 0.5) return false;
     float3 p = (C.a * float4(w, 1)).xyz;
     if (all(abs(p) < 1.0)) return true;
     p = (C.b * float4(w, 1)).xyz;
+    if (all(abs(p) < 1.0)) return true;
+    if (C.on.y < 0.5) return false;
+    p = (C.c * float4(w, 1)).xyz;           // suelo bajo el hueco de la puerta (lo cubre el interior)
     return all(abs(p) < 1.0);
 }
 
@@ -201,6 +204,7 @@ struct PostUniforms {
     float4 bloomCurve;    // y de los 4 puntos de ColourBloomCurve
     float4 blackCurve;    // y de BlackBloomCurve
     float4 misc;          // x BlackBloomIntensity, y Desaturation, z texel u, w texel v (bloom)
+    float4 tint;          // tinte de pantalla de la zona (rgb / luminancia), a = fuerza (0 = el ámbar fijo de siempre)
 };
 
 static float bez(float4 y, float t) {   // GetValueFromSpline [D]
@@ -266,7 +270,9 @@ fragment float4 fs_post(SkyOut in [[stage_in]], constant PostUniforms& P [[buffe
         // 2. Tinte amarillo/ámbar en medios tonos y luces (no en sombras).
         float l = dot(c, float3(0.299, 0.587, 0.114));
         float w = smoothstep(0.12, 0.80, l);
-        c *= mix(float3(1.0), float3(1.070, 1.030, 0.860), saturate(k * w));
+        // Con tinte de zona (ParameterMaps «Screen Tint Midday» [V]) ese color manda; si no, el ámbar fijo de antes [I].
+        float3 amber = P.tint.a > 0 ? mix(float3(1.0), P.tint.rgb, P.tint.a) : float3(1.070, 1.030, 0.860);
+        c *= mix(float3(1.0), amber, saturate(k * w));
         // 3. Saturación algo más baja en general, pero conservando los cálidos.
         float l2 = dot(c, float3(0.299, 0.587, 0.114));
         float warm = saturate((c.r - c.b) * 2.0);

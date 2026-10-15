@@ -44,6 +44,8 @@ struct AIStats {
     var maxGroundError: Float = 0
     var aiOverlaps = 0                   // coches de la IA que se solapan (choques entre ellos)
     var playerHitsTraffic = 0, playerHitsCops = 0
+    // Choques del juego (Crash/)
+    var copsDamaged = 0, copsDestroyed = 0, carImpacts = 0, smackablesHit = 0, breakersTriggered = 0, copsImmobilized = 0, heliSpawned = 0
     var pursuitsStarted = 0, evaded = 0, busted = 0, maxHeat: Float = 1
     var roadblocks = 0, roadblocksDodged = 0, spikesHit = 0
     var patternsUsed = Set<String>()
@@ -78,6 +80,11 @@ final class AIWorld {
 
     var traffic: TrafficManager!
     var police: PoliceManager!
+    /// Choques del juego entre coches y con los rompibles (Crash/CrashWorld.swift). Sustituye a `resolveContacts`.
+    var crash: CrashWorld?
+    /// Helicóptero de la policía (Crash/Heli.swift) y vehículos en el aire que se dibujan con AIRenderer.
+    var heli: HeliManager?
+    var airVehicles: [AIVehicle] = []
 
     init?(device: MTLDevice, data: GameData, textures: TextureCache, collision: CollisionWorld) {
         let ru = data.url("roads.json"), au = data.url("ai.json")
@@ -90,6 +97,8 @@ final class AIWorld {
         net.wallTest = { [unowned collision] a, b in collision.hitsWall(from: a, to: b) }
         traffic = TrafficManager(world: self)
         police = PoliceManager(world: self)
+        if !ProcessInfo.processInfo.arguments.contains("--no-crash") { crash = CrashWorld(ai: self, data: CrashData.shared(data)) }
+        if !ProcessInfo.processInfo.arguments.contains("--no-heli") { heli = HeliManager(ai: self, root: data.root) }
         // Precarga: todos los modelos de los patrones de tráfico y de la tabla de calor
         var names = tables.trafficPatterns.values.flatMap { $0.vehicles.map(\.model) }
         names += tables.heatLevels.flatMap { $0.cops.map(\.model) }.filter { $0 != "COPHELI" }
@@ -108,8 +117,8 @@ final class AIWorld {
         else { center = cameraPos; centerFwd = simd_normalize(float3(cameraFwd.x, cameraFwd.y, 0) + 1e-6); centerVel = .zero }
         frustum = viewProj.map { Frustum($0) }
         traffic.update(dt: dt)
-        if AIConfig.police { police.update(dt: dt) }
-        resolveContacts(dt: dt)
+        if AIConfig.police { police.update(dt: dt); heli?.update(dt: dt, camera: cameraPos) }
+        if let crash, crash.enabled { crash.step(dt: dt) } else { resolveContacts(dt: dt) }
         for v in vehicles {
             v.age += dt
             v.offscreenTime = onScreen(v.pos, radius: v.radius) ? 0 : v.offscreenTime + dt

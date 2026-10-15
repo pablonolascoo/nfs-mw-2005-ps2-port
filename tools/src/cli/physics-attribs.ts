@@ -34,6 +34,20 @@ function clean(vals: Record<string, Value>): Out {
   return out;
 }
 
+function damageOf(vals: Record<string, Value>): Out {
+  const out: Out = {};
+  for (const [k, x] of Object.entries(vals)) {
+    if (k === "CollectionName") continue;
+    if (x && typeof x === "object" && !Array.isArray(x) && "type" in x) {
+      const o = x as { type: string; raw: Value[] };
+      if (o.type === "DamageScaleRecord") out[k] = { VisualScale: f32(o.raw[0]), HitPointScale: f32(o.raw[1]) };
+      continue;
+    }
+    if (typeof x === "number" || typeof x === "boolean") out[k] = x;
+  }
+  return out;
+}
+
 const byClass = new Map<string, Map<string, ReturnType<typeof db.resolvedValues>>>();
 for (const c of db.collections.values()) {
   const cn = db.names.name(c.classKey);
@@ -62,6 +76,14 @@ for (const [name, pv] of byClass.get("pvehicle") ?? []) {
   const rb = refName(pv.rigidbodyspecs ?? null);
   const rbv = get("rigidbodyspecs", rb);
   v.rigidbody = rbv ? { collection: rb, ...clean(rbv) } : null;
+  // Daños (formato 11): damagespecs del pvehicle [D: DamageVehicle.cpp OnImpact]. DamageScaleRecord = {VisualScale, HitPointScale} [D].
+  const dn = refName(pv.damagespecs ?? null);
+  const dv = get("damagespecs", dn);
+  v.damage = dv ? { collection: dn, ...damageOf(dv) } : null;
+  // Helicóptero: chopperspecs [D: SimpleChopper.cpp]
+  const cn = refName(pv.chopperspecs ?? null);
+  const cv = get("chopperspecs", cn);
+  if (cv) v.chopper = { collection: cn, ...clean(cv) };
   v.upgrades = upgrades;
   // Cámaras de persecución del coche: clase ecar → CameraInfo_* (RefSpec a camerainfo) [V]
   const ecar = get("ecar", name);
@@ -90,9 +112,14 @@ for (const [k, x] of Object.entries(get("controller", "drive") ?? {})) {
 const surf = get("simsurface", "default");
 const surface = surf ? { GROUND_FRICTION: surf.GROUND_FRICTION, LATERAL_GRIP: surf.LATERAL_GRIP, DRIVE_GRIP: surf.DRIVE_GRIP, ROLLING_RESISTANCE: surf.ROLLING_RESISTANCE, WORLD_FRICTION: surf.WORLD_FRICTION } : null;
 
+// Todas las colecciones rigidbodyspecs (los rompibles usan "smackable" [V: smackable.rigidbodyspecs]) (formato 11)
+const rigidbodyspecs: Record<string, Out> = {};
+for (const [n, vals] of byClass.get("rigidbodyspecs") ?? []) rigidbodyspecs[n] = clean(vals);
+
 const out = {
   disc: id,
-  source: "GLOBAL\\ATTRIBUTES.BIN · pvehicle → chassis/tires/engine/transmission/brakes/induction/nos (índice 0) + rigidbodyspecs + camerainfo",
+  rigidbodyspecs,
+  source: "GLOBAL\\ATTRIBUTES.BIN · pvehicle → chassis/tires/engine/transmission/brakes/induction/nos (índice 0) + rigidbodyspecs + damagespecs + chopperspecs + camerainfo",
   note: "AxlePair = [delante, detrás]. Unidades del juego: RIDE_HEIGHT/TRAVEL/SHOCK_VALVING en pulgadas, SPRING/SHOCK/SWAYBAR en lb/in, BRAKES/EBRAKE y TORQUE en ft·lb, SECTION_WIDTH en mm, RIM_SIZE en pulgadas [D: SuspensionRacer.cpp, ConversionUtil.hpp]",
   vehicles, controller, surface,
 };

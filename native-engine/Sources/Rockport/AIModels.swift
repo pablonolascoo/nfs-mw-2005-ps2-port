@@ -21,7 +21,11 @@ final class AIModel {
     let halfLength: Float, halfWidth: Float, height: Float
     /// Destellos de la barra de luces (posición en espacio del coche: X adelante, Y izquierda, Z arriba desde el suelo).
     let flares: [(pos: float3, kind: FlareKind)]
-    static let partCount = 9
+    /// 0 carrocería, 1…4 ruedas, 5…8 frenos y, por cada ranura de daño (Crash/Damage.swift DamageParts.slots), su panel
+    /// intacto DAMAGE0_* (9 + 2k) y el roto DAMAGE1_* (10 + 2k): se enciende uno u otro con la matriz (la otra a cero).
+    static let partCount = 9 + 2 * DamageParts.slots.count
+    /// ¿Tiene paneles rotos (policía)? [V: solo los COP* traen DAMAGE1_* en el disco]
+    private(set) var hasDamageParts = false
 
     init(name: String, mesh: GPUMesh, local: float4x4, axles: [float3], camber: [Float], front: [Bool], frontSign: Float,
          radius: Float, halfLength: Float, halfWidth: Float, height: Float, flares: [(pos: float3, kind: FlareKind)]) {
@@ -31,9 +35,16 @@ final class AIModel {
     }
 
     /// Matrices de las 9 piezas (0 carrocería, 1…4 ruedas, 5…8 frenos) para una pose.
-    func partMatrices(position: float3, yaw: Float, pitch: Float, roll: Float, steer: Float, spin: Float) -> [float4x4] {
+    func partMatrices(position: float3, yaw: Float, pitch: Float, roll: Float, steer: Float, spin: Float, broken: UInt32 = 0) -> [float4x4] {
         let world = float4x4(translation: position) * float4x4(rotationZ: yaw) * float4x4(rotationX: roll) * float4x4(rotationY: -pitch) * local
         var out = [float4x4](repeating: world, count: AIModel.partCount)
+        // Paneles de daño [D: VehiclePartDamageBehaviour::DamageZone → RideInfo::SetPart(DAMAGE1)]: matriz nula = oculto
+        let zero = float4x4(0)
+        for k in 0..<DamageParts.slots.count {
+            let isBroken = (broken >> UInt32(k)) & 1 != 0
+            out[9 + 2 * k] = isBroken ? zero : world
+            out[10 + 2 * k] = isBroken ? world : zero
+        }
         for (i, a) in wheelAxles.enumerated() where i < 4 {
             let st = wheelFront[i] ? steer * 0.45 * frontSign : 0
             let hub = world * float4x4(translation: a) * float4x4(rotationZ: st) * float4x4(rotationX: wheelCamber[i])
@@ -116,7 +127,18 @@ final class AIModel {
             prims.append(p); parts.append(part)
             for v in p.vertices { let w = rest * float4(v.px, v.py, v.pz, 1); box.add(float3(w.x, w.y, w.z)) }
         }
-        for p in shown where !(mounted && special.contains(p.nodeName)) { add(p, part: 0) }
+        // Paneles de daño: DAMAGE0_<RANURA> (intacto, ya en `shown`) y DAMAGE1_<RANURA> (roto, oculto de serie) [V: COP*]
+        var brokenSlotsPresent = Set<String>()
+        for p in file.primitives { if let q = p.piece, q.kind == "dano", q.slot.hasPrefix("DAMAGE1_") { brokenSlotsPresent.insert(String(q.slot.dropFirst(8))) } }
+        func damagePart(_ p: GLBPrimitive) -> Int {
+            guard let q = p.piece, q.variant == "DAMAGE0", brokenSlotsPresent.contains(q.slot), let k = DamageParts.index(q.slot) else { return 0 }
+            return 9 + 2 * k
+        }
+        for p in shown where !(mounted && special.contains(p.nodeName)) { add(p, part: damagePart(p)) }
+        for p in file.primitives {
+            guard let q = p.piece, q.kind == "dano", q.slot.hasPrefix("DAMAGE1_"), q.kit ?? 0 == 0, let k = DamageParts.index(String(q.slot.dropFirst(8))) else { continue }
+            prims.append(p); parts.append(10 + 2 * k)   // no cuenta para la caja del modelo
+        }
 
         var axles: [float3] = [], cambers: [Float] = [], front: [Bool] = []
         var radius: Float = 0.33
@@ -172,8 +194,10 @@ final class AIModel {
         let flares = copLightMarkers(url).map { (p, k) -> (pos: float3, kind: FlareKind) in
             let w = local * float4(p, 1); return (float3(w.x, w.y, w.z), k)
         }
-        return AIModel(name: name, mesh: m, local: local, axles: axles, camber: cambers, front: wheelFront, frontSign: fs,
-                       radius: max(0.2, radius), halfLength: box.size.x / 2, halfWidth: box.size.y / 2, height: box.size.z, flares: flares)
+        let model = AIModel(name: name, mesh: m, local: local, axles: axles, camber: cambers, front: wheelFront, frontSign: fs,
+                            radius: max(0.2, radius), halfLength: box.size.x / 2, halfWidth: box.size.y / 2, height: box.size.z, flares: flares)
+        model.hasDamageParts = !brokenSlotsPresent.isEmpty
+        return model
     }
 }
 
