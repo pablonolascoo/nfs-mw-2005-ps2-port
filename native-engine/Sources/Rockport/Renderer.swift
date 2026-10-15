@@ -161,7 +161,7 @@ final class Renderer {
 
     /// Metalicidad y rugosidad de cada material del coche, como el visor: la pintura (paintCar) 0,45 / 0,32;
     /// el resto, lo que escribe tools/src/lib/glb.ts (metallicFactor 0, roughnessFactor 0,85).
-    static func carPBR(_ d: DrawRange) -> float2 { d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85) }
+    static func carPBR(_ d: DrawRange) -> float2 { d.pbr ?? (d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85)) }
 
     /// Asegura texturas de escena del tamaño máximo (la resolución dinámica usa una parte con el viewport).
     private func ensureTargets(width: Int, height: Int) {

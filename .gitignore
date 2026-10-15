@@ -24,4 +24,8 @@ map-data/**/collision/
 site/.vercel/
 map-data/**/physics.json
 map-data/**/ai.json
+map-data/**/presets.json
+map-data/**/vinyls/
 map-data/**/audio/
+map-data/**/frontend/
+map-data/**/radio/

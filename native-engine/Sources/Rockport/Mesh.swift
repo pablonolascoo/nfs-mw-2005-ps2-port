@@ -16,6 +16,7 @@ struct DrawRange {
     var wrap: Int = 3          // bit 0 repite U, bit 1 repite V
     var part: Int = 0          // pieza (coches: 0 = carrocería, 1…4 = ruedas)
     var visible = true
+    var pbr: float2? = nil     // coches: metalicidad y rugosidad propias (acabado de la pintura del preset, CarSkin.swift)
 }
 
 final class GPUMesh {

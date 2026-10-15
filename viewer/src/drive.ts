@@ -114,16 +114,35 @@ export function makeCollider(m: THREE.Mesh) {
 
 /** Atributos de coche de cars.json (tools/src/cli/car-attribs.ts): clase ecar + RIM_SIZE de la clase tires. */
 export interface CarAttribs { tires: number[][]; spokes?: number; skidWidth?: number[]; kitWidthScale?: number[][]; kitOffsetFront?: number[]; kitOffsetRear?: number[]; camber?: [number, number]; feCompression?: number[]; rimSize?: number[] }
-/** Configuración de tuneo: kit de carrocería, capó, llantas, alerón y toma de techo (null/undefined = de serie). */
-export interface CarConfig { kit?: number; hood?: number | null; rim?: string | null; spoiler?: string | null; roof?: string | null }
+/** Configuración de tuneo: kit de carrocería, capó, llantas, alerón y toma de techo (null/undefined = de serie).
+ *  `preset`: coche predefinido del juego (presets.json, tools/src/cli/presets.ts): manda sobre todo lo demás. */
+export interface CarConfig { kit?: number; hood?: number | null; rim?: string | null; spoiler?: string | null; roof?: string | null; preset?: CarPreset | null }
+type PresetColour = { name: string; rgb: string; gloss: number; finish: string; material?: string };
+/** Preset del juego (presets.json): sólidos exactos por ranura, pintura, vinilo, llanta y cristales [V: GLOBALB.BUN PresetCar]. */
+export interface CarPreset {
+  name: string; car: string; base: string; blacklist: number | null; kit: number;
+  solids: { slot: string; part: string; glb: string; node: string }[];
+  paint: PresetColour | null;
+  vinyl: { name: string; texture: string; image: string | null; mask: string | null; remap: number; colours: (PresetColour | null)[] } | null;
+  rim: { name: string; texture: string | null; innerMask: string | null } | null;
+  rimPaint: PresetColour | null;
+  windowTint: { name: string; rgb: string; opacity: number } | null;
+}
+/** Packs de tuneo que necesita un preset (WHEELS, SPOILER*, ROOF). */
+export const presetPacks = (p: CarPreset) => [...new Set(p.solids.filter(s => s.glb !== p.car).map(s => s.glb))];
+const presetFor = (model: THREE.Object3D, cfg: CarConfig) => {
+  const p = cfg.preset; if (!p) return null;
+  let ok = false; model.traverse(o => { if (!ok && pieza(o) && o.name.startsWith(p.car + "_")) ok = true; });
+  return ok ? p : null;
+};
 type Pieza = { slot: string; kit?: number; style?: number; stock: boolean; kind: string; variant?: string };
 const pieza = (o: THREE.Object3D) => o.userData?.pieza as Pieza | undefined;
 
 /** Packs comunes de tuneo ya cargados (WHEELS, SPOILER, ROOF…): los registra main.ts. */
 export const tuningPacks = new Map<string, THREE.Object3D>();
-function findTuningPart(variant: string): THREE.Object3D | null {
+function findTuningPart(variant: string, exact = false): THREE.Object3D | null {
   let hit: THREE.Object3D | null = null;
-  for (const pack of tuningPacks.values()) pack.traverse(o => { if (!hit && o.name.replace(/_[A-E]$/, "") === variant && pieza(o)) hit = o; });
+  for (const pack of tuningPacks.values()) pack.traverse(o => { if (!hit && (exact ? o.name === variant : o.name.replace(/_[A-E]$/, "") === variant) && pieza(o)) hit = o; });
   return hit;
 }
 
@@ -133,6 +152,18 @@ function findTuningPart(variant: string): THREE.Object3D | null {
  * capó STYLEnn en lugar del KITnn_HOOD; sin daños ni zonas de vinilo; UNIVERSAL_SPOILER_BASE solo con alerón de tuneo.
  */
 export function applyCarConfig(model: THREE.Object3D, cfg: CarConfig = {}) {
+  const preset = presetFor(model, cfg);
+  if (preset) {
+    // Preset: exactamente sus sólidos; sin zonas de calcomanía; base de alerón solo con alerón de tuneo [D: CarRender.cpp 1894].
+    const tunedSpoiler = preset.solids.some(s => s.slot === "SPOILER" && s.glb !== preset.car);
+    const want = new Set(preset.solids.filter(s => s.glb === preset.car && !s.slot.startsWith("DECAL_") && (s.slot !== "UNIVERSAL_SPOILER_BASE" || tunedSpoiler)).map(s => s.node));
+    // Sólidos rotos del disco (CAYMANS_KIT00_REAR_*_WINDOW, a 9 m) fuera, igual que Car.swift [V].
+    const sane = (o: THREE.Object3D) => { const b = new THREE.Box3().setFromObject(o); return b.isEmpty() || (Math.abs(b.max.y) < 4 && Math.abs(b.min.y) < 4 && b.min.z > -3); };
+    model.traverse(o => { if (pieza(o)) o.visible = want.has(o.name); });
+    model.updateMatrixWorld(true);
+    model.traverse(o => { if (pieza(o) && o.visible && !sane(o)) o.visible = false; });
+    return;
+  }
   const kitsBySlot = new Map<string, Set<number>>();
   model.traverse(o => { const p = pieza(o); if (p?.kit !== undefined) (kitsBySlot.get(p.slot) ?? kitsBySlot.set(p.slot, new Set()).get(p.slot)!).add(p.kit); });
   const hoodStyle = cfg.hood ?? null;
@@ -186,13 +217,19 @@ export function mountWheels(model: THREE.Object3D, attr?: CarAttribs, cfg: CarCo
   if (!attr?.tires) return model;
   model.updateMatrixWorld(true); // aún sin padre: espacio de mundo = coordenadas del coche
   const find = (re: RegExp) => { let hit: THREE.Object3D | null = null; model.traverse(o => { if (!hit && o.visible !== false && re.test(o.name) && pieza(o)) hit = o; }); return hit as THREE.Object3D | null; };
-  const kit = cfg.kit ?? 0;
+  const preset = presetFor(model, cfg);
+  const kit = preset?.kit ?? cfg.kit ?? 0;
   const stockFront = find(/_FRONT_TIRE(_[A-E])?$/), stockRear = find(/_REAR_TIRE(_[A-E])?$/) ?? stockFront;
   const brakeF = find(/_FRONT_BRAKE(_[A-E])?$/), brakeR = find(/_REAR_BRAKE(_[A-E])?$/) ?? brakeF;
   let rim: THREE.Object3D | null = null;
   if (cfg.rim) {
     const want = Math.round(attr.rimSize?.[0] ?? 18), sizes = [want, 18, 17, 19, 20];
     for (const sz of sizes) { rim = findTuningPart(`${cfg.rim}_${Math.min(20, Math.max(17, sz))}_25`); if (rim) break; }
+  }
+  if (preset) {
+    // Rueda del preset: la de serie o una llanta de tuneo de WHEELS (rueda entera) [D: CarRender.cpp]
+    const s = preset.solids.find(x => x.slot === "FRONT_WHEEL");
+    if (s) { if (s.glb === preset.car) { let hit: THREE.Object3D | null = null; model.traverse(o => { if (!hit && o.name === s.node) hit = o; }); rim = hit; } else rim = findTuningPart(s.node, true); }
   }
   const front = rim ?? stockFront, rear = rim ?? stockRear;
   if (!front) return model;
@@ -234,9 +271,12 @@ export function mountWheels(model: THREE.Object3D, attr?: CarAttribs, cfg: CarCo
 
 /** Alerón y toma de techo de tuneo en los marcadores SPOILER / ROOF_SCOOP de la pieza BASE [D: CarRender.cpp 3262-3316]. */
 function mountAddons(model: THREE.Object3D, assembly: THREE.Object3D, cfg: CarConfig) {
-  for (const [variant, mk] of [[cfg.spoiler, "SPOILER"], [cfg.roof, "ROOF_SCOOP"]] as const) {
+  const preset = presetFor(model, cfg);
+  const pack = (slot: string) => preset?.solids.find(s => s.slot === slot && s.glb !== preset.car)?.node ?? null;
+  const list = preset ? [[pack("SPOILER"), "SPOILER"], [pack("ROOF"), "ROOF_SCOOP"]] as const : [[cfg.spoiler, "SPOILER"], [cfg.roof, "ROOF_SCOOP"]] as const;
+  for (const [variant, mk] of list) {
     if (!variant) continue;
-    const part = findTuningPart(variant), m = marker(model, mk);
+    const part = findTuningPart(variant, !!preset), m = marker(model, mk);
     if (!part || !m) continue;
     const g = instancePart(part, m); g.name = variant; assembly.add(g);
   }
@@ -262,7 +302,8 @@ export function carHolder(model0: THREE.Object3D, attr?: CarAttribs, paint?: str
   applyCarConfig(model0, cfg);
   const model = mountWheels(model0, attr, cfg);
   mountAddons(model0, model, cfg);
-  if (paint) paintCar(model, paint);
+  const preset = presetFor(model0, cfg);
+  if (preset) skinCar(model, preset); else if (paint) paintCar(model, paint);
   const box = new THREE.Box3();
   model.updateMatrixWorld(true);
   model.traverse(o => { const m = o as THREE.Mesh; if (!m.isMesh) return; let v = true; for (let p: THREE.Object3D | null = m; p; p = p.parent) if (!p.visible) { v = false; break; } if (v) { m.geometry.computeBoundingBox(); box.union(m.geometry.boundingBox!.clone().applyMatrix4(m.matrixWorld)); } });
@@ -275,4 +316,64 @@ export function carHolder(model0: THREE.Object3D, attr?: CarAttribs, paint?: str
   holder.rotation.z = front > 0 ? 0 : Math.PI;
   const outer = new THREE.Group(); outer.add(holder);
   return { holder: outer, size };
+}
+
+/** Carpeta de datos del disco (/<ID>/) para leer los PNG de vinyls/: la fija main.ts. */
+export const presetData = { base: "" };
+const loadImage = (url: string) => new Promise<HTMLImageElement>((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+/** Píxeles de un PNG reescalado a w×h con filtrado bilineal del navegador. */
+async function pixels(url: string, w: number, h: number) {
+  const img = await loadImage(url);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d", { willReadFrequently: true })!; g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  g.drawImage(img, 0, 0, w, h);
+  return g.getImageData(0, 0, w, h).data;
+}
+const skinCache = new Map<string, THREE.Texture>();
+/**
+ * Piel compuesta como CarSkin.cpp [D] (misma regla que native-engine/Sources/Rockport/CarSkin.swift): base = pintura (alfa = GLOSS);
+ * m = R de la máscara del vinilo; m ≥ 128 → vinilo, 0 < m < 128 → mezcla m/128. Al doble de la resolución del PS2 (512 → 1024).
+ */
+export function presetSkin(p: CarPreset): THREE.Texture {
+  const hit = skinCache.get(p.name); if (hit) return hit;
+  const W = 1024, H = 1024, canvas = document.createElement("canvas"); canvas.width = W; canvas.height = H;
+  const g = canvas.getContext("2d")!;
+  g.fillStyle = `#${p.paint?.rgb ?? "b7b7b7"}`; g.fillRect(0, 0, W, H);
+  const tex = new THREE.CanvasTexture(canvas); tex.colorSpace = THREE.SRGBColorSpace; tex.flipY = false; tex.anisotropy = 8;
+  skinCache.set(p.name, tex);
+  const v = p.vinyl;
+  if (v?.image && v.mask) Promise.all([pixels(`${presetData.base}${v.image}`, W, H), pixels(`${presetData.base}${v.mask}`, W, H)]).then(([img, mask]) => {
+    const out = g.getImageData(0, 0, W, H), d = out.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const m = mask[i]; if (m === 0) continue;
+      const k = Math.min(1, m / 128);
+      for (let c = 0; c < 3; c++) d[i + c] = Math.round(img[i + c] * k + d[i + c] * (1 - k));
+    }
+    g.putImageData(out, 0, 0); tex.needsUpdate = true;
+  }).catch(e => console.warn("vinilo", p.name, e));
+  return tex;
+}
+
+/** Viste el coche con el preset: piel compuesta en los materiales "pintura" (SKIN1, SPOILER_SKIN1, ROOF_SKIN), acabado y cristales. */
+export function skinCar(model: THREE.Object3D, p: CarPreset) {
+  const map = presetSkin(p);
+  const finish = p.paint?.finish === "METAL" ? [0.6, 0.3] : p.paint?.finish === "PEARL" ? [0.4, 0.22] : [0.12, 0.24];
+  const tint = p.windowTint && !/^STOCK/i.test(p.windowTint.name) ? p.windowTint : null;
+  const done = new Map<THREE.Material, THREE.Material>();
+  model.traverse(o => {
+    const m = o as THREE.Mesh; if (!m.isMesh) return;
+    const swap = (mat: THREE.Material) => {
+      const c0 = done.get(mat); if (c0) return c0;
+      let c = mat;
+      if (mat.userData?.role === "pintura") {
+        const n = mat.clone() as THREE.MeshStandardMaterial; n.map = map; n.color.set(0xffffff); n.metalness = finish[0]; n.roughness = finish[1]; c = n;
+      } else if (tint && /^WINDOW_(?!MASK)|^REAR_DEFROSTER/.test(mat.name)) {
+        // Tintado [I]: el juego cambia el material de luz (WINDSHIELD_TINT_*); aquí se tiñe y oscurece el cristal.
+        const n = mat.clone() as THREE.MeshStandardMaterial; const t = new THREE.Color(`#${tint.rgb}`); const mx = Math.max(t.r, t.g, t.b, 0.001);
+        n.color.multiply(new THREE.Color(1, 1, 1).lerp(new THREE.Color(t.r / mx * 0.55, t.g / mx * 0.55, t.b / mx * 0.55), tint.opacity)); c = n;
+      }
+      done.set(mat, c); return c;
+    };
+    m.material = Array.isArray(m.material) ? m.material.map(swap) : swap(m.material);
+  });
 }

@@ -12,7 +12,7 @@ import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "
 import { compiled } from "../lib/paths";
 
 /** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
-export const DATA_FORMAT = 2; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json)
+export const DATA_FORMAT = 3; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía)
 
 const [mode, ...rest] = Bun.argv.slice(2);
 
@@ -26,11 +26,14 @@ if (mode === "step") {
     case "convert": await import("./convert"); break;
     case "garages": await import("./garages"); break;
     case "car-attribs": await import("./car-attribs"); break;
+    case "presets": await import("./presets"); break;
     case "physics-attribs": await import("./physics-attribs"); break;
     case "ai-attribs": await import("./ai-attribs"); break;
+    case "frontend": await import("./frontend"); break;
     case "roads": await import("./roads"); break;
     case "collision": await import("./collision"); break;
     case "topdown": await import("./topdown"); break;
+    case "radio": await (await import("./radio")).main(Bun.argv.slice(2)); break;
     default: console.error(`Paso desconocido: ${name}`); process.exit(2);
   }
 } else if (mode === "install") {
@@ -50,8 +53,11 @@ if (mode === "step") {
     ["Coches", "convert", [iso, id, "car"]],      // la lista de coches se añade tras el inventario
     ["Puertas de garajes", "garages", [iso, id]],
     ["Ruedas de los coches", "car-attribs", [iso, id]],
+    ["Coches de la Lista Negra (presets y vinilos)", "presets", [iso, id]],
     ["Física de los coches", "physics-attribs", [iso, id]],
     ["Tráfico y policía", "ai-attribs", [iso, id]],
+    ["Radio de la policía", "radio", [iso, id]],
+    ["Interfaz del juego (menús, HUD, textos)", "frontend", [iso, id]],
     ["Red de carreteras", "roads", [iso, id]],
     ["Colisión", "collision", [iso, id]],
     ["Plano de la ciudad", "topdown", [iso, id, "2048"]],

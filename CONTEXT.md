@@ -48,6 +48,7 @@
 | 14 | Tráfico, policía y persecuciones | [es](docs/es/14-trafico-y-policia.md) | [en](docs/en/14-traffic-and-police.md) |
 | 15 | Mandos | [es](docs/es/15-mandos.md) | [en](docs/en/15-controllers.md) |
 | 16 | Audio y voces | [es](docs/es/16-audio-y-voces.md) | [en](docs/en/16-audio-and-voices.md) |
+| 17 | Interfaz original (FEng): menús, HUD, fuentes, textos | [es](docs/es/17-interfaz.md) | [en](docs/en/17-interface.md) |
 
 ## 3b. Producto final (lo que queremos entregar)
 - Un `Rockport.dmg` en *Releases* de GitHub. Al abrirlo pide la ISO, detecta PAL (SLES-53559) o NTSC-U (SLUS-21351) por `SYSTEM.CNF` y convierte los datos en `~/Library/Application Support/Rockport/<ID>/`.
@@ -76,7 +77,7 @@ Carreteras: `L2RA.BUN` chunk `0x0003B800` (RNgp). Colisión: `STREAML2RA.BUN` ch
 - Escenario PS2: instancia 0x40 B, `ExcludeFlags` 0x10 oculto / 0x400 espejo, rotación `s16/8192`.
 - Grupos: `BARRIER_SPLINE_n` vallas de carrera, `BARRIER_LOCKED_10…15` candados de historia.
 - Garajes: puerta real = triángulos con textura `ARC_HOSPITAL_GARAGEDOOR`. En el juego, la zona llama a `EQuitToFE(GARAGETYPE_*)`.
-- Coches: pintura `<COCHE>_SKIN1` y cristales/faros son texturas de sustitución (no están en el disco). Una rueda por modelo; cara exterior en |y| = `TireOffsets.y`.
+- Coches: pintura `<COCHE>_SKIN1` y cristales/faros son texturas de sustitución (no están en el disco). La piel sale de pintura + vinilo (`VINYLS.BIN`, 512×512, máscara R ≥ 128 opaca) y los presets de `GLOBALB.BUN` chunk `0x00030220` (0x290 B). Una rueda por modelo; cara exterior en |y| = `TireOffsets.y`.
 - Carreteras en espacio "Bond": X = z, Y = −x, Z = y. Tramos = Bézier cúbicas.
 
 ## 7. Estado y pendientes (2026-10-12)
@@ -88,12 +89,15 @@ Hecho:
 - **Instalador**: la app pide la ISO, detecta PAL/NTSC-U y convierte en ~4,6 min, sin repo ni decomp [V con las dos ISOs]. `native-engine/scripts/make-dmg.sh` monta el `.dmg`.
 
 - **v0.2**: física de conducción del juego (decomp), 4 cámaras, mandos con barra de luz/táctil/gatillos, tráfico y policía con persecuciones, controles y HUD; tono PS2 fijo; datos versionados (`DATA_FORMAT` en `tools/src/cli/install.ts` = `Config.dataFormat`): si la app es más nueva que los datos, reconvierte con la misma ISO.
+- **Coches del juego (presets)**: los 82 presets de `GLOBALB.BUN` (Lista Negra 1–15, BMW de la historia) → `presets.json` + vinilos; la piel se compone como `CarSkin.cpp` en el motor nativo (`CarSkin.swift`) y en el visor. El jugador sale con el BMW M3 GTR plata y azul; `--car-preset` / `?preset=` (doc 10 §8).
+- **Interfaz original** (doc 17): paquetes FEng descifrados; «Pulsa START», menú principal, carrera, pausa y HUD del juego a resolución nativa (SDF para letras, bicúbica para imágenes).
 - Audio del disco extraído (doc 16). Las voces de la historia solo existen en inglés; la radio de la policía, en castellano/inglés/italiano. No se clonan voces sin permiso de los actores.
+- **Radio de la policía en el juego**: decodificador MicroTalk propio (TS + Swift, igual a vgmstream ±1), tablas `.IDX/.EVT` leídas, frases por evento de la persecución, paso `radio` del conversor → `radio/` (doc 16 §5–6). Suena por el altavoz del mando (USB; Bluetooth por informes HID Opus/SBC sin probar con hardware) o el Mac con filtro de escáner. **Barra de luz** como opción de tuneo con colores de persecución (doc 15 §7–8).
 
 Siguiente, por orden:
 1. Carreras y Lista Negra jugables (rutas: `TrackPathManager` + eventos de `gameplay.json`), menús mínimos al estilo MW.
 2. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
-3. Audio dentro del juego: motores, sirenas, radio de la policía (descifrar `.IDX/.CSI/.EVT`), películas.
+3. Audio dentro del juego: motores, sirenas, películas (la radio de la policía ya suena: falta probar el altavoz del mando con hardware).
 4. Choques del juego original (coche contra coche y muros), daños, pinchos; helicóptero.
 5. Probar mandos con hardware real; firma Developer ID (necesita cuenta de pago: decisión del dueño).
 6. Expansión «Rust Belt» como mod ([ROADMAP.md](ROADMAP.md), doc 12).

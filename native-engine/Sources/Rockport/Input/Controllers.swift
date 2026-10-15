@@ -1,6 +1,6 @@
 // Mandos: enchufar y jugar, con cable o Bluetooth.
 //  · GameController.framework para lo que macOS reconoce de serie: Xbox One/Series, DualShock 4, DualSense, MFi.
-//    Extras: barra de luz (color de la pintura; rojo/azul en persecución), gatillos adaptativos del DualSense,
+//    Extras: barra de luz (modo de tuneo y colores de persecución: Input/LightBarConfig.swift), gatillos adaptativos del DualSense,
 //    vibración con CoreHaptics, panel táctil (deslizar = cámara, pulsar = mirar atrás, toque = vistazo atrás,
 //    dos dedos = modo foto).
 //  · HIDPads.swift (IOKit) para el resto: DualShock 3 por USB, adaptadores USB de mandos de PS2 y mandos HID genéricos.
@@ -55,6 +55,7 @@ final class Controllers {
         var twoFinger = false
         var touchEvent: String? = nil            // "izq", "dcha", "toque", "dos"
         var lastTrigger = ""
+        var lastLight = SIMD3<Int>(-1, -1, -1)
         init(_ c: GCController) { controller = c }
     }
 
@@ -194,17 +195,26 @@ final class Controllers {
 
     // MARK: Luz, vibración y gatillos
 
-    /// Para el tráfico/policía: persecución activa → barra de luz roja/azul intermitente.
-    func setPursuit(active: Bool) { pursuit = active }
-    /// Color normal de la barra de luz (pintura del coche, sRGB 0…1).
+    /// Para el tráfico/policía: persecución sí/no. Los estados finos (enfriamiento, arresto, escapado, calor) los da
+    /// PursuitFX a LightBar cada fotograma; esto queda como respaldo si no hay IA.
+    func setPursuit(active: Bool) {
+        pursuit = active
+        if LightBar.shared.pursuit == .none || LightBar.shared.pursuit == .chase { LightBar.shared.note(active ? .chase : .none, heat: LightBar.shared.heat) }
+    }
+    /// Color normal de la barra de luz (pintura del coche, sRGB 0…1). El modo de la barra lo decide LightBar (Input/LightBarConfig.swift).
     func setPaint(_ rgb: SIMD3<Float>) { paint = rgb; for p in pads { applyLight(p) } }
 
     private func applyLight(_ p: Pad) {
         guard let light = p.controller.light else { return }
-        var c = paint
-        if pursuit { c = Int(clock * 4) % 2 == 0 ? SIMD3(1, 0, 0) : SIMD3(0, 0.25, 1) }
+        let c = LightBar.shared.color(time: clock, paint: paint)
+        let key = SIMD3<Int>(Int(c.x * 255), Int(c.y * 255), Int(c.z * 255))
+        guard key != p.lastLight else { return }   // no inundar el mando con el mismo color
+        p.lastLight = key
         light.color = GCColor(red: c.x, green: c.y, blue: c.z)
     }
+
+    /// Mandos conectados que tienen barra de luz (DualShock 4 / DualSense).
+    var lightBarPads: Int { pads.filter { $0.controller.light != nil }.count }
 
     /// Cada fotograma en conducción.
     func update(feedback f: PadFeedback) {

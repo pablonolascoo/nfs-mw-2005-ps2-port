@@ -1,5 +1,7 @@
 // Coche del jugador: modelo del juego (cars/<NOMBRE>.glb) con una pieza por ranura, ruedas y frenos montados como el juego
 // (cars.json), pintura sobre los materiales con role "pintura", y la física del juego (Physics/) sobre la colisión real.
+// Con un preset del juego (presets.json, CarSkin.swift) se montan exactamente sus piezas —kit, capó, alerón y toma de techo
+// de los packs SPOILER*/ROOF, llantas de WHEELS— y la carrocería lleva la piel compuesta (pintura + vinilo) como CarSkin.cpp.
 // Montaje igual que viewer/src/drive.ts (applyCarConfig, mountWheels, paintCar). Conducción: PVehicle (doc 13).
 import Foundation
 import Metal
@@ -96,18 +98,77 @@ final class Car {
         return q
     }
 
-    init?(device: MTLDevice, data: GameData, textures: TextureCache, name: String, paint: float3, config: CarConfig = CarConfig()) {
+    /// Packs comunes de tuneo ya leídos (WHEELS, SPOILER*, ROOF): se comparten entre coches.
+    private static var packCache: [String: GLBFile] = [:]
+    private static let packLock = NSLock()
+    static func pack(_ data: GameData, _ name: String) -> GLBFile? {
+        packLock.lock(); defer { packLock.unlock() }
+        if let f = packCache[name] { return f }
+        guard let f = try? GLB.load(data.url("cars/\(name).glb")) else { return nil }
+        packCache[name] = f
+        return f
+    }
+
+    /// Añade a `base` las primitivas de `other` cuyo nodo esté en `nodes`, con sus materiales e imágenes (índices desplazados).
+    static func merged(_ base: GLBFile, _ other: GLBFile, nodes: Set<String>) -> GLBFile {
+        var out = base
+        let mo = base.materials.count, io = base.images.count
+        out.images += other.images
+        out.materials += other.materials.map { m in var q = m; q.image = m.image.map { $0 + io }; return q }
+        for p in other.primitives where nodes.contains(p.nodeName) { var q = p; q.material += mo; out.primitives.append(q) }
+        return out
+    }
+
+    /// Piezas visibles de un preset: exactamente sus sólidos del GLB del coche, sin zonas de calcomanía (vacías sin textura de
+    /// calcomanía [D]) y UNIVERSAL_SPOILER_BASE solo con alerón de tuneo [D: CarRender.cpp 1894-1909].
+    static func presetParts(_ prims: [GLBPrimitive], _ preset: CarPreset, car: String) -> [Bool] {
+        let aftermarketSpoiler = preset.solid("SPOILER").map { $0.glb != car } ?? false
+        var want = Set<String>()
+        for s in preset.solids where s.glb == car {
+            if s.slot.hasPrefix("DECAL_") { continue }
+            if s.slot == "UNIVERSAL_SPOILER_BASE" && !aftermarketSpoiler { continue }
+            want.insert(s.node)
+        }
+        return prims.map { $0.piece == nil || want.contains($0.nodeName) }
+    }
+
+    init?(device: MTLDevice, data: GameData, textures: TextureCache, name: String, paint: float3, config cfg: CarConfig = CarConfig(), preset: CarPreset? = nil) {
         let url = data.url("cars/\(name).glb")
-        guard let file = try? GLB.load(url) else { fputs("coche: no se pudo leer \(url.path)\n", stderr); return nil }
+        guard var file = try? GLB.load(url) else { fputs("coche: no se pudo leer \(url.path)\n", stderr); return nil }
         let attr = data.carAttribs(name)
-        let vis = Car.visibleParts(file.primitives, config)
-        let shown = file.primitives.indices.filter { vis[$0] }.map { file.primitives[$0] }
+        var config = cfg
+        var keyPrefix = url.path
+        var vis = Car.visibleParts(file.primitives, config)
+        var packNodes: [String: [GLBPrimitive]] = [:]   // nodo de pack → primitivas (llantas, alerón, techo)
+        if let preset {
+            config.kit = preset.kit
+            let pv = Car.presetParts(file.primitives, preset, car: name)
+            // Sin carrocería (nombres que no cuadran): se queda la configuración normal.
+            if file.primitives.indices.contains(where: { pv[$0] && file.primitives[$0].piece?.slot == "BODY" }) { vis = pv }
+            else { fputs("coche: el preset \(preset.name) no encaja con \(name); se monta de serie\n", stderr) }
+            let byPack = Dictionary(grouping: preset.solids.filter { $0.glb != name }, by: \.glb)
+            for packName in byPack.keys.sorted() {
+                guard let pf = Car.pack(data, packName) else { fputs("coche: falta el pack \(packName)\n", stderr); continue }
+                let nodes = Set(byPack[packName]!.map(\.node))
+                let before = file.primitives.count
+                file = Car.merged(file, pf, nodes: nodes)
+                vis += [Bool](repeating: false, count: file.primitives.count - before)
+                for p in file.primitives[before...] { packNodes[p.nodeName, default: []].append(p) }
+                keyPrefix += "+\(packName)"
+            }
+        }
+        // Sólidos rotos del disco: CAYMANS_KIT00_REAR_*_WINDOW tiene vértices a 9 m del coche [V]; el juego no los dibuja
+        // (el Cayman no tiene ventanillas traseras). Fuera todo lo que se salga de un coche (|y| > 3 m o z < -2 m).
+        func sane(_ p: GLBPrimitive) -> Bool { p.piece == nil || !p.vertices.contains { abs($0.py) > 3 || $0.pz < -2 || abs($0.px) > 8 } }
+        let shown = file.primitives.indices.filter { vis[$0] && sane(file.primitives[$0]) }.map { file.primitives[$0] }
 
         // Modelo de rueda = pieza FRONT_TIRE (detrás, REAR_TIRE si existe); frenos FRONT_BRAKE / REAR_BRAKE [D: CarRender.cpp 1855-1999].
+        // Con preset: el sólido de FRONT_WHEEL / REAR_WHEEL (rueda de serie o llanta de tuneo de WHEELS, que es la rueda entera).
         func node(_ suffix: String) -> String? {
             shown.first { $0.piece != nil && $0.nodeName.range(of: "_\(suffix)(_[A-E])?$", options: .regularExpression) != nil }?.nodeName
         }
-        let tireF = node("FRONT_TIRE"), tireR = node("REAR_TIRE") ?? tireF
+        let presetTire = preset?.solid("FRONT_WHEEL")?.node
+        let tireF = presetTire ?? node("FRONT_TIRE"), tireR = preset?.solid("REAR_WHEEL")?.node ?? (presetTire != nil ? tireF : (node("REAR_TIRE") ?? tireF))
         let brakeF = node("FRONT_BRAKE"), brakeR = node("REAR_BRAKE") ?? brakeF
         let mounted = attr?.tires != nil && tireF != nil
         let special = Set([tireF, tireR, brakeF, brakeR].compactMap { $0 })
@@ -121,11 +182,21 @@ final class Car {
         }
         for p in shown where !(mounted && special.contains(p.nodeName)) { add(p, part: 0) }
 
+        // Alerón y toma de techo de tuneo en los marcadores SPOILER / ROOF_SCOOP de la pieza BASE [D: CarRender.cpp 3262-3316].
+        if let preset {
+            let baseMarkers = file.primitives.first { $0.piece?.slot == "BASE" }?.markers ?? [:]
+            for (slot, marker) in [("SPOILER", "SPOILER"), ("ROOF", "ROOF_SCOOP")] {
+                guard let s = preset.solid(slot), s.glb != name, let ps = packNodes[s.node] else { continue }
+                guard let m = baseMarkers[marker] else { fputs("coche: \(name) sin marcador \(marker)\n", stderr); continue }
+                for p in ps { add(Car.transformed(p, m), part: 0) }
+            }
+        }
+
         var axles: [float3] = [], cambers: [Float] = [], front: [Bool] = []
         var radius: Float = 0.33
         if mounted, let attr, let tires = attr.tires {
             let kit = config.kit
-            func primsOf(_ n: String?) -> [GLBPrimitive] { n.map { n in shown.filter { $0.nodeName == n } } ?? [] }
+            func primsOf(_ n: String?) -> [GLBPrimitive] { n.map { n in packNodes[n] ?? shown.filter { $0.nodeName == n } } ?? [] }
             func boxOf(_ ps: [GLBPrimitive]) -> AABB { var b = AABB.empty; for p in ps { for v in p.vertices { b.add(float3(v.px, v.py, v.pz)) } }; return b }
             for (i, t) in tires.prefix(4).enumerated() where t.count >= 4 {
                 let isFront = i <= 1, left = i == 0 || i == 3
@@ -189,13 +260,49 @@ final class Car {
 
         // GPUMesh.build agrupa por (pieza, material): la pieza sale de un índice paralelo
         let tagged = zip(prims, parts).map { p, part -> GLBPrimitive in var q = p; q.nodeName = "\(part)|" + p.nodeName; return q }
-        guard let m = GPUMesh.build(device: device, file: file, textures: textures, keyPrefix: url.path, prims: tagged,
+        guard let m = GPUMesh.build(device: device, file: file, textures: textures, keyPrefix: keyPrefix, prims: tagged,
                                     partOf: { Int($0.nodeName.split(separator: "|").first ?? "0") ?? 0 }) else { return nil }
         // Pintura del jugador sobre <COCHE>_SKIN1 (role "pintura"). Las tarjetas de llanta ya miran bien: se dibujan.
         for i in m.draws.indices where m.draws[i].role == "pintura" { m.draws[i].color = float4(srgbToLinear(paint), 1) }
+        if let preset { Car.dress(m, preset: preset, file: file, data: data, textures: textures) }
         mesh = m
         if ProcessInfo.processInfo.environment["ROCKPORT_DEBUG_CAR"] != nil {   // depuración: tramos de dibujo del coche
             for d in m.draws { print("tramo pieza \(d.part) \(d.name) \(d.kind) tex \(d.texture.map { "\($0.width)x\($0.height)" } ?? "—") tri \(d.indexCount / 3)") }
+        }
+    }
+
+    /// Viste la malla con el preset: piel compuesta en <COCHE>_SKIN1 / SPOILER_SKIN1 / ROOF_SKIN / GLOBAL_SKIN1 (role "pintura")
+    /// [D: GetUsedCarTextureInfo, ReplaceSkinHash], acabado de la pintura, llanta teñida con PAINT_RIM y tintado de cristales.
+    static func dress(_ m: GPUMesh, preset: CarPreset, file: GLBFile, data: GameData, textures: TextureCache) {
+        let skin = CarSkin.texture(preset, data: data, textures: textures)
+        // Acabado [I]: GLOSS = esmalte, METAL = metalizado, PEARL = perlado (el PS2 usa mapas de entorno; aquí, PBR del visor).
+        let finish: float2 = switch preset.paint?.finish {
+        case "METAL": float2(0.6, 0.3)
+        case "PEARL": float2(0.4, 0.22)
+        default: float2(0.12, 0.24)
+        }
+        for i in m.draws.indices where m.draws[i].role == "pintura" {
+            if let skin { m.draws[i].texture = skin; m.draws[i].color = float4(1, 1, 1, 1) }
+            else if let p = preset.paint { m.draws[i].color = float4(srgbToLinear(p.srgb), 1) }
+            m.draws[i].pbr = finish
+        }
+        // Llanta: <LLANTA>_WHEEL teñida con PAINT_RIM según su máscara interior [D: CompositeRim]
+        if preset.rimPaint != nil, let wheelTex = preset.rim?.texture {
+            if let mi = file.materials.firstIndex(where: { $0.name == wheelTex }), let im = file.materials[mi].image, im < file.images.count,
+               let png = file.images[im].data, let rim = CarSkin.rimTexture(preset, wheelPNG: png, data: data, textures: textures) {
+                for i in m.draws.indices where m.draws[i].name == wheelTex { m.draws[i].texture = rim }
+            }
+        }
+        // Cristales tintados [I]: el juego cambia su material de luz (WINDSHIELD_TINT_*); aquí se oscurecen y tiñen.
+        if let t = preset.windowTint, !t.name.uppercased().hasPrefix("STOCK") {
+            let v = UInt32(t.rgb, radix: 16) ?? 0
+            let c = srgbToLinear(float3(Float((v >> 16) & 255), Float((v >> 8) & 255), Float(v & 255)) / 255)
+            let hue = c / max(c.max(), 0.001)
+            for i in m.draws.indices where m.draws[i].name.hasPrefix("WINDOW_") && m.draws[i].name != "WINDOW_MASK" || m.draws[i].name == "REAR_DEFROSTER" {
+                let k = t.opacity
+                let rgb = simd_mix(float3(1, 1, 1), hue * 0.55, float3(repeating: k))
+                m.draws[i].color = float4(m.draws[i].color.x * rgb.x, m.draws[i].color.y * rgb.y, m.draws[i].color.z * rgb.z, min(1, m.draws[i].color.w * (1 + 0.3 * k)))
+            }
         }
     }
 

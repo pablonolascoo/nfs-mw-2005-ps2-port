@@ -26,6 +26,10 @@ struct Options {
     var size = (1920, 1080)
     var frames = 30
     var seconds: Double = 20
+    var noUI = false
+    var uiTest: String?
+    var uiTime: Double = 2500
+    var uiHudDemo = false
 
     static func parse(_ args: [String]) -> Options {
         var o = Options()
@@ -39,11 +43,17 @@ struct Options {
             case "--cam": o.camera = next()?.split(separator: ",").compactMap { Float($0) }
             case "--drive": o.drive = true
             case "--car": o.car = true
+            case "--car-preset":   // preset del juego para el coche del jugador (presets.json); "ninguno" = de serie
+                if let n = next() { Config.playerPreset = ["ninguno", "none", "stock"].contains(n.lowercased()) ? nil : n }
             case "--carcam": o.carCam = next()?.split(separator: ",").compactMap { Float($0) }   // pruebas: ojo,objetivo relativos al coche
             case "--autodrive": o.autodrive = next().flatMap(Double.init) ?? 0   // pruebas: acelera N s antes de capturar
             case "--near":   // depuración: radio del nivel con textura (m)
                 if let r = next().flatMap(Float.init) { Config.nearRadius = r; Config.maxNear = 400 }
             case "--scale": o.scale = next().flatMap(Float.init)
+            case "--no-ui": o.noUI = true
+            case "--ui-test": o.uiTest = next()                                   // UI/FEScreens.swift showForTest
+            case "--ui-time": o.uiTime = next().flatMap(Double.init) ?? 2500      // ms de animación antes de la captura
+            case "--ui-hud-demo": o.uiHudDemo = true                              // HUD con datos de persecución de ejemplo
             case "--quit-after": o.quitAfter = next().flatMap(Double.init)
             case "--screenshot": o.screenshot = next()
             case "--bench": o.bench = true
@@ -61,7 +71,11 @@ struct Options {
                   --cam x,y,z,r,i      cámara inicial (metros; rumbo e inclinación en grados)
                   --drive              empezar conduciendo el BMW M3 GTR
                   --carcam ox,oy,oz,tx,ty,tz  cámara fija respecto al coche (X adelante, Y izquierda, Z arriba)
+                  --car-preset <NOMBRE>  coche del juego (presets.json): M3GTRCAREERSTART (por defecto), RAZORMUSTANG, BL2…BL15, ninguno
                   --scale <f>          fija la escala de resolución (desactiva la dinámica)
+                  --no-ui              sin la interfaz del juego (arranca en cámara libre, HUD mínimo propio)
+                  --ui-test <pantalla> sin ventana (con --screenshot): Splash, MainMenu, Career, Pause, HUD, Dialog o un paquete .fng
+                  --ui-time <ms>       tiempo de animación de la interfaz antes de la captura (2500) · --ui-hud-demo datos de persecución
                   --quit-after <s>     salir tras s segundos (pruebas)
                   --screenshot <png>   sin ventana: carga, dibuja --frames fotogramas, guarda PNG y sale
                   --size AxB           tamaño del modo sin ventana (1920x1080)
@@ -77,6 +91,8 @@ struct Options {
             case "--physics-trace": break
             case "--traffic-test", "--traffic-max", "--heat", "--test-plan": i += 1   // AIEngine.swift (AIOptions)
             case "--no-traffic", "--no-police": break
+            case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
+            case "--radio-log", "--audio-devices", "--radio-test", "--pad-audio-test", "--lightbar-test": break   // Audio/AudioTests.swift
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
             i += 1
@@ -137,7 +153,10 @@ func runHeadless(_ o: Options) {
     do { engine = try Engine(device: device, data: data, outputFormat: .bgra8Unorm) } catch { fputs("motor: \(error)\n", stderr); exit(1) }
     if let g = o.grade { engine.renderer.gradeStrength = g }
     if let c = o.camera, c.count == 5 { engine.setCamera(x: c[0], y: c[1], z: c[2], yawDeg: c[3], pitchDeg: c[4]) }
-    if o.drive { engine.toggleMode() } else if o.car || o.carCam != nil { engine.loadCar() }
+    if let t = o.uiTest, let ui = engine.enableUI(outputFormat: .bgra8Unorm) {
+        ui.showForTest(t)
+        if o.uiHudDemo { ui.hudDemo = true }
+    } else if o.drive { engine.toggleMode() } else if o.car || o.carCam != nil { engine.loadCar() }
     if let c = o.carCam, c.count == 6 { engine.carCam = (float3(c[0], c[1], c[2]), float3(c[3], c[4], c[5])) }
     let (W, H) = o.size
     engine.aspect = Float(W) / Float(H)
@@ -203,6 +222,9 @@ func runHeadless(_ o: Options) {
                      o.autodrive, car.kmh, simd_distance(start, car.position), start.z, car.position.z, car.grounded ? "sí" : "no"))
     }
 
+    // 2b'. Interfaz: deja correr sus animaciones (APPEAR de los paquetes) antes de la captura
+    if o.uiTest != nil { for _ in 0..<Int(o.uiTime / 1000 * 60) { clock += 1.0 / 60; _ = renderOne(dt: 1.0 / 60) } }
+
     // 2c. N fotogramas fijos (medida estable) y captura
     var gpu: [Double] = []
     for _ in 0..<max(1, o.frames) { clock += 1.0 / 60; gpu.append(renderOne(dt: 1.0 / 60).gpu) }
@@ -240,6 +262,8 @@ if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.
     if let r = DiscProbe.probe(url) { print("\(r.id) · \(r.known?.label ?? "desconocido")"); exit(0) }
     print("no es una ISO de PS2 reconocible"); exit(2)
 }
+// Pruebas de audio y luz del mando sin ventana (Audio/AudioTests.swift)
+if AudioTests.handle(CommandLine.arguments) { exit(0) }
 let options = Options.parse(CommandLine.arguments)
 if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     let a = CommandLine.arguments

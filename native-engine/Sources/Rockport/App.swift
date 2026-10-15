@@ -74,7 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         do { engine = try Engine(device: device, data: data, outputFormat: view.colorPixelFormat) } catch { fatal("Error al crear el motor: \(error)") }
         engine.renderer.gradeStrength = options.grade ?? engine.renderer.gradeStrength
         if let c = options.camera { engine.setCamera(x: c[0], y: c[1], z: c[2], yawDeg: c[3], pitchDeg: c[4]) }
-        if options.drive { engine.toggleMode() }
+        // Interfaz original del juego (UI/): «Pulsa START» → menú principal → carrera → zona libre con el HUD del juego.
+        // --drive (o --no-ui) entra directamente a conducir.
+        if !options.noUI, let ui = engine.enableUI(outputFormat: view.colorPixelFormat) {
+            if options.drive { ui.startGame() } else { ui.showSplash() }
+        } else if options.drive { engine.toggleMode() }
         view.delegate = self
         window.contentView = view
         window.makeKeyAndOrderFront(nil)
@@ -83,7 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         NSApp.activate(ignoringOtherApps: true)
         captureMouse(true)
         installInput()
-        print("Controles: ratón mira · WASD mover · E/Espacio subir · Q/Ctrl bajar · Mayús rápido · C coche/libre · Tab soltar ratón · Esc salir")
+        print("Controles: ratón mira · WASD mover · E/Espacio subir · Q/Ctrl bajar · Mayús rápido · C coche/libre · Tab soltar ratón · Esc pausa (⌘Q salir)")
         print("Coche: W/S gas y freno · A/D girar · Espacio freno de mano · N o Mayús nitro · X mirar atrás · V cámara · E/Q cambio · R recolocar · mandos: ver doc 15")
     }
 
@@ -99,9 +103,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
             switch e.type {
             case .keyDown:
                 if e.modifierFlags.contains(.command) && e.charactersIgnoringModifiers == "q" { NSApp.terminate(nil) }
-                if e.keyCode == Key.escape.rawValue { NSApp.terminate(nil) }
+                if e.keyCode == Key.escape.rawValue && self.engine.ui == nil { NSApp.terminate(nil) }   // con interfaz, Esc = pausa / atrás
                 if !e.isARepeat {
-                    if e.keyCode == Key.c.rawValue { self.engine.toggleMode() }
+                    if e.keyCode == Key.c.rawValue && self.engine.ui?.capturesInput != true { self.engine.toggleMode() }
                     // El tono PS2 va siempre activo (sin tecla para quitarlo); solo --grade de desarrollo lo cambia
                     if e.keyCode == 48 { self.captureMouse(!self.mouseCaptured) }   // Tab
                 }

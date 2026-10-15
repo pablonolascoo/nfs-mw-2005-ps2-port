@@ -27,6 +27,8 @@ final class Engine {
     /// Tráfico y policía (AIEngine.swift). nil si faltan roads.json / ai.json.
     var ai: AIWorld?
     var aiRenderer: AIRenderer?
+    /// Interfaz original del juego (UI/: menús y HUD FEng). nil = sin interfaz (pruebas sin ventana).
+    var ui: FEUI?
 
     // Cámara libre
     var camPos = float3(1700, 2300, 260)
@@ -67,7 +69,10 @@ final class Engine {
     /// Carga el coche del jugador y lo coloca en el respawn del primer refugio.
     func loadCar() {
         guard car == nil else { return }
-        car = Car(device: device, data: data, textures: textures, name: Config.playerCar, paint: Config.playerPaint)
+        // Preset del juego (presets.json): por defecto el BMW M3 GTR de la historia (M3GTRCAREERSTART). Sin presets.json, de serie.
+        let preset = Config.playerPreset.flatMap { CarPresets.named($0, in: data) }
+        if let p = Config.playerPreset, preset == nil { fputs("coche: no hay preset «\(p)» en presets.json; coche de serie\n", stderr) }
+        car = Car(device: device, data: data, textures: textures, name: preset?.car ?? Config.playerCar, paint: Config.playerPaint, preset: preset)
         guard let car else { return }
         if let z = data.zones.first(where: { $0.zoneType == "safehouse" }), let r = z.respawn, r.position.count == 3 {
             car.place(float3(r.position[0], r.position[1], r.position[2]), yaw: (r.rotation ?? 0) * .pi / 180, collision: collision)
@@ -98,10 +103,13 @@ final class Engine {
 
     /// Avanza la simulación `dt` segundos.
     func update(dt: Float) {
+        if ui?.paused == true { mouseDelta = .zero; return }   // pausa (Pause_Main): todo quieto
         time += Double(dt)
-        if GameInput.shared.takeToggleRequest(polling: mode == .fly) { toggleMode() }   // Start / dos dedos: modo foto
+        // Con la interfaz, Start abre la pausa (UI/FEScreens.swift); sin ella, alterna el modo foto
+        if ui == nil, GameInput.shared.takeToggleRequest(polling: mode == .fly) { toggleMode() }   // Start / dos dedos: modo foto
         switch mode {
         case .fly:
+            if ui?.capturesInput == true { break }             // menús: la cámara la mueve la interfaz
             yaw -= mouseDelta.x * 0.0022
             pitch = max(-1.5, min(1.5, pitch - mouseDelta.y * 0.0022))
             let fwd = float3(cos(pitch) * cos(yaw), cos(pitch) * sin(yaw), sin(pitch))
@@ -161,10 +169,11 @@ final class Engine {
 
     /// Streaming + simulación + codificación del fotograma.
     func frame(cb: MTLCommandBuffer, target: MTLTexture, dt: Float, scale: Float, now: Double) {
+        ui?.update(dt: dt)
         update(dt: dt)
         streamer.update(camera: eye, now: now)
         let f = makeFrame()
-        updateAI(dt: dt, frame: f)
+        updateAI(dt: ui?.paused == true ? 0 : dt, frame: f)
         renderer.encode(cb, frame: f, target: target, scale: scale)
     }
 }

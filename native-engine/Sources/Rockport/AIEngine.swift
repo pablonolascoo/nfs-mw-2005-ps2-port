@@ -7,6 +7,7 @@
 //   --heat H           calor inicial (1…5)
 //   --no-traffic / --no-police
 import Foundation
+import AppKit   // NSApp (PursuitFX: ¿hay ventana?)
 import Metal
 import QuartzCore
 import simd
@@ -65,6 +66,7 @@ extension Engine {
         let v = frame.view
         let camFwd = -float3(v.columns.0.z, v.columns.1.z, v.columns.2.z)
         ai.update(dt: dt, player: p, cameraPos: frame.camPos, cameraFwd: camFwd, viewProj: frame.proj * frame.view)
+        PursuitFX.shared.update(police: ai.police, dt: dt, root: data.root, headless: AIOptions.trafficTest != nil)   // luz del mando y radio (Audio/)
         // Golpes contra la IA: el coche del jugador pierde velocidad (la física del juego no tiene aún choques entre coches)
         let f = ai.playerSpeedFactor
         ai.playerSpeedFactor = 1

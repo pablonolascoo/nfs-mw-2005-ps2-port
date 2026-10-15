@@ -1,4 +1,4 @@
-// HUD de persecución, mínima y al estilo de MW: solo aparece cuando la policía está metida.
+// HUD de persecución propio (respaldo: la app usa el HUD original del juego, UI/FEHud.swift). Mínima y al estilo de MW: solo aparece cuando la policía está metida.
 //  - Arriba a la izquierda: «HEAT» y 5 barras de calor (se llenan con el nivel; roja la parte alcanzada).
 //  - Abajo, centrada: la barra de persecución. Izquierda «EVADE» (verde), derecha «BUSTED» (roja). Durante la persecución
 //    se llena desde el centro con el medidor del juego (AIPursuit::GetPursuitMeter [D]); el arresto la llena hacia la derecha.
@@ -40,6 +40,8 @@ final class PursuitHUD {
     private var textCache: [String: MTLTexture] = [:]
     /// Visible siempre que haya persecución; también se puede forzar (pruebas).
     var forceVisible = false
+    /// Con la interfaz original (UI/FEHud.swift) este HUD propio se apaga: queda como respaldo si faltan los datos de frontend/.
+    var enabled = true
 
     // Colores del HUD de MW (ámbar/naranja del juego, verde de evasión, rojo de arresto)
     static let amber = float4(1.0, 0.62, 0.12, 1)
@@ -93,7 +95,7 @@ final class PursuitHUD {
         return t
     }
 
-    var visible: Bool { forceVisible || police.state != .none }
+    var visible: Bool { enabled && (forceVisible || police.state != .none) }
 
     func encode(_ cb: MTLCommandBuffer, target: MTLTexture) {
         guard visible else { return }

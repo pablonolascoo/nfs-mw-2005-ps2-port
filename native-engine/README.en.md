@@ -70,6 +70,7 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | C | Switch between free camera and car |
 | R | Reset the car (stopped, on the ground) |
 | Gamepad | Xbox, PS3/PS4/PS5, PS2 adapters and generic HID: see [doc 15](../docs/en/15-controllers.md) |
+| DualShock 4 / DualSense | Light bar as a tuning option plus pursuit colours; police radio through its speaker: [doc 15 §7–8](../docs/en/15-controllers.md) |
 | Tab | Release or capture the mouse |
 | Esc or ⌘Q | Quit |
 
@@ -88,8 +89,12 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--autodrive <s>` | With `--drive` and `--screenshot`: accelerate for s seconds on real collision and summarise |
 | `--near <m>` | Debug: near-level radius (`--near -1`: far level only) |
 | `--carcam ox,oy,oz,tx,ty,tz` | Camera fixed to the car (X forward, Y left, Z up) |
+| `--car-preset <NAME>` | Game car from `presets.json`: `M3GTRCAREERSTART` (default), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Loads every tile and checks geometry and textures |
 | `--physics-test [CAR] [--physics-trace]` | Window-less: game physics on a flat plane: 0–100, top speed, braking, cornering, handbrake, NOS |
+| `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Pad light bar mode for this session (not saved). Also `ROCKPORT_LIGHTBAR` |
+| `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Where the police radio plays · print each line to the console |
+| `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Window-less: audio outputs and pads · disc radio (vs vgmstream) · pad Opus/SBC/HID reports · light bar colours |
 
 ## Folder layout
 
@@ -230,6 +235,23 @@ It is always on in the game. For development only, change it with `--grade <n>` 
 - Driving: **the game's physics** ported from the decomp (see "Game physics" below and doc 13). Without `physics.json`, the old arcade prototype.
 - Ground: collision triangles in 8 m cells. Walls: vertical segments.
 
+## Game cars: presets, vinyls and composite skins (2026-10-15)
+- `CarSkin.swift` reads `presets.json` (82 presets from `GLOBAL\GLOBALB.BUN`: Blacklist `RAZORMUSTANG`, `BL2…BL15`, the story BMW `M3GTRCAREERSTART`…) and composites the body like `CarSkin.cpp`: base colour (alpha = gloss) + vinyl through its mask (`m ≥ 128` → vinyl, `0 < m < 128` → blend `m/128`). Composited on the CPU at 1024×1024 (twice the PS2 size) with bilinear sampling and uploaded with mipmaps. The same skin is used by the spoiler and roof scoop.
+- `Car.swift` with a preset: mounts exactly the preset's solids (kit, hood), the rim from `WHEELS.glb`, the spoiler (`SPOILER*.glb`) and roof scoop (`ROOF.glb`) on the BASE solid's `SPOILER`/`ROOF_SCOOP` markers; tints the rim with `PAINT_RIM` (`_WHEEL_INNER_MASK`), darkens the windows by tint [I] and picks metalness/roughness by finish (GLOSS/METAL/PEARL) [I].
+- The player defaults to the story BMW M3 GTR (silver + blue stripes). `--car-preset RAZORMUSTANG` (or `BL2…BL15`, `ninguno` = stock) and `--carcam` for screenshots. Traffic and police are unchanged (their `SKIN1` is a real disc texture).
+- Formats and the Blacklist table: [docs/en/10-cars.md §8](../docs/en/10-cars.md).
+
+## Original game interface: menus and HUD (2026-10-15)
+
+- The app starts with **the game's own screens** (FEng `.fng` packages from the disc): "Press START" → main menu → Career
+  (Resume / Start new) → free roam with the **original HUD** (tachometer, speedometer, nitrous, heat, pursuit board).
+  Start or Esc: the game's pause menu (resume, restart, options, quit). ⌘Q quits.
+- Text and fonts from the disc: Spanish on PAL, English on NTSC-U. Other options open the game's dialog with "Coming soon.".
+- Native resolution: the 640×480 canvas is scaled keeping aspect; images use Catmull-Rom bicubic; text uses a distance field
+  (×4 SDF from the converter). Drawn after the PS2 grade, like on PS2.
+- Code in `Sources/Rockport/UI/`; data from the `frontend` step in `tools/`. `--no-ui` disables it; `--ui-test <screen>` takes
+  screenshots (`.build/shots/ui/`). Format, decisions and gaps: [doc 17](../docs/en/17-interface.md).
+
 ## Changes for the new data (2026-10-12)
 
 What changed in the converter and how the engine follows it:
@@ -294,6 +316,16 @@ Notes:
 - **Camera**: the car's `camerainfo` views (bumper, hood, close, far); own motion [H] (the game's is not decompiled).
 - **PS2 look always on**: the G key was removed.
 - Shots: `.build/shots/drive-physics.png` (cornering with body roll and steered wheels) and `.build/shots/drive-cameras.png` (all 4 views).
+
+## Light bar and police radio (2026-10-15)
+
+- **Light bar** (`Input/LightBarConfig.swift`): per-car tuning option —paint, custom colour, police, heat, off— saved in
+  `settings.json`; on top, pursuit colours with the game's patrol-car light pattern (red/blue), amber/blue in cooldown,
+  red when busted, green when you escape. `LightBar.shared` API for the tuning menu. Details: [doc 15 §7](../docs/en/15-controllers.md).
+- **Police radio** (`Audio/`): the disc's lines (Spanish on PAL, English on NTSC), decoded by the app itself (MicroTalk),
+  picked per event with the game's `.EVT/.IDX` tables and triggered by the pursuit (`PursuitFX.swift`). It plays through the pad speaker
+  over USB, through HID reports (Opus / SBC) over Bluetooth —untested with a real pad— and otherwise on the Mac with a scanner filter.
+  Details: [doc 15 §8](../docs/en/15-controllers.md) and [doc 16 §5–6](../docs/en/16-audio-and-voices.md). Needs data converted with format 3 (step "Police radio").
 
 ## Traffic and police (2026-10-12)
 

@@ -70,6 +70,7 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | C | Cambiar entre cámara libre y coche |
 | R | Recolocar el coche (parado, sobre el suelo) |
 | Mando | Xbox, PS3/PS4/PS5, adaptadores de PS2 y HID genéricos: ver [doc 15](../docs/es/15-mandos.md) |
+| DualShock 4 / DualSense | Barra de luz como opción de tuneo y colores de persecución; radio de la policía por su altavoz: [doc 15 §7–8](../docs/es/15-mandos.md) |
 | Tab | Soltar o capturar el ratón |
 | Esc o ⌘Q | Salir |
 
@@ -88,8 +89,12 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--autodrive <s>` | Con `--drive` y `--screenshot`: acelera s segundos sobre la colisión real y lo resume |
 | `--near <m>` | Depuración: radio del nivel cercano (`--near -1`: solo nivel lejano) |
 | `--carcam ox,oy,oz,tx,ty,tz` | Cámara fija respecto al coche (X adelante, Y izquierda, Z arriba) |
+| `--car-preset <NOMBRE>` | Coche del juego de `presets.json`: `M3GTRCAREERSTART` (por defecto), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Carga todas las casillas y comprueba geometría y texturas |
 | `--physics-test [COCHE] [--physics-trace]` | Sin ventana: física del juego en un plano: 0–100, punta, frenada, curva, freno de mano, NOS |
+| `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Modo de la barra de luz del mando en esta sesión (no se guarda). También `ROCKPORT_LIGHTBAR` |
+| `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Por dónde suena la radio de la policía · escribir cada frase en la consola |
+| `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Sin ventana: salidas de audio y mandos · radio del disco (contra vgmstream) · Opus/SBC/informes HID del mando · colores de la barra |
 
 ## Estructura de carpetas
 
@@ -230,6 +235,23 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - Conducción: **la física del juego** portada de la decomp (ver «Física del juego» abajo y el doc 13). Sin `physics.json`, el prototipo arcade de antes.
 - Suelo: triángulos de colisión en celdas de 8 m. Muros: segmentos verticales.
 
+## Coches del juego: presets, vinilos y piel compuesta (2026-10-15)
+- `CarSkin.swift` lee `presets.json` (82 presets de `GLOBAL\GLOBALB.BUN`: Lista Negra `RAZORMUSTANG`, `BL2…BL15`, el BMW de la historia `M3GTRCAREERSTART`…) y compone la carrocería como `CarSkin.cpp`: color base (alfa = brillo) + vinilo con su máscara (`m ≥ 128` → vinilo, `0 < m < 128` → mezcla `m/128`). Se compone en CPU a 1024×1024 (el doble del PS2) con muestreo bilineal y se sube con mipmaps. La misma piel va al alerón y a la toma de techo.
+- `Car.swift` con preset: monta exactamente los sólidos del preset (kit, capó), la llanta de `WHEELS.glb`, el alerón (`SPOILER*.glb`) y la toma de techo (`ROOF.glb`) en los marcadores `SPOILER`/`ROOF_SCOOP` de la pieza BASE; tiñe la llanta con `PAINT_RIM` (máscara `_WHEEL_INNER_MASK`), oscurece los cristales según el tintado [I] y elige metalicidad/rugosidad por acabado (GLOSS/METAL/PEARL) [I].
+- El jugador lleva por defecto el BMW M3 GTR de la historia (plata + franjas azules). `--car-preset RAZORMUSTANG` (o `BL2…BL15`, `ninguno` = de serie) y `--carcam` para capturas. Tráfico y policía no cambian (su `SKIN1` es una textura real del disco).
+- Detalle de formatos y la tabla de la Lista Negra: [docs/es/10-coches.md §8](../docs/es/10-coches.md).
+
+## Interfaz original del juego: menús y HUD (2026-10-15)
+
+- La app arranca con las **pantallas del propio juego** (paquetes FEng `.fng` del disco): «Pulsa START» → menú principal →
+  Modo carrera (Continuar / Empezar nuevo) → zona libre con el **HUD original** (cuentarrevoluciones, velocímetro, nitro, calor,
+  panel de persecución). Start o Esc: menú de pausa del juego (volver, reiniciar, opciones, salir). ⌘Q sale.
+- Textos y fuentes del disco: castellano en PAL, inglés en NTSC-U. Las demás opciones abren el cuadro del juego con «Próximamente.».
+- A resolución nativa: lienzo 640×480 escalado con su aspecto; imágenes con bicúbica Catmull-Rom; letras con campo de distancias
+  (SDF ×4 del conversor). Se dibuja después del tono PS2, como en el PS2.
+- Código en `Sources/Rockport/UI/`; datos del paso `frontend` de `tools/`. `--no-ui` la quita; `--ui-test <pantalla>` saca capturas
+  (`.build/shots/ui/`). Formato, decisiones y lo que falta: [doc 17](../docs/es/17-interfaz.md).
+
 ## Física del juego, mandos y cámara (2026-10-12)
 
 - **Física**: `SuspensionRacer`, `EngineRacer`, `Chassis` y `RigidBody` del juego, en Swift (`Physics/`), a **60 Hz fijos** como el juego
@@ -242,6 +264,16 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - **Cámara**: vistas `camerainfo` del coche (parachoques, capó, cerca, lejos); movimiento propio [H] (el del juego no está decompilado).
 - **Tono PS2 siempre activo**: se quitó la tecla G.
 - Capturas: `.build/shots/drive-physics.png` (curva con balanceo y ruedas giradas) y `.build/shots/drive-cameras.png` (las 4 vistas).
+
+## Barra de luz y radio de la policía (2026-10-15)
+
+- **Barra de luz** (`Input/LightBarConfig.swift`): opción de tuneo por coche —pintura, color propio, policía, calor, apagada— guardada en
+  `settings.json`; encima, colores de la persecución con el patrón de las luces de los patrulla del juego (rojo/azul), ámbar/azul en enfriamiento,
+  rojo al arrestarte, verde al escapar. API `LightBar.shared` para el menú de tuneo. Detalle: [doc 15 §7](../docs/es/15-mandos.md).
+- **Radio de la policía** (`Audio/`): las frases del disco (castellano en PAL, inglés en NTSC), decodificadas por la propia app (MicroTalk),
+  elegidas por evento con las tablas `.EVT/.IDX` del juego y disparadas por la persecución (`PursuitFX.swift`). Suena por el altavoz del mando
+  si está por USB, por informes HID (Opus / SBC) si está por Bluetooth —sin probar con mando real— y si no por el Mac con filtro de escáner.
+  Detalle: [doc 15 §8](../docs/es/15-mandos.md) y [doc 16 §5–6](../docs/es/16-audio-y-voces.md). Necesita datos convertidos con formato 3 (paso «Radio de la policía»).
 
 ## Tráfico y policía (2026-10-12)
 

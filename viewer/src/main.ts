@@ -4,7 +4,7 @@ import * as THREE from "three/webgpu";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
-import { Driver, makeCollider, carHolder, tuningPacks, type CarAttribs, type CarConfig } from "./drive";
+import { Driver, makeCollider, carHolder, tuningPacks, presetPacks, presetData, type CarAttribs, type CarConfig, type CarPreset } from "./drive";
 import { buildRoads, type RoadsFile } from "./roads";
 import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
 
@@ -87,10 +87,13 @@ const qs = new URLSearchParams(location.search);
 const carConfig: CarConfig = { kit: qs.has("kit") ? +qs.get("kit")! : undefined, hood: qs.has("capo") ? +qs.get("capo")! : null, rim: qs.get("llanta"), spoiler: qs.get("aleron"), roof: qs.get("techo") };
 /** Carga (una vez) los packs comunes de tuneo que pida la configuración. */
 async function ensureTuning(cfg: CarConfig) {
-  const need = [cfg.rim && "WHEELS", cfg.spoiler && (/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler) ? `SPOILER_${/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler)![1]}` : "SPOILER"), cfg.roof && "ROOF"].filter((x): x is string => !!x);
+  const need = [...(cfg.preset ? presetPacks(cfg.preset) : []), cfg.rim && "WHEELS", cfg.spoiler && (/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler) ? `SPOILER_${/_(HATCH|PORSCHES|CARRERA)/.exec(cfg.spoiler)![1]}` : "SPOILER"), cfg.roof && "ROOF"].filter((x): x is string => !!x);
   for (const pack of need) if (!tuningPacks.has(pack)) { const it = index?.items.find(i => i.id === `car:${pack}`); if (it) tuningPacks.set(pack, await loadGlb(it.glb)); }
 }
 /** Color de la pintura del coche del jugador (?pintura=1f6fd1). El BMW M3 GTR de la historia es plata y azul. */
+ // Coche del juego (presets.json): ?preset=RAZORMUSTANG, BL2…BL15. Por defecto el BMW de la historia (M3GTRCAREERSTART),
+// salvo que se pida otra pintura o tuneo por URL. ?preset=ninguno = de serie.
+const presetName = qs.get("preset") ?? (["pintura", "kit", "capo", "llanta", "aleron", "techo"].some(k => qs.has(k)) ? null : "M3GTRCAREERSTART");
 let playerPaint = "#" + (new URLSearchParams(location.search).get("pintura") ?? "aeb7c2").replace(/^#/, "");
 // Caché de texturas propia: cada textura del juego se sube una vez a la GPU y la comparten todas las casillas.
 // (No usamos THREE.Cache: al liberar una casilla cerraría imágenes que otras siguen usando.)
@@ -731,9 +734,15 @@ try {
     const gr = await fetch(`/${disc}/garages.json`); if (gr.ok) garageInfo = ((await gr.json()) as { garages: GarageInfo[] }).garages;
     const cr = await fetch(`/${disc}/cars.json`); if (cr.ok) carAttribs = ((await cr.json()) as { cars: typeof carAttribs }).cars; buildBounds(); $("city-status").textContent = `${world.length} secciones · ${tiles.length} casillas`; if (!tiles.length) { btn.disabled = true; $("city-status").textContent = "Ejecuta el conversor en modo tiles"; } }
   else { btn.disabled = true; $("city-status").textContent = "Sin world.json: ejecuta el conversor en modo world"; }
-  for (const it of index.items.filter(i => i.group === "Coches")) pick.append(new Option(it.label, it.label, it.label === "BMWM3GTRE46", it.label === "BMWM3GTRE46"));
+  presetData.base = `/${disc}/`;
+  if (presetName && !/^(ninguno|none)$/i.test(presetName)) {
+    const pr = await fetch(`/${disc}/presets.json`);
+    if (pr.ok) carConfig.preset = ((await pr.json()) as { presets: CarPreset[] }).presets.find(p => p.name.toUpperCase() === presetName.toUpperCase()) ?? null;
+  }
+  const playerCar = carConfig.preset?.car ?? "BMWM3GTRE46";
+  for (const it of index.items.filter(i => i.group === "Coches")) pick.append(new Option(it.label, it.label, it.label === playerCar, it.label === playerCar));
   renderTree();
-  const first = index.items.find(i => i.group === "Coches") ?? index.items[0];
+  const first = index.items.find(i => i.id === `car:${playerCar}`) ?? index.items.find(i => i.group === "Coches") ?? index.items[0];
   if (first) await open(first);
 } catch {
   $("disc-tag").textContent = disc;

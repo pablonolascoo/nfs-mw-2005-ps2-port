@@ -47,7 +47,7 @@ export function decodeTexture(info: Uint8Array, plat: Uint8Array, pixels: Uint8A
 }
 
 /** Lee un pack de texturas (0xB3300000). Soporta entradas en streaming comprimidas (car TEXTURES.BIN) y tablas planas. */
-export function readTexturePack(buf: Uint8Array): { name: string; textures: Texture[]; warnings: string[] } {
+export function readTexturePack(buf: Uint8Array, want?: (nameHash: number) => boolean): { name: string; textures: Texture[]; warnings: string[] } {
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   const all = [...walk(parseChunks(buf))].map(([c]) => c);
   const out: Texture[] = [], warnings: string[] = [];
@@ -65,12 +65,14 @@ export function readTexturePack(buf: Uint8Array): { name: string; textures: Text
         const info = buf.subarray(infos.dataOffset + i * 0x7c, infos.dataOffset + (i + 1) * 0x7c);
         const plat = buf.subarray(plats.dataOffset + i * 0x54, plats.dataOffset + (i + 1) * 0x54);
         const iv = new DataView(info.buffer, info.byteOffset, 0x7c);
+        if (want && !want(iv.getUint32(0x24, true))) continue;
         const ip = iv.getInt32(0x30, true), pp = iv.getInt32(0x34, true), isz = iv.getInt32(0x38, true), psz = iv.getInt32(0x3c, true);
         try { out.push(decodeTexture(info, plat, buf.subarray(base + ip, base + ip + isz), pp >= 0 ? buf.subarray(base + pp, base + pp + psz) : new Uint8Array())); }
         catch (e) { warnings.push(`textura ${i}: ${(e as Error).message}`); }
       }
     } else if (stream) {
       for (let o = stream.dataOffset; o + 24 <= stream.dataOffset + stream.size; o += 24) {
+        if (want && !want(dv.getUint32(o, true))) continue; // +0 = hash del nombre [V: VINYLS.BIN]
         const off = dv.getUint32(o + 4, true), sz = dv.getInt32(o + 8, true), fl = buf[o + 17];
         try {
           const u = fl & 1 ? lzDecompress(buf.subarray(off, off + sz)) : buf.slice(off, off + sz);

@@ -8,7 +8,7 @@ enum Config {
     /// Se puede cambiar al arrancar con `--grade <n>` o la variable `ROCKPORT_GRADE`.
     static let ps2GradeStrength: Float = 1.0
     /// Formato de datos que espera esta versión (tools/src/cli/install.ts DATA_FORMAT). Si la instalación es anterior, se reconvierte.
-    static let dataFormat = 2
+    static let dataFormat = 3
 
     // MARK: Streaming de casillas (igual que viewer/src/main.ts)
     /// Distancia (m, de la cámara a la caja de la casilla) por debajo de la cual se carga el nivel con textura.
@@ -50,7 +50,10 @@ enum Config {
     static let sunIntensity: Float = 2.2
     static let sunPosition = SIMD3<Float>(30, -20, 50)
 
-    /// Color de pintura del coche del jugador (BMW M3 GTR: plata).
+    /// Coche del jugador por defecto: el preset del juego M3GTRCAREERSTART (BMW M3 GTR plata con las franjas azules,
+    /// presets.json). `--car-preset <NOMBRE>` lo cambia (p. ej. RAZORMUSTANG, BL2…BL15). nil = coche de serie con `playerPaint`.
+    static var playerPreset: String? = "M3GTRCAREERSTART"
+    /// Color de pintura del coche del jugador sin preset (BMW M3 GTR: plata).
     static let playerPaint = SIMD3<Float>(0xae, 0xb7, 0xc2) / 255
     static let playerCar = "BMWM3GTRE46"
 }
