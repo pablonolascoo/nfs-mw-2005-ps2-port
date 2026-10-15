@@ -74,7 +74,11 @@ final class TileStreamer {
     }
 
     /// Llamar una vez por fotograma desde el hilo principal.
-    func update(camera: float3, now: Double, force: Bool = false) {
+    func update(camera: float3, now: Double, force: Bool = false) { update(cameras: [camera], now: now, force: force) }
+
+    /// Varias cámaras (pantalla partida, Multiplayer/): cada casilla mide su distancia a la cámara más cercana y el tope de
+    /// casillas cercanas crece con el número de vistas (las que comparten zona se cuentan una vez).
+    func update(cameras: [float3], now: Double, force: Bool = false) {
         // 1. Recoger trabajo terminado
         lock.lock(); let done = finished; finished.removeAll(); lock.unlock()
         for f in done { f() }
@@ -82,11 +86,12 @@ final class TileStreamer {
         // 2. Decidir qué casillas quieren detalle (cada 200 ms, como el visor)
         if !force && now - lastStream < 0.2 { return }
         lastStream = now
-        for t in tiles { t.distance = t.box.distance(to: camera) }
+        for t in tiles { t.distance = cameras.map { t.box.distance(to: $0) }.min() ?? .infinity }
         let sorted = tiles.sorted { $0.distance < $1.distance }
+        let maxNear = Config.maxNear + max(0, cameras.count - 1) * Config.maxNear / 2
         var nearCount = 0, ready = 0, nearBytes = 0
         for t in sorted {
-            let want = t.distance < Config.nearRadius && nearCount < Config.maxNear
+            let want = t.distance < Config.nearRadius && nearCount < maxNear
             t.wantNear = want
             if want {
                 nearCount += 1

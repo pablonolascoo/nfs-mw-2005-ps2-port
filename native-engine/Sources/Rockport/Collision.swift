@@ -21,6 +21,11 @@ final class CollisionWorld {
     /// Muros añadidos en tiempo de juego: vallas activas de la prueba y candados de la historia (TrackPathBarrier,
     /// Race/RaceWorld.swift). Planta (a, b) y alturas como los muros de las casillas.
     var dynamicWalls: [(a: SIMD2<Float>, b: SIMD2<Float>, zMin: Float, zMax: Float)] = []
+    /// Garajes sin carga (Garage/WorldGarage.swift): muros del interior y de la persiana cerrada, muros del edificio que se
+    /// ignoran (los que caen dentro del recorte) y suelo del interior.
+    var garageWalls: [(a: SIMD2<Float>, b: SIMD2<Float>, zMin: Float, zMax: Float)] = []
+    var ignoreWall: ((SIMD2<Float>, SIMD2<Float>, Float, Float) -> Bool)?
+    var groundOverride: ((Float, Float, Float) -> (z: Float, normal: float3)?)?
 
     init(root: URL) { self.root = root.appendingPathComponent("collision") }
 
@@ -60,6 +65,7 @@ final class CollisionWorld {
 
     /// Altura del suelo bajo (x, y): el triángulo más alto que no esté más de `step` m por encima de `z`.
     func ground(x: Float, y: Float, z: Float, step: Float = 2.5) -> (z: Float, normal: float3)? {
+        if let g = groundOverride?(x, y, z) { return g }
         let tx = Int((x / size).rounded(.down)), ty = Int((y / size).rounded(.down))
         guard let t = tile(tx: tx, ty: ty) else { return nil }
         let cx = Int(((x - t.ox) / Tile.cell).rounded(.down)), cy = Int(((y - t.oy) / Tile.cell).rounded(.down))
@@ -93,7 +99,7 @@ final class CollisionWorld {
         let tx = Int((to.x / size).rounded(.down)), ty = Int((to.y / size).rounded(.down))
         let p = float2(from.x, from.y), r = float2(to.x - from.x, to.y - from.y)
         if simd_length_squared(r) < 1e-10 { return false }
-        for dw in dynamicWalls where !(dw.zMax < from.z + 0.3 || dw.zMin > from.z + 1.5) {
+        for dw in dynamicWalls + garageWalls where !(dw.zMax < from.z + 0.3 || dw.zMin > from.z + 1.5) {
             if RaceBarrierLines.intersect(dw.a, dw.b, p, p + r) { return true }
         }
         guard let t = tile(tx: tx, ty: ty) else { return false }
@@ -102,6 +108,7 @@ final class CollisionWorld {
         while i < w.count {
             defer { i += 6 }
             if w[i + 5] < from.z + 0.3 || w[i + 4] > from.z + 1.5 { continue }
+            if let ig = ignoreWall, ig(float2(w[i], w[i + 1]), float2(w[i + 2], w[i + 3]), w[i + 4], w[i + 5]) { continue }
             let q = float2(w[i], w[i + 1]), s = float2(w[i + 2] - w[i], w[i + 3] - w[i + 1])
             let rxs = r.x * s.y - r.y * s.x
             if abs(rxs) < 1e-9 { continue }
@@ -122,7 +129,7 @@ extension CollisionWorld: PhysicsGround {
         let tx0 = Int(((p.x - radius) / size).rounded(.down)), tx1 = Int(((p.x + radius) / size).rounded(.down))
         let ty0 = Int(((p.y - radius) / size).rounded(.down)), ty1 = Int(((p.y + radius) / size).rounded(.down))
         let r2 = radius * radius
-        for dw in dynamicWalls {
+        for dw in dynamicWalls + garageWalls {
             let ab = dw.b - dw.a, l2 = simd_length_squared(ab)
             let u = l2 > 0 ? max(0, min(1, simd_dot(p - dw.a, ab) / l2)) : 0
             if simd_length_squared(dw.a + ab * u - p) <= r2 { out.append(dw) }
@@ -136,7 +143,9 @@ extension CollisionWorld: PhysicsGround {
                 // Distancia del punto al segmento en planta
                 let ab = b - a, l2 = simd_length_squared(ab)
                 let u = l2 > 0 ? max(0, min(1, simd_dot(p - a, ab) / l2)) : 0
-                if simd_length_squared(a + ab * u - p) <= r2 { out.append((a, b, min(w[i + 4], w[i + 5]), max(w[i + 4], w[i + 5]))) }
+                if simd_length_squared(a + ab * u - p) <= r2, !(ignoreWall?(a, b, min(w[i + 4], w[i + 5]), max(w[i + 4], w[i + 5])) ?? false) {
+                    out.append((a, b, min(w[i + 4], w[i + 5]), max(w[i + 4], w[i + 5])))
+                }
                 i += 6
             }
         } }

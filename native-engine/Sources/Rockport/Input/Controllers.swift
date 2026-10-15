@@ -56,6 +56,7 @@ final class Controllers {
         var touchEvent: String? = nil            // "izq", "dcha", "toque", "dos"
         var lastTrigger = ""
         var lastLight = SIMD3<Int>(-1, -1, -1)
+        var glanceUntil: Double = 0
         init(_ c: GCController) { controller = c }
     }
 
@@ -68,6 +69,9 @@ final class Controllers {
     private var glanceBackUntil: Double = 0
     private var xbox360Warned = false
     private var lastUSBCheck: Double = -10
+    /// Pantalla partida (Multiplayer/): color de la barra de luz por mando (manda sobre LightBar) y aviso al enchufar/desenchufar.
+    var lightOverride: [ObjectIdentifier: SIMD3<Float>] = [:]
+    var onPadsChanged: (() -> Void)?
 
     /// Llamar una vez con la app en marcha (hilo principal).
     func start() {
@@ -83,6 +87,7 @@ final class Controllers {
             guard let self, let c = n.object as? GCController else { return }
             self.pads.removeAll { $0.controller === c }
             print("Mando desconectado: \(c.vendorName ?? "mando")")
+            self.onPadsChanged?()
         }
         for c in GCController.controllers() { add(c) }
         hid.start()
@@ -113,6 +118,7 @@ final class Controllers {
         if let ds = c.extendedGamepad as? GCDualShockGamepad { hookTouchpad(p, ds.touchpadPrimary, ds.touchpadSecondary) }
         if let ds = c.extendedGamepad as? GCDualSenseGamepad { hookTouchpad(p, ds.touchpadPrimary, ds.touchpadSecondary) }
         applyLight(p)
+        onPadsChanged?()
     }
 
     /// Panel táctil: el juego original no lo tiene (PS2). Gestos propios, documentados en el doc 15.
@@ -155,6 +161,14 @@ final class Controllers {
         return out
     }
 
+    /// Un solo mando (pantalla partida: cada jugador lee el suyo). No mezclar con `poll()` en el mismo fotograma: comparten flancos.
+    func readPad(_ p: Pad) -> PadState? {
+        clock = CACurrentMediaTimeShim.now()
+        var s = read(p)
+        if clock < p.glanceUntil { s?.lookBack = true }
+        return s
+    }
+
     private func read(_ p: Pad) -> PadState? {
         guard let g = p.controller.extendedGamepad else { return nil }
         var s = PadState()
@@ -184,7 +198,7 @@ final class Controllers {
             switch ev {
             case "dcha": s.nextCamera = true
             case "izq": s.prevCamera = true
-            case "toque": glanceBackUntil = clock + 1.0
+            case "toque": glanceBackUntil = clock + 1.0; p.glanceUntil = clock + 1.0
             case "dos": s.toggleFreeCamera = true
             default: break
             }
@@ -204,9 +218,9 @@ final class Controllers {
     /// Color normal de la barra de luz (pintura del coche, sRGB 0…1). El modo de la barra lo decide LightBar (Input/LightBarConfig.swift).
     func setPaint(_ rgb: SIMD3<Float>) { paint = rgb; for p in pads { applyLight(p) } }
 
-    private func applyLight(_ p: Pad) {
+    func applyLight(_ p: Pad) {
         guard let light = p.controller.light else { return }
-        let c = LightBar.shared.color(time: clock, paint: paint)
+        let c = lightOverride[ObjectIdentifier(p)] ?? LightBar.shared.color(time: clock, paint: paint)
         let key = SIMD3<Int>(Int(c.x * 255), Int(c.y * 255), Int(c.z * 255))
         guard key != p.lastLight else { return }   // no inundar el mando con el mismo color
         p.lastLight = key
@@ -218,14 +232,17 @@ final class Controllers {
 
     /// Cada fotograma en conducción.
     func update(feedback f: PadFeedback) {
-        for p in pads {
-            applyLight(p)
-            // Vibración continua: deslizamiento, limitador, nitro y golpes [diseño propio; el PS2 usa Rumble.cpp]
-            let base = min(1, f.slip * 0.08) * 0.5 + (f.onLimiter ? 0.25 : 0) + (f.nos ? 0.2 : 0) + min(1, f.impact / 15)
-            try? p.rumble?.sendParameters([CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: min(1, base), relativeTime: 0)], atTime: CHHapticTimeImmediate)
-            if let ds = p.controller.extendedGamepad as? GCDualSenseGamepad { adaptiveTriggers(p, ds, f) }
-        }
+        for p in pads { feedback(f, pad: p) }
         hid.rumble(strong: min(1, f.impact / 15 + (f.onLimiter ? 0.2 : 0)), weak: min(1, f.slip * 0.05 + (f.nos ? 0.3 : 0)))
+    }
+
+    /// Luz, vibración y gatillos de un solo mando (pantalla partida: cada mando recibe lo de su coche).
+    func feedback(_ f: PadFeedback, pad p: Pad) {
+        applyLight(p)
+        // Vibración continua: deslizamiento, limitador, nitro y golpes [diseño propio; el PS2 usa Rumble.cpp]
+        let base = min(1, f.slip * 0.08) * 0.5 + (f.onLimiter ? 0.25 : 0) + (f.nos ? 0.2 : 0) + min(1, f.impact / 15)
+        try? p.rumble?.sendParameters([CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: min(1, base), relativeTime: 0)], atTime: CHHapticTimeImmediate)
+        if let ds = p.controller.extendedGamepad as? GCDualSenseGamepad { adaptiveTriggers(p, ds, f) }
     }
 
     /// DualSense: el freno (L2) se endurece; con las ruedas bloqueadas vibra; el gas (R2) tiembla en el limitador.

@@ -211,6 +211,13 @@ final class Career {
 
     /// Sustituye la partida (pruebas sin ventana).
     func setSave(_ s: CareerSave) { save = s }
+    /// Cambios de la partida desde los garajes (Garage/GarageMenus.swift): compra, coche actual, dinero; guarda si toca.
+    func modifySave(persistNow: Bool = true, _ f: (inout CareerSave) -> Void) {
+        f(&save)
+        if persist && persistNow { save.save(saveURL) }
+    }
+    /// Coche del jugador para el escenario del frontend: el de la partida en curso o el de la partida guardada.
+    var currentCarPreset: String? { active ? save.currentCar : (persist ? CareerSave.load(saveURL)?.currentCar : nil) }
     func applyMilestone(_ id: String) {
         guard let m = db?.milestone(id), !save.milestonesDone.contains(id) else { return }
         save.milestonesDone.append(id); save.bounty += Int(m.bounty)

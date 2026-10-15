@@ -48,6 +48,15 @@ final class Engine {
     var extraCars: [(mesh: GPUMesh, parts: [float4x4], shadow: float4x4?)] = []
     var driverFilter: ((inout DriverInput, inout Bool, Float) -> Void)?
     var frameHooks: [(Float) -> Void] = []
+    /// Retoques del fotograma antes de dibujarlo (Garage/: escenario del frontend y coches de exposición).
+    var frameOverrides: [(inout SceneFrame) -> Void] = []
+
+    // Pantalla partida (Multiplayer/): varios jugadores con su coche, su cámara y su HUD. nil = un jugador (lo de siempre).
+    var splitScreen: SplitScreen?
+    /// Entrada del jugador 1 si no es «todos los mandos y el teclado a la vez» (pantalla partida: solo su mando).
+    var playerInputOverride: (() -> GameInput.Frame)?
+    /// Aspecto de la vista del jugador 1 (pantalla partida); nil = el de la pantalla.
+    var cameraAspect: Float?
 
     var keys = Set<UInt16>()
     var mouseDelta = float2(0, 0)
@@ -134,15 +143,16 @@ final class Engine {
         case .drive:
             guard let car else { mode = .fly; return }
             // Teclado + mandos (Input/), física del juego a 60 Hz (Physics/) y cámara camerainfo (Camera/)
-            var pad = GameInput.shared.poll(keys: keys)
+            var pad = playerInputOverride?() ?? GameInput.shared.poll(keys: keys)
             driverFilter?(&pad.driver, &pad.reset, dt)
             car.update(dt: dt, input: Car.Input(driver: pad.driver), collision: collision)
             if pad.reset { car.reset() }
             if pad.nextCamera { car.camera.next(1) }
             if pad.prevCamera { car.camera.next(-1) }
-            car.camera.update(dt: dt, car: car, lookBack: pad.driver.lookBack, aspect: aspect)
+            car.camera.update(dt: dt, car: car, lookBack: pad.driver.lookBack, aspect: cameraAspect ?? aspect)
             chasePos = car.camera.eye; chaseTarget = car.camera.target
-            Controllers.shared.update(feedback: car.padFeedback)
+            // En pantalla partida la vibración y la luz van por jugador (Multiplayer/SplitScreen.swift)
+            if splitScreen?.active != true { Controllers.shared.update(feedback: car.padFeedback) }
         }
         mouseDelta = .zero
     }
@@ -175,6 +185,7 @@ final class Engine {
         if let car { carDraw = (car.mesh, car.partMatrices) }   // aparcado también en modo libre
         var f = SceneFrame(view: view, proj: proj, camPos: eye, time: Float(time), meshes: meshes, car: carDraw, carShadow: car?.shadowMatrix)
         f.extraCars = extraCars
+        for o in frameOverrides { o(&f) }   // garajes (Garage/): escenario del frontend, coches de exposición
         return f
     }
 
@@ -184,9 +195,25 @@ final class Engine {
         update(dt: dt)
         let hookDt = ui?.paused == true ? 0 : dt
         for h in frameHooks { h(hookDt) }
+        if let ss = splitScreen, ss.active {
+            // Pantalla partida: el streaming junta la posición de todas las cámaras; una vista por jugador
+            streamer.update(cameras: ss.streamingPoints(), now: now)
+            let views = ss.views(target: target)
+            updateAI(dt: ui?.paused == true ? 0 : dt, frame: views.first?.frame ?? makeFrame())
+            renderer.encode(cb, views: views, target: target, scale: scale)
+            return
+        }
         streamer.update(camera: eye, now: now)
         let f = makeFrame()
         updateAI(dt: ui?.paused == true ? 0 : dt, frame: f)
         renderer.encode(cb, frame: f, target: target, scale: scale)
+    }
+
+    /// Otra pantalla de la pantalla partida (Multiplayer/MultiDisplay.swift): solo dibuja sus vistas, sin simular.
+    func renderDisplay(_ display: Int, cb: MTLCommandBuffer, target: MTLTexture, scale: Float) {
+        guard let ss = splitScreen, ss.active else { return }
+        ss.currentDisplay = display
+        defer { ss.currentDisplay = 0 }
+        renderer.encode(cb, views: ss.views(target: target), target: target, scale: scale)
     }
 }

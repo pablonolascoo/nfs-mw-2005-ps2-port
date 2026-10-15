@@ -81,6 +81,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         } else if options.drive { engine.toggleMode() }
         // Carreras y Lista Negra (Race/, Career/): marcadores del mundo, carrera rápida y carrera profesional
         engine.enableRaces()
+        SFXWorld.shared.attach(engine)   // sonido del juego: motores, efectos, sirenas (Audio/SFXWorld.swift)
         if CommandLine.arguments.contains("--career") { Career.shared.start() }
         if let ev = RaceTestOptions.value("--race") { QuickRace.shared.start(eventID: ev, engine: engine) }
         view.delegate = self

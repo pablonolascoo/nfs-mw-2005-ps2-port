@@ -91,6 +91,11 @@ struct Options {
                                        · --seconds N · --opponents N · --screenshot base.png (capturas -start/-mid/-finish + JSON)
                   --career-test        sin ventana: progresión simulada de la Lista Negra (15 → 1) · --save ruta.json
                   --race ID            (app) empieza directamente la carrera rápida ID · --career  (app) entra en la carrera profesional
+                  --players N          (app) pantalla partida: con --race, N jugadores (2…4) · --displays all|1|2  pantallas a usar
+                  --split-test N       sin ventana: N jugadores con piloto automático (--race ID, --seconds S, --displays D, --screenshot base.png)
+                  --quickrace-test     sin ventana: recorre las pantallas de la carrera rápida (--split N) y saca capturas
+                  --sound-off · --volume V   sonido del juego apagado · volumen general 0…1
+                  --sound-test [COCHE] sin ventana: recorrido con guion → .build/sound-test/<COCHE>.wav · --sound-dump bancos · --sound-live S salida real
                 """)
                 exit(0)
             case "--audit": break   // se atiende en el arranque (runAudit)
@@ -100,9 +105,16 @@ struct Options {
             case "--no-traffic", "--no-police": break
             case "--race-test", "--opponents", "--save", "--race": i += 1   // Race/RaceTests.swift, App.swift
             case "--career-test", "--career", "--race-audit": break
+            case "--garage-test", "--garage-mode", "--garage-screen", "--garage-select": i += 1   // Garage/GarageTests.swift
+            case "--split-test", "--displays", "--players", "--split": i += 1   // Multiplayer/ (pantalla partida, varias pantallas)
+            case "--quickrace-test", "--multi-display-test": break
             case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
             case "--debug-hud": break   // HUDPursuit.swift: HUD propio de depuración (el juego usa el original, UI/FEHud.swift)
             case "--radio-log", "--audio-devices", "--radio-test", "--pad-audio-test", "--lightbar-test": break   // Audio/AudioTests.swift
+            case "--sound-dump", "--sound-trace", "--sound-off": break   // Audio/SFXTests.swift, Audio/SFXWorld.swift
+            case "--sound-live": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
+            case "--sound-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
+            case "--volume": i += 1
             default: fputs("argumento desconocido: \(args[i])\n", stderr)
             }
             i += 1
@@ -274,14 +286,22 @@ if let i = CommandLine.arguments.firstIndex(of: "--probe"), i + 1 < CommandLine.
 }
 // Pruebas de audio y luz del mando sin ventana (Audio/AudioTests.swift)
 if AudioTests.handle(CommandLine.arguments) { exit(0) }
+// Pruebas del sonido del juego sin ventana (Audio/SFXTests.swift)
+if SFXTests.handle(CommandLine.arguments) { exit(0) }
 let options = Options.parse(CommandLine.arguments)
 if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     let a = CommandLine.arguments
     runPhysicsTest(options, carName: i + 1 < a.count && !a[i + 1].hasPrefix("-") ? a[i + 1] : Config.playerCar)
 } else if let ev = RaceTestOptions.raceTest {
     runRaceTest(options, eventKey: ev)
+} else if let z = GarageTestOptions.zone {
+    runGarageTest(options, zone: z)
 } else if RaceTestOptions.careerTest {
     runCareerTest(options)
+} else if let n = MPTestOptions.splitTest {
+    runSplitTest(options, players: n)
+} else if MPTestOptions.quickRaceTest {
+    runQuickRaceTest(options)
 } else if RaceTestOptions.raceAudit {
     runRaceAudit(options)
 } else if let secs = AIOptions.trafficTest {

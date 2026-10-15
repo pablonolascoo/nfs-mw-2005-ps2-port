@@ -55,7 +55,23 @@ struct HudInput {
 }
 
 final class FEHud {
-    enum Kind { case standard, drag }
+    /// ePlayerHudType [D: FEPkg_Hud.cpp]: PHT_STANDARD (HUD_SingleRace), PHT_DRAG (HUD_Drag) y los de pantalla partida
+    /// PHT_SPLIT1/2 (HUD_Player1/2) y PHT_DRAG_SPLIT1/2 (HUD_Drag_Player1/2), que vienen en GLOBAL\INGAMESPLITSCREEN.BUN.
+    enum Kind {
+        case standard, drag, split1, split2, dragSplit1, dragSplit2
+        var isDrag: Bool { self == .drag || self == .dragSplit1 || self == .dragSplit2 }
+        var isSplit: Bool { self == .split1 || self == .split2 || self == .dragSplit1 || self == .dragSplit2 }
+        /// Solo PHT_STANDARD y PHT_SPLIT1 crean el Minimap [D: FEngHud::FEngHud].
+        var hasMinimap: Bool { self == .standard || self == .split1 }
+        /// HudResourceManager::GetHudFengName [D].
+        var package: String {
+            switch self {
+            case .standard: "HUD_SingleRace"; case .drag: "HUD_Drag"
+            case .split1: "HUD_Player1"; case .split2: "HUD_Player2"
+            case .dragSplit1: "HUD_Drag_Player1"; case .dragSplit2: "HUD_Drag_Player2"
+            }
+        }
+    }
 
     /// Estado de la prueba en curso (lo rellena RaceHUD); nil = zona libre.
     struct RaceState {
@@ -162,13 +178,17 @@ final class FEHud {
     /// Radar que gira con el coche (ExploringMiniMapMode/RacingMiniMapMode = 1, el modo por defecto [I]).
     var minimapRotates = true
     // Drag
+    private var dragNeedleWidth: Float = 0, dragNeedleLeft: Float = 0
+    private var splitNeedleWidth: Float = 0, splitNeedleLeft: Float = 0
+    /// Pantalla partida: el otro jugador en el radar compartido (PLAYERCARINDICATOR2) [D: Minimap::UpdatePlayer2Element].
+    var otherPlayer: (pos: SIMD2<Float>, dir: SIMD2<Float>)?
     private var dragNeedle, dragGear, engineBar, engineIcon, shiftMsgGroup, shiftMsg, shiftMsgShadow, overheatGroup: FEObj?
     // Estado previo
     private var lastBusted = -1, lastEvaded = -1
     private var lastCost = 0
 
     init?(assets: FEAssets, kind: Kind = .standard) {
-        guard let p = FEPackageRT(name: kind == .drag ? "HUD_Drag" : "HUD_SingleRace", assets: assets) else { return nil }
+        guard let p = FEPackageRT(name: kind.package, assets: assets) else { return nil }
         pkg = p; self.kind = kind; self.assets = assets
         // FEngHud::FEngHud: todo invisible; cada elemento registra lo suyo [D]
         for o in p.all { o.flags |= 1 }
@@ -217,13 +237,14 @@ final class FEHud {
         element("countdown", 0x400, groups: [H("321_GO_GROUP")])
         cdGroup = f("321_GO_GROUP"); cdText = f("321_GO"); cdShadow = f("321_GO_SHADOW")
 
-        if kind == .drag {
+        if kind.isDrag {
             element("enginetemp", 0x40, groups: [H("Engine_Heat_Meter_Group")], objects: [H("ENGINE_METER")])
             engineBar = f("ENGINE_METER"); engineIcon = f("ENGINE_HEAT_ICON_GROUP")
             // DragTachometer: RPM_fill, Drag_Turbo_Backing, Drag_Turbo_Lines, 3rdPersonSpeedUnits, SPEED_BACKING, grupo RPM…
             element("dragtach", 0x2, groups: [H("RPM")], objects: ["RPM_fill", "Drag_Turbo_Backing", "Drag_Turbo_Lines", "3rdPersonSpeedUnits",
                                                                   "SPEED_BACKING", "TAC_Lines_7500", "RPM_Redline", "3rdPersonNeedle", "3rdPersonGear"].map(H))
             dragNeedle = f("3rdPersonNeedle"); dragGear = f("3rdPersonGear"); tachLines = f("TAC_Lines_7500"); redline = f("RPM_Redline")
+            dragNeedleWidth = dragNeedle?.size.x ?? 0; dragNeedleLeft = (dragNeedle?.pos.x ?? 0) - dragNeedleWidth / 2
             element("shift", 0x20000000, groups: [H("ENGINE_HEAT_SHIFTLIGHT_GROUP"), H("SHIFT_GROUP")], objects: [H("Shift_light")])
             shiftLight = f("Shift_light"); overheatGroup = f("ENGINE_HEAT_SHIFTLIGHT_GROUP")
             shiftMsgGroup = f("SHIFT_GROUP"); shiftMsg = f("ShiftMessage"); shiftMsgShadow = f("ShiftMessage_Shadow")
@@ -231,7 +252,10 @@ final class FEHud {
             element("timeext", 0x2000000)
             element("tach", 0x2, groups: [H("GaugeCluster"), 0x045E9562])
             needle = f("3rdPersonNeedle"); redline = f("RPM_REDLINE"); shiftLight = f("Shift_light"); gearString = f("3rdPersonGear")
+            splitNeedleWidth = needle?.size.x ?? 0; splitNeedleLeft = (needle?.pos.x ?? 0) - splitNeedleWidth / 2
             tachLines = f("TAC_Lines_7500")
+            if kind == .split1 { registerMinimap() }
+            guard kind == .standard else { registerCommonStandardDrag(); return }
             // Solo en el HUD normal: Reputation (carrera), HeatMeter, CostToState, PursuitBoard, MilestoneBoard, BustedMeter,
             // MenuZoneTrigger, Infractions, RadarDetector; y el Minimap
             element("rep", 0x1000, groups: [0xEA903012])
@@ -260,21 +284,35 @@ final class FEHud {
             element("radardetector", 0x200000, groups: [0x062743f5], objects: [0x839e7d77, 0x9ee06631])
             rdGroup = h(0x062743f5); rdLightsL = h(0x69aa01e7); rdLightsR = h(0x9f59065a); rdArrow = f("Radar_DirectionArrow")
             rdIcon = f("Radar_Icon"); rdBacking = h(0x839e7d77); rdBackingMirror = h(0x9ee06631)
-            // Minimap (FeMinimap.cpp): 4 trozos TRACK_MAP1…4, rejilla TRACK_MAP, norte, coche, iconos de policía y rivales
-            var mm: [UInt32] = []
-            for i in 1...4 { mm.append(H("TRACK_MAP\(i)")) }
-            mm += ["TRACK_MAP", "MINIMAP_NORTH_INDICATOR", "PLAYERCARINDICATOR", "PLAYERCARINDICATOR2", "TRACKMAPTARGETRING", "MAP_COLOR_TINT"].map(H)
-            mm.append(H("HELICOPTER_LINE_OF_SIGHT"))
-            for i in 0..<8 { mm += [H("MMICON_COPCAR_\(i)"), H("MMICON_AIRACER_\(i)")] }
-            mm += [H("MMICON_CHECKPOINT"), 0xE8741681]
-            element("minimap", 0x40010000, groups: [H("HELICOPTER_ICON_GROUP")], objects: mm)
-            for i in 1...4 { let o = f("TRACK_MAP\(i)"); mmPieces.append(o); mmPieceUVs.append((o?.maskTL ?? .zero, o?.maskBR ?? .zero)) }
-            mmLayout = f("TRACK_MAP"); mmNorth = f("MINIMAP_NORTH_INDICATOR"); mmPlayer = f("PLAYERCARINDICATOR"); mmPlayer2 = f("PLAYERCARINDICATOR2")
-            mmHeli = f("HELICOPTER_ICON_GROUP"); mmHeliLOS = f("HELICOPTER_LINE_OF_SIGHT"); mmCheckpoint = f("MMICON_CHECKPOINT"); mmGPS = h(0xE8741681)
-            for i in 0..<8 { mmCops.append(f("MMICON_COPCAR_\(i)")); mmRacers.append(f("MMICON_AIRACER_\(i)")) }
-            if let l = mmLayout { mmDefaultPos = l.pos; mmCentre = SIMD2(l.pos.x, l.pos.y) }
+            registerMinimap()
         }
-        // Comunes al HUD normal y al de aceleración (PHT_STANDARD / PHT_DRAG): SpeedBreakerMeter y GetAwayMeter
+        registerCommonStandardDrag()
+    }
+
+    /// Minimap (FeMinimap.cpp): 4 trozos TRACK_MAP1…4, rejilla TRACK_MAP, norte, coche, iconos de policía y rivales.
+    private func registerMinimap() {
+        let H = feHash
+        var mm: [UInt32] = []
+        for i in 1...4 { mm.append(H("TRACK_MAP\(i)")) }
+        mm += ["TRACK_MAP", "MINIMAP_NORTH_INDICATOR", "PLAYERCARINDICATOR", "PLAYERCARINDICATOR2", "TRACKMAPTARGETRING", "MAP_COLOR_TINT"].map(H)
+        mm.append(H("HELICOPTER_LINE_OF_SIGHT"))
+        for i in 0..<8 { mm += [H("MMICON_COPCAR_\(i)"), H("MMICON_AIRACER_\(i)")] }
+        mm += [H("MMICON_CHECKPOINT"), 0xE8741681]
+        element("minimap", 0x40010000, groups: [H("HELICOPTER_ICON_GROUP")], objects: mm)
+        for i in 1...4 { let o = f("TRACK_MAP\(i)"); mmPieces.append(o); mmPieceUVs.append((o?.maskTL ?? .zero, o?.maskBR ?? .zero)) }
+        mmLayout = f("TRACK_MAP"); mmNorth = f("MINIMAP_NORTH_INDICATOR"); mmPlayer = f("PLAYERCARINDICATOR"); mmPlayer2 = f("PLAYERCARINDICATOR2")
+        mmHeli = f("HELICOPTER_ICON_GROUP"); mmHeliLOS = f("HELICOPTER_LINE_OF_SIGHT"); mmCheckpoint = f("MMICON_CHECKPOINT"); mmGPS = h(0xE8741681)
+        for i in 0..<8 { mmCops.append(f("MMICON_COPCAR_\(i)")); mmRacers.append(f("MMICON_AIRACER_\(i)")) }
+        if let l = mmLayout { mmDefaultPos = l.pos; mmCentre = SIMD2(l.pos.x, l.pos.y) }
+        // Pantalla partida: el radar no gira con el coche (MinimapRotateWithPlayer = 0) [D: Minimap::Update]
+        if kind.isSplit { minimapRotates = false }
+    }
+
+    /// Comunes al HUD normal y al de aceleración (PHT_STANDARD / PHT_DRAG, no en pantalla partida [D]): SpeedBreakerMeter y
+    /// GetAwayMeter.
+    private func registerCommonStandardDrag() {
+        guard kind == .standard || kind == .drag else { return }
+        let H = feHash
         element("speedbreaker", 0x40000, groups: [H("Speedbreaker_Meter_Group"), 0x82D60021], objects: [H("Speedbreaker_Meter_Multi_Image")])
         sbIcon = f("SPEEDBREAKER_METER_ICON_GROUP"); sbBar = f("Speedbreaker_Meter_Multi_Image"); sbGroup = h(0x82D60021); sbBarSmall = h(0x1FDAF669)
         sbBarWidth = sbBarSmall?.size.x ?? 0
@@ -306,9 +344,11 @@ final class FEHud {
         let d = off - wsOffset
         guard abs(d) > 0.01 else { return }
         wsOffset = off
-        if let g = h(0x1603009e) { g.pos.x -= d }
-        if let g = h(0x5d0101f1) { g.pos.x += d }
-        guard kind == .standard else { return }
+        // Todos los grupos con el script de panorámica (0x1EDC08): en los HUD de pantalla partida hay dos a la derecha
+        // (0x5D0101F1 y 0x2FE4FF9C en HUD_Player1) [V]
+        for g in pkg.findAll(0x1603009e) { g.pos.x -= d }
+        for g in pkg.findAll(0x5d0101f1) + pkg.findAll(0x2fe4ff9c) { g.pos.x += d }
+        guard kind.hasMinimap else { return }
         mmCentre.x -= d
         mmPivotX = -off
         for p in mmPieces { if let p { p.pos.x -= d } }
@@ -320,10 +360,10 @@ final class FEHud {
     /// ChooseMaxRpmTextureNumber / ChooseLoadableTextures + HUD de serie (HUDS_CUSTOM_00) [D: FEPkg_Hud.cpp].
     func setTachTextures(maxRpm: Float, redline redlineRpm: Float) {
         maxRpmTexture = maxRpm < 7000 ? 7000 : maxRpm < 8000 ? 8000 : maxRpm < 9000 ? 9000 : 10000
-        let isDrag = kind == .drag
+        let isDrag = kind.isDrag
         let lines = isDrag ? "DRAG_RPM_\(Int(maxRpmTexture))_LINES" : "\(Int(maxRpmTexture))_LINES_00"
         h(0x309878bc)?.handle = feHash(lines)
-        if !isDrag {
+        if kind == .standard {
             // LoadedCustomHudTexturesCallback: fondo, aguja de rpm, velocímetro y aguja del turbo del HUD 00 [D]. En el disco PS2
             // esas texturas se llaman TACH_FILL_00 / TACH_NEEDLE_00 / TURBO_* (no CUSTOMHUD_*) [V: HUDS_CUSTOM_00.BIN]
             h(0x05d19f25)?.handle = feHash("TACH_FILL_00")
@@ -350,7 +390,7 @@ final class FEHud {
         let racing = race != nil && race?.setup.kind != .pursuit
         let isDrag = race?.setup.kind == .drag
         // Minimapa: circuito 2000 (Rockport) y el modo del radar no está apagado; en aceleración no hay radar
-        if kind == .standard && (race == nil || race?.setup.showMinimap == true) { f |= 0x10000 | 0x4000 }
+        if kind.hasMinimap && (race == nil || race?.setup.showMinimap == true) { f |= 0x10000 | 0x4000 }
         // GaugesOn / PositionOn (por defecto encendidos [I: valores de fábrica de FEPlayerSettings])
         f |= 0x8000000
         f |= 0x2 | 0x800 | 0x40000
@@ -373,9 +413,9 @@ final class FEHud {
         events(i)
         if f != 0 {
             if on(0x8000000) { speedometer(i) }
-            if kind == .drag { if on(0x2) { dragTachometer(i) }; if on(0x20000000) { shiftUpdater(i) }; if on(0x40) { engineTemp() } }
+            if kind.isDrag { if on(0x2) { dragTachometer(i) }; if on(0x20000000) { shiftUpdater(i) }; if on(0x40) { engineTemp() } }
             else if on(0x2) { tachometer(i) }
-            if kind == .standard && on(0x10000) { minimap(i) }
+            if kind.hasMinimap && on(0x10000) { minimap(i) }
             if on(0x4000000) { raceInformation() }
             if on(0x18) { leaderboard() }
             if kind == .standard {
@@ -417,10 +457,18 @@ final class FEHud {
     private func tachometer(_ i: HudInput) {
         // CalcAngleForRPM: 66°…294° según rpm / máximo de la textura [D]
         let factor = max(0, min(1, i.rpm / maxRpmTexture))
-        needle?.setRotationZ(factor * (294 - 66) + 66)
+        if kind.isSplit, let n = needle {
+            // Pantalla partida (Sim::USER_SPLIT_SCREEN): la aguja es una barra que crece desde su borde izquierdo con
+            // rpm / MaxRpm y se pone roja en la zona roja [D: Tachometer::Update]
+            let w = max(0, min(1, i.rpm / max(i.maxRpm, 1))) * splitNeedleWidth
+            n.size = SIMD3(w, n.size.y, n.size.z); n.pos = SIMD3(splitNeedleLeft + w / 2, n.pos.y, n.pos.z)
+            ensure(n, i.rpm >= i.redline ? 0x61D30442 : FEH.initScript)
+        } else {
+            needle?.setRotationZ(factor * (294 - 66) + 66)
+        }
         if let g = gearString {
             pkg.printf(g, gearLetter(i.gear))
-            g.setColor(i.shifting ? 0x8800_0000 : 0xFF00_0000)
+            if !kind.isSplit { g.setColor(i.shifting ? 0x8800_0000 : 0xFF00_0000) }
         }
         let potential = i.shiftPotential > 0 ? i.shiftPotential : (i.rpm >= i.redline - 150 && i.gear >= 2 ? 2 : 0)
         let want: UInt32 = potential > 1 ? 0x02DDC8F0 : FEH.initScript
@@ -441,7 +489,8 @@ final class FEHud {
 
     private func nitrous(_ i: HudInput) {
         // NitrousGauge::Update / SetNos [D]
-        let minAngle: Float = kind == .drag ? -48 : 175
+        // HUD_Drag.fng: −48; pantalla partida: 180; el resto 175 [D: NitrousGauge::Update compara el nombre del paquete]
+        let minAngle: Float = kind == .drag ? -48 : kind.isSplit ? 180 : 175
         if var pr = nosBar?.pivotRot { pr.z = i.nos * -minAngle + minAngle; nosBar?.pivotRot = pr }
         if lastNos >= 0 {
             let want: UInt32 = i.nos <= 0 ? FEH.initScript : (i.nos < lastNos ? 0x77031C70 : 0x03826A28)
@@ -740,7 +789,14 @@ final class FEHud {
     private func dragTachometer(_ i: HudInput) {
         // DragTachometer::CalcAngleForRPMDrag: −43°…44,5° [D]
         let factor = max(0, min(1, i.rpm / maxRpmTexture))
-        dragNeedle?.setRotationZ(factor * (44.5 + 43) - 43)
+        if kind.isSplit, let n = dragNeedle {
+            // Pantalla partida: la «aguja» es una barra que crece desde la izquierda; roja en la zona roja [D: DragTachometer::Update]
+            let w = max(0, min(1, i.rpm / max(i.maxRpm, 1))) * dragNeedleWidth
+            n.size = SIMD3(w, n.size.y, n.size.z); n.pos = SIMD3(dragNeedleLeft + w / 2, n.pos.y, n.pos.z)
+            ensure(n, i.rpm >= i.redline ? 0x61D30442 : FEH.initScript)
+        } else {
+            dragNeedle?.setRotationZ(factor * (44.5 + 43) - 43)
+        }
         if let g = dragGear { pkg.printf(g, gearLetter(i.gear)); g.setColor(i.shifting ? 0x88FF_FFFF : 0xFFFF_FFFF) }
     }
 
@@ -842,6 +898,8 @@ final class FEHud {
             ri += 1
         }
         for k in ri..<8 { pkg.setVisible(mmRacers[k], false) }
+        if let o2 = otherPlayer, let ind = mmPlayer2 { placeIcon(o2.pos, o2.dir, ind, calib, minimapRotates ? -mapRot : 0) }
+        else { pkg.setVisible(mmPlayer2, false) }
         if let cp = race?.nextCheckpoint, let o = mmCheckpoint {
             placeIcon(SIMD2(cp.x, cp.y), SIMD2(1, 0), o, calib, minimapRotates ? -mapRot : 0); o.setRotationZ(0)
         } else { pkg.setVisible(mmCheckpoint, false) }

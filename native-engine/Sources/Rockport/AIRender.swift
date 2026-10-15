@@ -1,5 +1,5 @@
 // Dibujo de los coches de la IA con instancias: una llamada por (modelo, material) sin importar cuántos coches haya.
-// Matrices de las 9 piezas por coche en un búfer por fotograma (anillo de 4 para no pisar a la GPU).
+// Matrices de las 9 piezas por coche en un búfer por fotograma (anillo de 16: una entrada por vista de pantalla partida y fotograma en vuelo).
 // Extras: pilotos de freno encendidos al frenar, destellos de la barra de luces de policía (rojo/azul alternos y blancos,
 // fórmula de CarRender.cpp 2364-2423 [D]) y los caballetes / pinchos de los controles (cajas, sin modelo en el disco [I]).
 // Se engancha al Renderer con el protocolo RenderOverlay (tres puntos: opacos, transparentes y pantalla).
@@ -158,7 +158,8 @@ final class AIRenderer: RenderOverlay {
             sd.sAddressMode = w & 1 != 0 ? .repeat : .clampToEdge; sd.tAddressMode = w & 2 != 0 ? .repeat : .clampToEdge
             sampler.append(device.makeSamplerState(descriptor: sd)!)
         }
-        for _ in 0..<4 {
+        // Anillo: una entrada por vista y fotograma en vuelo (pantalla partida: hasta 4 vistas × 3 fotogramas + margen)
+        for _ in 0..<16 {
             ring.append((device.makeBuffer(length: AIRenderer.maxInst * 9 * 64, options: .storageModeShared)!,
                          device.makeBuffer(length: AIRenderer.maxInst * 16, options: .storageModeShared)!,
                          device.makeBuffer(length: AIRenderer.maxFlares * 32, options: .storageModeShared)!))

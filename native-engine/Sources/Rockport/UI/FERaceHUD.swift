@@ -76,6 +76,9 @@ extension FEUI: RaceHUD {
             (0xefc9662e, 0x84e4a54c, {}), (0xd807e9b3, 0x216f1b81, {}), (0x021a4b0c, 0xe451941e, {}), (0xe97e4e83, 0x2d159737, {}),
         ]) else { onChoice(nil); return }
         let p = s.pkg
+        // Dentro del juego los iconos van en naranja: SetIdleColor(0xFFFFAE40) / SetFadeColor(0x00FFAE40) [D]
+        s.scroller?.idleColor = 0xFFFFAE40; s.scroller?.fadeColor = 0x00FFAE40
+        s.scroller?.snap()
         if let t = p.find(0x242657ce) { setLabelDeep(p, t, 0x2e3919e9) }
         var idx = max(0, min(rivals.count - 1, rivals.firstIndex { $0.rank == selected } ?? 0))
         let show: (Int) -> Void = { [weak self] i in self?.blacklistPage(p, rivals[i]) }
@@ -125,12 +128,19 @@ extension FEUI: RaceHUD {
         p.setVisible(p.find(0x34d4433b), r.defeated)
         if r.defeated { p.setVisible(p.find(0x55f6aa1a), false); p.post(0xb4c144b1) }
         else if r.unlocked { p.post(feHash("RIVAL_CHALLENGE_DEACTIVATED")); p.setVisible(p.find(0x55f6aa1a), true) }
-        else { p.post(feHash("RIVAL_CHALLENGE_ACTIVATED")); p.setVisible(p.find(0x55f6aa1a), false) }
+        else {
+            // La decomp manda RIVAL_CHALLENGE_ACTIVATED con el rival no disponible, y ese mensaje oculta el panel de
+            // requisitos (grupo 0x1E617835: ACTIVATED/ON → HIDE, OFF → SHOW) [D][V]. Así la pantalla quedaba con un hueco
+            // vacío justo cuando más falta hacen los requisitos; dejamos el panel a la vista [I: el `if` de UpdateInfo está
+            // marcado sin resolver en la decomp].
+            p.setVisible(p.find(0x55f6aa1a), false)
+        }
+        if let panel = p.find(0x1E617835) { p.setScript(panel, 0x1ca7c0) }        // SHOW
+        // Recompensa y dinero se turnan en la cabecera: los scripts ON/OFF de 0xB514E2D8 y 0xF91A59F6 se mandan el relevo
+        // cada 300 ms (eventos 0x71A545A9 / 0x0339155A) [V]
         let cash = assets.string(0x73b79e0) ?? "", bounty = assets.string(0xce6b99b1) ?? ""
         printDeep(p, p.find(0xb514e2d8), "\(bounty) \(money(r.bounty))")
-        // El dinero (0xf91a59f6) ocupa el mismo sitio que la recompensa: solo se enseña la recompensa [I]
-        p.setVisible(p.find(0xf91a59f6), false)
-        _ = cash
+        printDeep(p, p.find(0xf91a59f6), "\(cash) \(money(blacklistCash))")
     }
 
     // MARK: Coche ganado (Showcase)
@@ -228,6 +238,12 @@ extension FEUI: RaceHUD {
         p.printf(p.find(0xe1045a4f), "\(assets.string(0x29b1b96a) ?? ""): \(FEHud.money(bounty))")
         p.printf(p.find(0x324f7792), "\(assets.string(0x5ccf949a) ?? ""): \(FEHud.money(bounty))")
         p.setScript(icon, FEH.appear)
+        // FEMSG_SCREEN_TICK: al acabar APPEAR, el icono grande vuela a su hueco de la tira (POS0 = recompensa) [D]
+        let pos0 = feHash("POS0")
+        s.tick = { [weak icon, weak p] in
+            guard let icon, let p, let sc = icon.script, sc.id == FEH.appear, icon.time > sc.length else { return }
+            p.setScript(icon, pos0)
+        }
         enterModal(s, accept: { [weak self] in self?.closeModal(s) {} }, back: nil)
     }
 }

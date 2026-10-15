@@ -89,7 +89,7 @@ function readSolid(buf: Uint8Array, c: Chunk): Solid {
  *  29 V4-16  ST: por fila (s0, t0, t1, s1) → 2 vértices/fila
  *  45 V4-8u  RGBA por vértice (solo escenario; 128 = 1.0)
  *  77 V4-8   normales SoA igual que XYZ (int8 / 127)
- * Posición = entero × escala + desplazamiento entero por eje (se deduce de la AABB: ver docs).
+ * Posición = entero × escala + desplazamiento entero por eje (se deduce de la AABB: ver docs); con XYZ en V4-32, metros directos.
  */
 function decodeStrip(buf: Uint8Array, start: number, end: number, e: { nv: number; np: number; flags: number; texture: number; lightMaterial: number }): Strip {
   const cur: Record<number, Unpack> = {};
@@ -116,8 +116,11 @@ function decodeStrip(buf: Uint8Array, start: number, end: number, e: { nv: numbe
   };
   const rawPos = soa(cur[5], 3, cur[5 + packs * 3]);
   if (rawPos.length < nv) throw new Error(`posiciones insuficientes (${rawPos.length}/${nv})`);
-  const off = [0, 1, 2].map(a => Math.round(bbMin[a] - Math.min(...rawPos.slice(0, nv).map(v => v[a])) * scale));
-  const positions = rawPos.slice(0, nv).map(v => v.map((x, a) => x * scale + off[a]));
+  // Con XYZ en V4-32 (floats; cabecera [nv, packs, 9, …]) las posiciones ya vienen en metros: sin escala ni desplazamiento.
+  // Lo usan las piezas grandes (> ±128 m con int16/256), p. ej. la cúpula del cielo BACKDROP_CURRGEN de los garajes [V].
+  const floatPos = cur[5].bits === 32;
+  const off = floatPos ? [0, 0, 0] : [0, 1, 2].map(a => Math.round(bbMin[a] - Math.min(...rawPos.slice(0, nv).map(v => v[a])) * scale));
+  const positions = rawPos.slice(0, nv).map(v => v.map((x, a) => (floatPos ? x : x * scale + off[a])));
 
   const uvs: number[][] = [];
   if (cur[29]) {

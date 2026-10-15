@@ -20,6 +20,12 @@ final class RaceSystem {
     let world: RaceWorld
     private(set) var session: RaceSession?
     var hud: RaceHUD? { engine.raceHUD }
+    /// Pantalla partida (Multiplayer/): el HUD de cada jugador humano (0 = el del motor). nil = un jugador: el HUD de la interfaz.
+    var playerHUDs: [RaceHUD]?
+    func hud(forHuman i: Int) -> RaceHUD? {
+        if let l = playerHUDs { return i < l.count ? l[i] : nil }
+        return i == 0 ? hud : nil
+    }
     var playerName = "TÚ"
     /// Dificultad de la carrera rápida (GRace::Difficulty): 0 fácil, 1 media, 2 difícil.
     var quickRaceDifficulty = 1
@@ -50,10 +56,11 @@ final class RaceSystem {
     // MARK: Pruebas
 
     @discardableResult
-    func start(_ event: RaceEvent, context: RaceContext, opponents: Int? = nil, onEnd: ((RaceOutcome) -> Void)? = nil) -> RaceSession? {
+    func start(_ event: RaceEvent, context: RaceContext, opponents: Int? = nil, options: QuickRaceOptions = QuickRaceOptions(),
+               onEnd: ((RaceOutcome) -> Void)? = nil) -> RaceSession? {
         if let s = session { s.abandon() }
         hud?.dismissScreens()
-        guard let s = RaceSession(system: self, event: event, context: context, opponents: opponents) else { return nil }
+        guard let s = RaceSession(system: self, event: event, context: context, opponents: opponents, options: options) else { return nil }
         s.log = log
         s.onEnd = { [weak self] o in
             self?.session = nil
@@ -127,10 +134,10 @@ final class RaceSystem {
     }
 
     /// fBaseSkill (AIPerpVehicle::ComputeSkill) [D]: carrera = SkillLevel/100 del personaje; rápida = tabla por dificultad.
-    func baseSkill(for o: RaceOpponent, event: RaceEvent, context: RaceContext) -> Float {
+    func baseSkill(for o: RaceOpponent, event: RaceEvent, context: RaceContext, catchUp: Bool? = nil) -> Float {
         switch context {
         case .quickRace:
-            let t = event.catchUp.enabled ? RaceAITables.quickRaceSkills : RaceAITables.quickRaceSkillsNoGlue
+            let t = (catchUp ?? event.catchUp.enabled) ? RaceAITables.quickRaceSkills : RaceAITables.quickRaceSkillsNoGlue
             return t[max(0, min(2, quickRaceDifficulty))]
         case .career, .test:
             return max(0, min(1, (o.skill ?? 100) * 0.01))

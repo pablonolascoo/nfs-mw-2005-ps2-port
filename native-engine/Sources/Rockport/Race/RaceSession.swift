@@ -35,11 +35,37 @@ final class RaceRacer {
     var topSpeed: Float = 0
     var trafficHits = 0
     var position = 0
+    /// Jugador humano: 0 = el del motor (`isPlayer`), 1… = los de la pantalla partida (Multiplayer/). nil = IA.
+    var humanIndex: Int?
+    var isHuman: Bool { humanIndex != nil }
+    // Estado por corredor humano (antes solo del jugador): drag, peaje, aviso de sentido contrario, choques
+    var dragLane = 0
+    var dragPrevSteer: Float = 0
+    var engineTemp: Float = 0
+    var lastGear = 0
+    var shiftQuality = 0
+    var crashWindow: [Float] = []
+    var hudWrongWay = false
+    var timeRemaining: Double = 0
+    var autoDriver: RaceDriver?
 
     init(name: String, isPlayer: Bool, car: Car, opponent: RaceOpponent?) {
         self.name = name; self.isPlayer = isPlayer; self.car = car; self.opponent = opponent
+        if isPlayer { humanIndex = 0 }
     }
     var active: Bool { !finished && !knockedOut && !dnf }
+}
+
+/// Opciones de la carrera rápida (Track_Options [D: uiQRTrackOptions.cpp]): nil = lo que diga la prueba.
+struct QuickRaceOptions {
+    var laps: Int?
+    /// Tráfico 0…1 (TrafficDensity: ninguno, mínimo, moderado, máximo).
+    var traffic: Float?
+    /// Policía en la prueba (la carrera rápida del juego la quita siempre: SetCopsEnabled(false) [D]; aquí es opcional).
+    var police: Bool?
+    var catchUp: Bool?
+    /// Jugadores humanos además del del motor (pantalla partida): coche y nombre.
+    var humans: [(car: Car, name: String)] = []
 }
 
 /// Cómo se arrancó la prueba (GRace::Context [D]).
@@ -74,32 +100,38 @@ final class RaceSession {
     private(set) var clock: Double = 0             // tiempo de carrera (desde «¡YA!»)
     private var phaseTime: Double = 0
     private var countdownShown = 99
-    private(set) var timeRemaining: Double = 0     // peaje
     private var finishHold: Double = 0
     var autopilot = false                          // pruebas: el jugador lo conduce un RaceDriver
     private var autoDriver: RaceDriver?
     var onEnd: ((RaceOutcome) -> Void)?
     var log: (String) -> Void = { print($0) }
     // Drag
-    private var dragLane = 0
     private var dragLanes: [Float] = [0]
-    private(set) var engineTemp: Float = 0
-    private var lastGear = 0
-    private(set) var shiftQuality = 0
+    var engineTemp: Float { player.engineTemp }
+    var shiftQuality: Int { player.shiftQuality }
+    let options: QuickRaceOptions
+    /// Vueltas de la prueba (las de la carrera rápida si se eligieron).
+    let laps: Int
+    /// Pantalla partida: tiempo que queda a los demás tras llegar el primer humano.
+    private var humansGrace: Double?
     // Persecución (desafíos y carreras con policía)
     private var pursuitStartTime: Double?
     private var pursuitPeak: (cost: Int, infractions: Int, roadblocks: Int, spikes: Int, copsHit: Int) = (0, 0, 0, 0, 0)
     private var statsAtStart: AIStats?
     private(set) var milestoneValue: Float = 0
     private var savedTraffic: (Int, Float, Bool)?
-    private var hudWrongWay = false
-    private var crashWindow: [Float] = []
+    var humans: [RaceRacer] { racers.filter(\.isHuman).sorted { ($0.humanIndex ?? 0) < ($1.humanIndex ?? 0) } }
+    /// HUD de un corredor humano (cada jugador de la pantalla partida tiene el suyo); nil para la IA.
+    private func hud(_ r: RaceRacer) -> RaceHUD? { r.humanIndex.flatMap { system.hud(forHuman: $0) } }
+    /// Peaje: tiempo que le queda al jugador 1 (cada humano lleva el suyo).
+    var timeRemaining: Double { player.timeRemaining }
 
     var isTimeTrial: Bool { event.kind == .tollbooth }
     var hasRoute: Bool { event.kind != .challenge || event.finish != nil }
 
-    init?(system: RaceSystem, event: RaceEvent, context: RaceContext, opponents requested: Int? = nil) {
-        self.system = system; self.event = event; self.context = context
+    init?(system: RaceSystem, event: RaceEvent, context: RaceContext, opponents requested: Int? = nil, options: QuickRaceOptions = QuickRaceOptions()) {
+        self.system = system; self.event = event; self.context = context; self.options = options
+        laps = event.isLapRace ? max(1, options.laps ?? event.laps) : max(1, event.laps)
         let engine = system.engine
         guard let net = engine.ai?.net else { fputs("Carreras: sin red de carreteras (roads.json)\n", stderr); return nil }
         guard let start = event.start ?? event.checkpoints.first ?? event.finish else { fputs("Carreras: \(event.id) sin salida\n", stderr); return nil }
@@ -109,7 +141,6 @@ final class RaceSession {
         if let f = event.finish { lap.append(f) }
         let wander = lap.isEmpty
         if wander { lap = RaceSession.wanderGates(net: net, from: start, meters: 8000) }   // desafío sin meta: solo para el piloto automático
-        let laps = max(1, event.laps)
         route = RaceRoute(net: net, barriers: barriers, start: start, gates: lap, laps: laps)
         if wander {
             gates = []
@@ -161,8 +192,8 @@ final class RaceSession {
         if event.kind == .tollbooth || event.kind == .challenge { opps = [] }
         let p0 = route.sample(0)
         let fwd = p0.tangent, right = float3(fwd.y, -fwd.x, 0)
-        // Parrilla de dos en fondo, 8 m entre filas, el jugador detrás [I: GRacerInfo::ForceStartPosition sin datos de parrilla]
-        let total = opps.count + 1
+        // Parrilla de dos en fondo, 8 m entre filas, los humanos detrás [I: GRacerInfo::ForceStartPosition sin datos de parrilla]
+        let total = opps.count + 1 + options.humans.count
         let half = min(2.6, max(1.6, min(p0.left, p0.right) - 1.2))
         func slot(_ i: Int) -> (float3, Float) {
             let row = i / 2, side: Float = total == 1 ? 0 : (i % 2 == 0 ? -half : half)
@@ -177,10 +208,20 @@ final class RaceSession {
             car.place(p + float3(0, 0, 1.5), yaw: yaw, collision: engine.collision, probe: 3)
             let name = o.racerName ?? (o.boss == true ? (system.db.bins.first { $0.boss == o.name }?.bossName ?? "Rival") : RaceSystem.prettyName(o.name))
             let r = RaceRacer(name: name, isPlayer: false, car: car, opponent: o)
-            let skill = system.baseSkill(for: o, event: event, context: context)
-            r.driver = RaceDriver(car: car, route: route, skill: skill, catchUp: RaceCatchUpParams(event.catchUp),
+            let skill = system.baseSkill(for: o, event: event, context: context, catchUp: options.catchUp)
+            var cu = RaceCatchUpParams(event.catchUp)
+            if let c = options.catchUp { cu.enabled = c }
+            r.driver = RaceDriver(car: car, route: route, skill: skill, catchUp: cu,
                                   laneOffset: 0, drag: event.kind == .drag, player: pcar,
                                   minPerformance: o.minPerformance ?? 0)
+            list.append(r)
+        }
+        // Pantalla partida: los demás humanos delante del jugador 1, en orden
+        for (k, h) in options.humans.enumerated() {
+            let (hp, _) = slot(opps.count + k)
+            h.car.place(hp + float3(0, 0, 1.5), yaw: yaw, collision: engine.collision, probe: 3)
+            let r = RaceRacer(name: h.name, isPlayer: false, car: h.car, opponent: nil)
+            r.humanIndex = k + 1
             list.append(r)
         }
         let (pp, _) = slot(total - 1)
@@ -193,16 +234,21 @@ final class RaceSession {
             if let d = r.driver { d.laneOffset = max(-p0.left + 1.5, min(p0.right - 1.5, pr.lateral)) }
         }
         // Salida lanzada (desafíos): velocidad inicial (InitialPlayerSpeed, mph [I])
-        if event.rollingStart || event.initialSpeed > 0, let v = pcar.vehicle {
-            let sp = PM.mph2mps(event.initialSpeed > 0 ? event.initialSpeed : 40)
-            v.rb.linearVel = v.rb.rotate(V3(0, 0, sp)); v.engine.matchSpeed(sp)
+        if event.rollingStart || event.initialSpeed > 0 {
+            for h in racers where h.isHuman {
+                guard let v = h.car.vehicle else { continue }
+                let sp = PM.mph2mps(event.initialSpeed > 0 ? event.initialSpeed : 40)
+                v.rb.linearVel = v.rb.rotate(V3(0, 0, sp)); v.engine.matchSpeed(sp)
+            }
         }
         // Drag: carriles cada 3,5 m dentro de la calzada; cambio manual [D: STYLE_DRAG, kLaneDrag]
         if event.kind == .drag {
             let n = max(2, Int((p0.left + p0.right) / 3.5))
             dragLanes = (0..<n).map { -p0.left + 1.75 + Float($0) * 3.5 }
-            dragLane = dragLanes.indices.min { abs(dragLanes[$0] - player.lateral) < abs(dragLanes[$1] - player.lateral) } ?? 0
-            pcar.vehicle?.engine.automatic = false
+            for h in racers where h.isHuman {
+                h.dragLane = dragLanes.indices.min { abs(dragLanes[$0] - h.lateral) < abs(dragLanes[$1] - h.lateral) } ?? 0
+                h.car.vehicle?.engine.automatic = false
+            }
         }
         return true
     }
@@ -213,8 +259,8 @@ final class RaceSession {
         system.world.setRaceBarriers(event.barriers)
         // Tráfico (TrafficLevel %) y policía (CopsInRace / ForceHeatLevel / MaxHeatLevel) [V: datos de la prueba]
         savedTraffic = (AIConfig.maxTraffic, AIConfig.density, AIConfig.police)
-        AIConfig.density = max(0, event.trafficLevel) / 100
-        AIConfig.police = event.copsInRace || event.kind == .challenge
+        AIConfig.density = options.traffic ?? max(0, event.trafficLevel) / 100
+        AIConfig.police = options.police ?? (event.copsInRace || event.kind == .challenge)
         if let ai = engine.ai {
             if AIConfig.police {
                 let h = event.forceHeat > 0 ? event.forceHeat : (event.useWorldHeat ? ai.police.heat : 1)
@@ -223,7 +269,8 @@ final class RaceSession {
             statsAtStart = ai.stats
         }
         engine.driverFilter = { [weak self] d, reset, dt in self?.filterInput(&d, &reset, dt) }
-        if let hud = system.hud {
+        for h in humans {
+            guard let hud = hud(h) else { continue }
             let kind: RaceKind = switch event.kind {
             case .sprint: .sprint
             case .circuit: .circuit
@@ -233,7 +280,7 @@ final class RaceSession {
             case .tollbooth: .tollbooth
             case .challenge: .pursuit
             }
-            hud.beginRace(RaceHUDSetup(kind: kind, laps: event.laps, racers: racers.map { RaceHUDRacer(name: $0.name, isPlayer: $0.isPlayer) },
+            hud.beginRace(RaceHUDSetup(kind: kind, laps: laps, racers: racers.map { RaceHUDRacer(name: $0.name, isPlayer: $0 === h) },
                                        eventName: event.eventId, showMinimap: hasRoute,
                                        timeLimit: isTimeTrial ? Double(max(event.timeLimit, 1)) : nil,
                                        checkpointCount: event.kind == .speedtrap ? event.speedtraps.count : (isTimeTrial ? event.checkpoints.count : 0)))
@@ -248,7 +295,7 @@ final class RaceSession {
             let end = d + 200
             while d < end { let q = route.sample(d); log(String(format: "  ruta %.0f m: (%.1f, %.1f, %.1f) t (%.2f, %.2f) izq %.1f dcha %.1f", d, q.p.x, q.p.y, q.p.z, q.tangent.x, q.tangent.y, q.left, q.right)); d += 8 }
         }
-        timeRemaining = Double(event.timeLimit > 0 ? event.timeLimit : 90)
+        for h in humans { h.timeRemaining = Double(event.timeLimit > 0 ? event.timeLimit : 90) }
         if !event.doCountdown || event.rollingStart || event.kind == .challenge { startRacing() }
         else { phase = .countdown; phaseTime = 0 }
         log(String(format: "Carrera %@ (%@): %d corredores · ruta %.0f m (dato RaceLength %.0f m) · %d puertas · %d vallas (%d líneas) · tramos sin camino %d",
@@ -258,7 +305,7 @@ final class RaceSession {
     private func startRacing() {
         phase = .racing; phaseTime = 0; clock = 0
         for r in racers { r.lapStart = 0 }
-        system.hud?.showCountdown(-1)
+        for h in humans { hud(h)?.showCountdown(-1) }
         if event.kind == .challenge || event.pursuitRace, let ai = system.engine.ai {
             ai.police.forcePursuit()
             pursuitStartTime = 0
@@ -267,9 +314,17 @@ final class RaceSession {
 
     // MARK: Entrada del jugador
 
-    private func filterInput(_ d: inout DriverInput, _ reset: inout Bool, _ dt: Float) {
+    private func filterInput(_ d: inout DriverInput, _ reset: inout Bool, _ dt: Float) { filter(player, &d, &reset, dt) }
+
+    /// Entrada de otro humano de la pantalla partida (Multiplayer/SplitScreen.swift): mismas reglas que el jugador 1.
+    func filterHuman(car: Car, _ d: inout DriverInput, _ reset: inout Bool, _ dt: Float) {
+        guard let r = racers.first(where: { $0.car === car && $0.isHuman }) else { return }
+        filter(r, &d, &reset, dt)
+    }
+
+    private func filter(_ player: RaceRacer, _ d: inout DriverInput, _ reset: inout Bool, _ dt: Float) {
         if reset { reset = false; resetRacer(player) }
-        if autopilot, let ad = autoDriver ?? makeAutoDriver() {
+        if autopilot, let ad = player.autoDriver ?? makeAutoDriver(player) {
             let o = others(for: player)
             let staging = phase == .countdown
             let a = ad.drive(dt: dt, progress: player.progress, lateralNow: player.lateral, others: o, stop: phase != .countdown && phase != .racing, staging: staging)
@@ -282,28 +337,29 @@ final class RaceSession {
             }
             let keepShift = (d.shiftUp, d.shiftDown)
             d = a
-            if event.kind == .drag { autoShift(&d) } else { (d.shiftUp, d.shiftDown) = keepShift }
+            if event.kind == .drag { autoShift(player, &d) } else { (d.shiftUp, d.shiftDown) = keepShift }
         }
         switch phase {
         case .countdown:
             // Parados hasta «¡YA!»: se puede acelerar en vacío (freno de mano) [I]
             d.handBrake = 1; d.brake = 0; d.steerLeft = 0; d.steerRight = 0; d.nos = false
         case .racing:
-            if event.kind == .drag && !autopilot { dragAssist(&d, dt) }
+            if event.kind == .drag && !autopilot { dragAssist(player, &d, dt) }
         case .finishing, .results, .done:
             if !player.active || player.finished { d.gas = 0; d.nos = false; d.brake = max(d.brake, 0.4) }
         }
     }
 
-    private func makeAutoDriver() -> RaceDriver? {
-        let d = RaceDriver(car: player.car, route: route, skill: 0.75, catchUp: RaceCatchUpParams(), laneOffset: 0, drag: event.kind == .drag, player: nil, minPerformance: 1)
+    private func makeAutoDriver(_ r: RaceRacer) -> RaceDriver? {
+        // Jugador 1 por el centro (como siempre); los demás humanos de la pantalla partida, por su carril de la parrilla
+        let d = RaceDriver(car: r.car, route: route, skill: 0.75, catchUp: RaceCatchUpParams(), laneOffset: r.isPlayer ? 0 : r.lateral, drag: event.kind == .drag, player: nil, minPerformance: 1)
         var c = RaceCatchUpParams(); c.enabled = false; d.catchUp = c
-        autoDriver = d
+        r.autoDriver = d
         return d
     }
 
     /// Piloto automático en drag: cambia de marcha en el punto de cambio óptimo (pruebas).
-    private func autoShift(_ d: inout DriverInput) {
+    private func autoShift(_ player: RaceRacer, _ d: inout DriverInput) {
         guard let v = player.car.vehicle else { return }
         let g = v.engine.gear
         d.shiftDown = false
@@ -311,14 +367,13 @@ final class RaceSession {
     }
 
     /// Drag: la dirección la lleva el juego; izquierda/derecha cambian de carril [D: STYLE_DRAG, kLaneDrag].
-    private var dragPrevSteer: Float = 0
-    private func dragAssist(_ d: inout DriverInput, _ dt: Float) {
+    private func dragAssist(_ player: RaceRacer, _ d: inout DriverInput, _ dt: Float) {
         let s = d.steerRight - d.steerLeft
-        if abs(s) > 0.5 && abs(dragPrevSteer) <= 0.5 && !autopilot {
-            dragLane = max(0, min(dragLanes.count - 1, dragLane + (s > 0 ? 1 : -1)))
+        if abs(s) > 0.5 && abs(player.dragPrevSteer) <= 0.5 && !autopilot {
+            player.dragLane = max(0, min(dragLanes.count - 1, player.dragLane + (s > 0 ? 1 : -1)))
         }
-        dragPrevSteer = s
-        let want = dragLanes[min(dragLane, dragLanes.count - 1)]
+        player.dragPrevSteer = s
+        let want = dragLanes[min(player.dragLane, dragLanes.count - 1)]
         // Dirección asistida hacia el carril (mismo controlador que la IA)
         let look = max(14, min(60, 10 + abs(player.car.speed) * 0.8))
         let tp = route.sample(player.progress + look)
@@ -341,7 +396,7 @@ final class RaceSession {
         let engine = system.engine
         // Rivales: conducir y simular (la física del juego a 60 Hz)
         let playerPct = racePct(player)
-        for r in racers where !r.isPlayer {
+        for r in racers where !r.isHuman {
             guard let drv = r.driver else { continue }
             if r.active && phase == .racing {
                 drv.updateGlue(dt: dt, myPct: racePct(r), playerPct: playerPct, raceLength: route.length, speedtrap: event.kind == .speedtrap)
@@ -357,11 +412,12 @@ final class RaceSession {
         switch phase {
         case .countdown:
             let left = 3 - Int(phaseTime)
-            if left != countdownShown { countdownShown = left; system.hud?.showCountdown(max(0, left)); if left > 0 { log("  cuenta atrás \(left)") } }
-            if phaseTime >= 3 { system.hud?.showCountdown(0); log("  ¡YA!"); startRacing() }
+            if left != countdownShown { countdownShown = left; for h in humans { hud(h)?.showCountdown(max(0, left)) }; if left > 0 { log("  cuenta atrás \(left)") } }
+            if phaseTime >= 3 { for h in humans { hud(h)?.showCountdown(0) }; log("  ¡YA!"); startRacing() }
         case .racing:
             clock += Double(dt)
             rules(dt: dt)
+            if let g = humansGrace { humansGrace = g - Double(dt); if g - Double(dt) <= 0 { enterFinishing() } }
         case .finishing:
             clock += Double(dt)
             finishHold -= Double(dt)
@@ -411,7 +467,7 @@ final class RaceSession {
                 if simd_distance(float2(pos.x, pos.y), float2(t.p.x, t.p.y)) < max(t.radius, 12) && abs(pos.z - t.p.z) < 12 {
                     let v = simd_length(r.car.velocity)
                     r.speedtrapSpeeds[i] = v
-                    if r.isPlayer { system.hud?.showMessage(.speedtrap(mps: v)); log(String(format: "  radar %d: %.0f km/h", i + 1, v * 3.6)) }
+                    if r.isHuman { hud(r)?.showMessage(.speedtrap(mps: v)); log(String(format: "  radar %d: %.0f km/h (%@)", i + 1, v * 3.6, r.name)) }
                 }
             }
         }
@@ -424,12 +480,12 @@ final class RaceSession {
                        near.map { String(format: "[(%.0f,%.0f)-(%.0f,%.0f) z %.0f..%.0f]", $0.a.x, $0.a.y, $0.b.x, $0.b.y, $0.zMin, $0.zMax) }.joined(separator: " ")))
         }
         // Sentido contrario (flecha del HUD) y fuera de ruta
-        if r.isPlayer {
+        if r.isHuman {
             let t = route.sample(r.progress).tangent
             let vAlong = simd_dot(r.car.velocity, t)
             r.wrongWayTime = vAlong < -3 ? r.wrongWayTime + dt : max(0, r.wrongWayTime - dt * 2)
             let ww = r.wrongWayTime > 1.5
-            if ww != hudWrongWay { hudWrongWay = ww; system.hud?.showMessage(.wrongWay(ww)) }
+            if ww != r.hudWrongWay { r.hudWrongWay = ww; hud(r)?.showMessage(.wrongWay(ww)) }
             r.offRouteTime = pr.gap > 80 ? r.offRouteTime + dt : 0
             if r.offRouteTime > 6 || pos.z < -40 { resetRacer(r) }
             // resetplayertrigger: plano de reinicio (ancho Width) detrás de la salida [V: datos; regla I]
@@ -460,19 +516,19 @@ final class RaceSession {
             r.bestLap = min(r.bestLap ?? lapTime, lapTime)
             r.lapStart = clock
             if r.isPlayer { log(String(format: "  vuelta %d: %.2f s (posición %d)", r.lapsCompleted, lapTime, r.position)) }
-            if r.lapsCompleted >= max(1, event.laps) { finish(r) }
+            if r.lapsCompleted >= laps { finish(r) }
             else {
-                if r.isPlayer && r.lapsCompleted == event.laps - 1 { system.hud?.showMessage(.finalLap) }
+                if r.isHuman && r.lapsCompleted == laps - 1 { hud(r)?.showMessage(.finalLap) }
                 if event.kind == .knockout { knockoutCheck(lap: r.lapsCompleted) }
             }
         } else {
-            if r.isPlayer {
+            if r.isHuman {
                 if let tb = g.marker.timeBonus, isTimeTrial {
-                    timeRemaining += Double(tb)
-                    system.hud?.showMessage(.tollbooth(timeAdded: Double(tb)))
-                    log(String(format: "  peaje %@: +%.0f s (quedan %.1f s)", g.marker.name ?? "", tb, timeRemaining))
+                    r.timeRemaining += Double(tb)
+                    hud(r)?.showMessage(.tollbooth(timeAdded: Double(tb)))
+                    log(String(format: "  peaje %@: +%.0f s (quedan %.1f s)", g.marker.name ?? "", tb, r.timeRemaining))
                 } else {
-                    system.hud?.showMessage(.checkpoint)
+                    hud(r)?.showMessage(.checkpoint)
                     log(String(format: "  punto de control %d/%d a %.1f s (posición %d)", i + 1, gates.count, clock, r.position))
                 }
             }
@@ -483,8 +539,8 @@ final class RaceSession {
         guard !r.finished else { return }
         r.finished = true
         r.finishTime = clock
-        log(String(format: "  %@ %@ termina en %.2f s", r.isPlayer ? "JUGADOR" : "rival", r.name, clock))
-        if r.isPlayer { enterFinishing() }
+        log(String(format: "  %@ %@ termina en %.2f s", r.isHuman ? "JUGADOR" : "rival", r.name, clock))
+        if r.isHuman { humanOut() }
         else if event.kind == .drag || event.kind == .sprint || event.kind == .circuit || event.kind == .knockout {
             // Si los rivales terminan todos y el jugador no, sigue la carrera (el jugador puede acabar último)
         }
@@ -498,20 +554,27 @@ final class RaceSession {
         guard done.count >= alive.count - k else { return }
         for r in alive where r.lapsCompleted < lap {
             r.knockedOut = true
-            system.hud?.showMessage(.knockedOut(name: r.name))
+            for h in humans { hud(h)?.showMessage(.knockedOut(name: r.name)) }
             log("  eliminado: \(r.name) (vuelta \(lap))")
-            if r.isPlayer { enterFinishing() }
+            if r.isHuman { humanOut() }
         }
         // Si solo queda uno, gana
         let left = racers.filter { !$0.knockedOut && !$0.dnf }
-        if left.count == 1, let w = left.first, !w.finished { w.finished = true; w.finishTime = clock; if w.isPlayer { enterFinishing() } }
+        if left.count == 1, let w = left.first, !w.finished { w.finished = true; w.finishTime = clock; if w.isHuman { humanOut() } }
     }
 
     private func dnf(_ r: RaceRacer, _ why: String) {
         guard r.active else { return }
         r.dnf = true; r.dnfReason = why
         log("  \(r.name): \(why)")
-        if r.isPlayer { enterFinishing() }
+        if r.isHuman { humanOut() }
+    }
+
+    /// Un humano terminó o quedó fuera: con todos fuera se cierra la prueba; en pantalla partida, el resto tiene 30 s más
+    /// [I: el juego sigue la carrera hasta que acaban los dos jugadores (FEManager mira al otro jugador) sin límite conocido].
+    private func humanOut() {
+        if humans.allSatisfy({ !$0.active }) { enterFinishing() }
+        else if humansGrace == nil { humansGrace = 30 }
     }
 
     private func enterFinishing() {
@@ -522,36 +585,8 @@ final class RaceSession {
 
     /// Reglas por fotograma: tiempo (peaje), drag (motor), persecución (hitos), arresto.
     private func rules(dt: Float) {
+        for h in humans where h.active { humanRules(h, dt: dt) }
         let p = player
-        if isTimeTrial {
-            timeRemaining -= Double(dt)
-            if timeRemaining <= 0 { timeRemaining = 0; dnf(p, "tiempo agotado") }
-        }
-        if event.kind == .drag, let v = p.car.vehicle {
-            let red = v.specs.engine.RED_LINE
-            let ratio = v.engine.rpm / max(red, 1)
-            // Temperatura del motor: sube en la zona roja, baja fuera [I: el juego la tiene en HUD_Drag; sin decomp]
-            engineTemp = max(0, min(1, engineTemp + (ratio > 0.97 ? 0.45 : -0.12) * dt))
-            if engineTemp >= 1 { dnf(p, "motor roto") }
-            // Calidad del cambio: al subir de marcha, cerca del punto óptimo = perfecto [I]
-            let g = v.engine.gear
-            if g > lastGear && lastGear >= Gear.first {
-                let opt = v.engine.shiftPoint(from: lastGear, to: g)
-                let rpmAtShift = v.engine.rpm * (v.engine.gearRatio(lastGear) / max(v.engine.gearRatio(g), 0.01))
-                let rel = abs(rpmAtShift - opt) / max(opt, 1)
-                shiftQuality = rel < 0.04 ? 2 : (rel < 0.12 ? 1 : 0)
-            }
-            lastGear = g
-            // Siniestro total: choque frontal fuerte (Δv > 14 m/s en un fotograma) [I]
-            // (pérdida de velocidad hacia delante > 14 m/s en 0,1 s yendo a más de 15 m/s)
-            let fwd = p.car.speed
-            crashWindow.append(fwd); if crashWindow.count > 6 { crashWindow.removeFirst() }
-            if let first = crashWindow.first, first > 15, first - fwd > 14 {
-                log(String(format: "  choque: %.1f → %.1f m/s en (%.0f, %.0f) a %.0f m de ruta (desvío %.1f m)", first, fwd, p.car.position.x, p.car.position.y, p.progress, p.lateral))
-                if let near = system.engine.ai?.vehicles.min(by: { simd_distance($0.pos, p.car.position) < simd_distance($1.pos, p.car.position) }) { log(String(format: "  coche de la IA más cercano: %@ a %.1f m", near.typeName, simd_distance(near.pos, p.car.position))) }
-                dnf(p, "siniestro total")
-            }
-        }
         if let ai = system.engine.ai, AIConfig.police, let pol = ai.police {
             if pol.state == .busted { dnf(p, "arrestado") }
             if event.kind == .challenge, let ch = event.challenge, let metric = ch.milestone {
@@ -563,8 +598,41 @@ final class RaceSession {
                 if !pol.inPursuit && pol.state != .evaded && pursuitStartTime != nil && clock > 5 { ai.police.forcePursuit() }
             }
         }
-        // Rivales: si el jugador ya no compite, la carrera termina cuando se acabe la espera
-        if !p.active && phase == .racing { enterFinishing() }
+        // Rivales: si ningún humano compite, la carrera termina cuando se acabe la espera
+        if humans.allSatisfy({ !$0.active }) && phase == .racing { enterFinishing() }
+    }
+
+    /// Reglas de cada humano: peaje (tiempo propio), drag (motor y cambios) y siniestro total.
+    private func humanRules(_ p: RaceRacer, dt: Float) {
+        if isTimeTrial {
+            p.timeRemaining -= Double(dt)
+            if p.timeRemaining <= 0 { p.timeRemaining = 0; dnf(p, "tiempo agotado") }
+        }
+        if event.kind == .drag, let v = p.car.vehicle {
+            let red = v.specs.engine.RED_LINE
+            let ratio = v.engine.rpm / max(red, 1)
+            // Temperatura del motor: sube en la zona roja, baja fuera [I: el juego la tiene en HUD_Drag; sin decomp]
+            p.engineTemp = max(0, min(1, p.engineTemp + (ratio > 0.97 ? 0.45 : -0.12) * dt))
+            if p.engineTemp >= 1 { dnf(p, "motor roto") }
+            // Calidad del cambio: al subir de marcha, cerca del punto óptimo = perfecto [I]
+            let g = v.engine.gear
+            if g > p.lastGear && p.lastGear >= Gear.first {
+                let opt = v.engine.shiftPoint(from: p.lastGear, to: g)
+                let rpmAtShift = v.engine.rpm * (v.engine.gearRatio(p.lastGear) / max(v.engine.gearRatio(g), 0.01))
+                let rel = abs(rpmAtShift - opt) / max(opt, 1)
+                p.shiftQuality = rel < 0.04 ? 2 : (rel < 0.12 ? 1 : 0)
+            }
+            p.lastGear = g
+            // Siniestro total: choque frontal fuerte (Δv > 14 m/s en un fotograma) [I]
+            // (pérdida de velocidad hacia delante > 14 m/s en 0,1 s yendo a más de 15 m/s)
+            let fwd = p.car.speed
+            p.crashWindow.append(fwd); if p.crashWindow.count > 6 { p.crashWindow.removeFirst() }
+            if let first = p.crashWindow.first, first > 15, first - fwd > 14 {
+                log(String(format: "  choque: %.1f → %.1f m/s en (%.0f, %.0f) a %.0f m de ruta (desvío %.1f m)", first, fwd, p.car.position.x, p.car.position.y, p.progress, p.lateral))
+                if let near = system.engine.ai?.vehicles.min(by: { simd_distance($0.pos, p.car.position) < simd_distance($1.pos, p.car.position) }) { log(String(format: "  coche de la IA más cercano: %@ a %.1f m", near.typeName, simd_distance(near.pos, p.car.position))) }
+                dnf(p, "siniestro total")
+            }
+        }
     }
 
     // MARK: Reinicio
@@ -628,21 +696,23 @@ final class RaceSession {
     private func updateHUD() {
         let rank = ranking()
         for (i, r) in rank.enumerated() { r.position = i + 1 }
-        guard let hud = system.hud else { return }
-        let p = player
-        hud.setPosition(p.position, of: racers.count)
-        hud.setLap(min(max(1, event.laps), p.lapsCompleted + 1), of: max(1, event.laps))
-        hud.setTimer(raceTime: isTimeTrial ? timeRemaining : clock, lapTime: event.isLapRace ? clock - p.lapStart : nil, bestLap: p.bestLap)
-        hud.setProgress(racePct(p))
-        hud.setRacers(rank.map { RaceHUDRacer(name: $0.name, isPlayer: $0.isPlayer, knockedOut: $0.knockedOut || $0.dnf, gap: $0.progress - p.progress, position: $0.position) })
-        hud.setRacerBlips(racers.filter { !$0.isPlayer }.map(\.car.position))
-        if p.nextGate < gates.count, hasRoute { hud.setNextCheckpoint(gates[p.nextGate].marker.p) } else { hud.setNextCheckpoint(nil) }
-        if event.kind == .speedtrap { hud.setSpeedtrap(totalMps: p.speedtrapTotal, passed: p.speedtrapSpeeds.count, of: event.speedtraps.count) }
-        if event.kind == .drag { hud.setDrag(shiftQuality: shiftQuality, engineTemp: engineTemp) }
+        for p in humans {
+            guard let hud = hud(p) else { continue }
+            hud.setPosition(p.position, of: racers.count)
+            hud.setLap(min(laps, p.lapsCompleted + 1), of: laps)
+            hud.setTimer(raceTime: isTimeTrial ? p.timeRemaining : clock, lapTime: event.isLapRace ? clock - p.lapStart : nil, bestLap: p.bestLap)
+            hud.setProgress(racePct(p))
+            hud.setRacers(rank.map { RaceHUDRacer(name: $0.name, isPlayer: $0 === p, knockedOut: $0.knockedOut || $0.dnf, gap: $0.progress - p.progress, position: $0.position) })
+            hud.setRacerBlips(racers.filter { $0 !== p }.map(\.car.position))
+            if p.nextGate < gates.count, hasRoute { hud.setNextCheckpoint(gates[p.nextGate].marker.p) } else { hud.setNextCheckpoint(nil) }
+            if event.kind == .speedtrap { hud.setSpeedtrap(totalMps: p.speedtrapTotal, passed: p.speedtrapSpeeds.count, of: event.speedtraps.count) }
+            if event.kind == .drag { hud.setDrag(shiftQuality: p.shiftQuality, engineTemp: p.engineTemp) }
+        }
     }
 
+    /// Coches de la carrera que dibuja el motor como extra: la IA (los humanos de la pantalla partida los pone SplitScreen).
     private func updateRacerDraw() {
-        system.engine.extraCars = racers.filter { !$0.isPlayer }.map { ($0.car.mesh, $0.car.partMatrices, $0.car.shadowMatrix) }
+        system.engine.extraCars = racers.filter { !$0.isHuman }.map { ($0.car.mesh, $0.car.partMatrices, $0.car.shadowMatrix) }
     }
 
     // MARK: Resultados
@@ -652,6 +722,7 @@ final class RaceSession {
         phase = .results
         // Los que no terminaron: tiempo estimado con su velocidad media (SkipToEndOfRaceForRacer [D: idea]) [I]
         for r in racers where r.active && !r.isPlayer {
+            // (también los humanos de la pantalla partida que no llegaron a tiempo)
             let avg = max(5, r.progress / Float(max(clock, 1)))
             r.finishTime = clock + Double((route.length - r.progress) / avg)
             r.finished = true
@@ -666,7 +737,7 @@ final class RaceSession {
         default: won = p.finished && !p.dnf && !p.knockedOut && p.position == 1
         }
         let rows = rank.map { r in
-            RaceResultRow(position: r.position, name: r.name, isPlayer: r.isPlayer,
+            RaceResultRow(position: r.position, name: r.name, isPlayer: r.isHuman,
                           totalTime: (r.dnf || r.knockedOut) ? nil : r.finishTime, bestLap: r.bestLap,
                           speedTrapMps: event.kind == .speedtrap ? r.speedtrapTotal : nil)
         }
@@ -711,10 +782,10 @@ final class RaceSession {
         let engine = system.engine
         engine.driverFilter = nil
         engine.extraCars = []
-        player.car.vehicle?.engine.automatic = true
+        for h in humans { h.car.vehicle?.engine.automatic = true }
         system.world.setRaceBarriers([])
         if let s = savedTraffic { AIConfig.maxTraffic = s.0; AIConfig.density = s.1; AIConfig.police = s.2 }
-        system.hud?.endRace()
+        for h in humans { hud(h)?.endRace() }
         onEnd?(o)
     }
 }

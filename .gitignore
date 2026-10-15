@@ -29,4 +29,6 @@ map-data/**/vinyls/
 map-data/**/audio/
 map-data/**/frontend/
 map-data/**/radio/
+map-data/**/sound/
 map-data/**/races.json
+map-data/**/fe-cameras.json

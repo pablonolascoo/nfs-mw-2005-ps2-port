@@ -97,11 +97,12 @@ Hecho:
 - **Radio de la policía en el juego**: decodificador MicroTalk propio (TS + Swift, igual a vgmstream ±1), tablas `.IDX/.EVT` leídas, frases por evento de la persecución, paso `radio` del conversor → `radio/` (doc 16 §5–6). Suena por el altavoz del mando (USB; Bluetooth por informes HID Opus/SBC sin probar con hardware) o el Mac con filtro de escáner. **Barra de luz** como opción de tuneo con colores de persecución (doc 15 §7–8).
 
 - **Carreras y Lista Negra** (doc 18): paso `races` → `races.json` (254 pruebas, bins, hitos + radares de la zona libre, 1 376 vallas `TrackPathBarrier` de `L2RA.BUN` 0x0003414D), `DATA_FORMAT` 4. Ruta por la red cerrada por las vallas (mediana 0,997 de `RaceLength`), rivales con la física y la IA de carrera del juego (AIActionRace/AIVehiclePid, «glue»), los 7 tipos de prueba, carrera profesional 15 → 1 con partida `save.json`, candados por bin. **Colisión**: los objetos de grupos ocultos (891 instancias con `GroupNumber`) eran muros invisibles; ahora van en `collision/groups/`. Pruebas: `--race-test`, `--career-test`, `--race-audit`.
+- **Sonido del juego** (doc 16 §7–10): paso `sound` → `sound/` (301 bancos AEMS `ABKC` + 160 motores granulares `.GIN` tal cual, `sound.json` con VLT `engineaudio`/`turbosfx`/`shiftpattern`, coche → sonidos, 608 «stitches» de golpes de `INGAMEB.BUN`), `DATA_FORMAT` 5. Códecs PS-ADPCM, EA-XA v2 y EA-XAS propios: 2350/2350 sonidos y 160/160 `.GIN` iguales a vgmstream. En la app: sintetizador Ginsu y lógica del motor de la decomp (RPM de audio, cambios, mezcla acelerando/desacelerando), turbo, nitro, derrapes, viento, golpes, sirenas 3D, tráfico y rivales; 0,2 % de un núcleo. Pruebas: `--sound-test`, `--sound-dump`. Falta: capa AEMS (módulos MIPS) y `MIXMAPS`.
 
 Siguiente, por orden:
 1. Conectar Carrera/Carrera rápida del menú a `Career.shared` / `QuickRace.shared` (interfaz); garaje, tienda, NIS y atajos de carrera.
 2. Garajes sin carga en el motor nativo; refugios sin edificio (2, 4, 5).
-3. Audio dentro del juego: motores, sirenas, películas (la radio de la policía ya suena: falta probar el altavoz del mando con hardware).
+3. Audio: películas y música (`PFDATA`); capa AEMS de los motores y mapas de mezcla (los motores, efectos y sirenas ya suenan, doc 16 §9); probar el altavoz del mando con hardware.
 4. Choques del juego original (coche contra coche y muros), daños, pinchos; helicóptero.
 5. Probar mandos con hardware real; firma Developer ID (necesita cuenta de pago: decisión del dueño).
 6. Expansión «Rust Belt» como mod ([ROADMAP.md](ROADMAP.md), doc 12).
@@ -116,4 +117,5 @@ Dudas abiertas: tipos de carril 2/3/4/7/10, escala de longitud de `RNrd`, 8 hash
 - Build everything: `cd tools && bun run build-all ../original/SLES-53559.iso`; then `cd viewer && bun run dev`.
 - What each generated file answers: [docs/en/11-data-catalog.md](docs/en/11-data-catalog.md).
 - Races and Blacklist playable in the native engine (doc 18): `races.json`, barrier-closed routes, game racer AI, 7 event types, career 15 → 1 with save; hidden-group collision moved to `collision/groups/` (was invisible walls).
+- Game sound in the native engine (doc 16 §7–10): `sound` step → `sound/` (ABKC banks + Ginsu `.GIN` engines, `sound.json`), own decoders identical to vgmstream, the decomp's Ginsu synth and engine logic, turbo, nitrous, skids, impacts, 3D sirens; `DATA_FORMAT` 5.
 - Next steps: real collision in driving (road layer already in the viewer), garages for building-less safehouses, aftermarket rims, game physics and audio from the decomp, native Metal engine, road/district editor, story/sequel mods.

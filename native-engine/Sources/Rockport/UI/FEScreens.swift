@@ -21,13 +21,21 @@ final class IconScroller {
     private var index = 1
     // AnimateCubic: valor que va hacia −XPos del elegido en 0,2 s [D]
     private var val: Float = 0, from: Float = 0, to: Float = 0, t: Float = 1
+    /// IdleColor / FadeColor (ARGB): blanco en los menús; naranja 0xFFFFAE40 en las pantallas dentro del juego [D: uiRepSheetMain].
+    var idleColor: UInt32 = 0xFFFFFFFF, fadeColor: UInt32 = 0x00FFFFFF
     var fade: Float = 1                      // fCurFadeTime / fMaxFadeTime (entrada y salida)
     var fadingIn = true, fadingOut = false
     private var fadeTime: Float = 0
 
     init(pkg: FEPackageRT) {
         self.pkg = pkg
-        if let r = pkg.find("ICON_SCROLL_REGION") { center = SIMD2(r.pos.x, r.pos.y); pkg.setVisible(r, false) }
+        // El constructor del juego busca el objeto «master» (OPTION_MASTER), toma su centro y lo oculta; la decomp lo
+        // llama scroll_region, pero el ensamblador pasa el 2.º argumento (a2 = "OPTION_MASTER", SLUS 0x280360/0x280468) [V].
+        // En MainMenu el master está 17 unidades a la derecha de ICON_SCROLL_REGION: justo dentro de los corchetes [V].
+        if let m = pkg.find("OPTION_MASTER") { center = SIMD2(m.pos.x, m.pos.y); pkg.setVisible(m, false) }
+        else if let r = pkg.find("ICON_SCROLL_REGION") { center = SIMD2(r.pos.x, r.pos.y) }
+        // ICON_SCROLL_REGION (BasePoly blanco 340×70) es una guía del editor: no se ve en el juego [I]
+        if let r = pkg.find("ICON_SCROLL_REGION") { pkg.setVisible(r, false) }
         for _ in 0..<2 { add(tex: feHash("END_OF_SCROLLER"), name: 0, bookEnd: true) }
     }
 
@@ -53,6 +61,8 @@ final class IconScroller {
 
     var currentOption: Option { options[current] }
     var currentIndex: Int { current - 2 }
+    var atHead: Bool { current == 2 }
+    var atTail: Bool { current == options.count - 3 }
 
     func scroll(_ d: Int) -> Bool {
         var n = current
@@ -63,6 +73,11 @@ final class IconScroller {
         from = val; to = -options[n].xPos; t = 0
         return true
     }
+
+    /// IsGreyOut [D]: la opción se ve en gris (alfa 150) y el carrusel la salta.
+    func greyOut(_ i: Int) { guard i < options.count else { return }; options[i].grey = true; position(i) }
+    /// AnimateCubic.Snap [D]: sin animación hasta la selección.
+    func snap() { val = to; from = to; t = 1; for i in options.indices { position(i) } }
 
     func update(dt: Float) {
         if t < 1 {
@@ -96,8 +111,11 @@ final class IconScroller {
         s *= fade
         o.size = SIMD3(op.w * s, op.h * s, o.size.z)
         o.pos = SIMD3(x, center.y, o.pos.z)            // FEngSetCenter; alineación al medio (eSA_MIDDLE)
-        let a = UInt32(max(0, min(255, 255 * s)))
-        o.setColor(op.grey ? (150 << 24) | 0xFFFFFF : (a << 24) | 0xFFFFFF)
+        // UpdateFade: mezcla IdleColor → FadeColor por canal con la escala; gris = alfa 150 [D]
+        func ch(_ c: UInt32, _ sh: UInt32) -> Float { Float((c >> sh) & 0xFF) }
+        func mix(_ sh: UInt32) -> UInt32 { UInt32(max(0, min(255, ch(idleColor, sh) * s + ch(fadeColor, sh) * (1 - s)))) }
+        let a: UInt32 = op.grey ? 150 : mix(24)
+        o.setColor((a << 24) | (mix(16) << 16) | (mix(8) << 8) | mix(0))
     }
 }
 
@@ -110,6 +128,14 @@ final class FEScreen {
     var leaveAge = 0
     var onExit: (() -> Void)?
     var titleObjects: [FEObj] = []
+    /// Lógica por fotograma de la pantalla (FEMSG_SCREEN_TICK del juego).
+    var tick: (() -> Void)?
+    /// Pantallas de los garajes (Garage/GarageMenus.swift): atrás, izquierda/derecha y ✕ propios.
+    var onBack: (() -> Void)?
+    var onLeftRight: ((Int) -> Void)?
+    var onUpDown: ((Int) -> Void)?
+    /// Cabecera propia (textos libres en vez de etiquetas del juego): recibe el índice de la opción elegida.
+    var customHeader: ((Int) -> Void)?
     init(pkg: FEPackageRT) { self.pkg = pkg }
 
     /// Salida con las animaciones LEAVE del paquete (LEAVE_SCREEN → __LEAVE_ALL__) y después `then` [D: IconScrollerMenu].
@@ -122,12 +148,16 @@ final class FEScreen {
     }
     func refreshHeader() {
         guard let sc = scroller else { return }
-        for t in titleObjects { pkg.setLabel(t, sc.currentOption.name) }
+        if let ch = customHeader { ch(sc.currentIndex) } else { for t in titleObjects { pkg.setLabel(t, sc.currentOption.name) } }
+        // IconScrollerMenu::RefreshHeader [D]: en los extremos avisa al paquete (las flechas de ese lado se apagan)
+        if sc.atHead { pkg.post(0xD7118934) }
+        if sc.atTail { pkg.post(0xB9B17747) }
     }
 }
 
 final class FEUI: RenderOverlay {
-    enum State { case splash, menu, game, pause, modal }
+    /// garage: menús de un garaje del mundo (refugio, concesionario, taller) con la simulación parada.
+    enum State { case splash, menu, game, pause, modal, garage }
     let assets: FEAssets
     let renderer: FERenderer
     unowned let engine: Engine
@@ -154,7 +184,7 @@ final class FEUI: RenderOverlay {
     private var orbit: Float = 0
     var drawCalls: Int { 0 }
     /// Pausa: la simulación se congela.
-    var paused: Bool { state == .pause || state == .modal }
+    var paused: Bool { state == .pause || state == .modal || state == .garage }
     /// Menús delante: el juego no recibe teclado ni mando.
     var capturesInput: Bool { state != .game }
     /// En la partida, ¿se ve el HUD? (cámara libre: no)
@@ -167,6 +197,7 @@ final class FEUI: RenderOverlay {
               let r = try? FERenderer(device: engine.device, outputFormat: outputFormat) else { return nil }
         assets = a; renderer = r; self.engine = engine
         hud = FEHud(assets: a)
+        GarageSystem.attach(engine)   // escenario del frontend y garajes sin carga (Garage/)
     }
 
     var es: Bool { assets.language == "spanish" }
@@ -182,7 +213,8 @@ final class FEUI: RenderOverlay {
         }
         screens.append(s)
         // Entrada: todos los objetos que tengan APPEAR lo reproducen (los INIT ya están puestos) [I: MenuScreen]
-        for o in p.all where o.findScript(FEH.appear) != nil && o.script?.id == FEH.initScript { p.setScript(o, FEH.appear) }
+        // Si el INIT encadena a otro script (p. ej. INIT → HIDE del dinero de la Lista Negra), manda el encadenado [V: datos]
+        for o in p.all where o.findScript(FEH.appear) != nil && o.script?.id == FEH.initScript && o.script?.chainTo == nil { p.setScript(o, FEH.appear) }
         return s
     }
     private func popAll() { screens.removeAll() }
@@ -190,6 +222,7 @@ final class FEUI: RenderOverlay {
     func showSplash() {
         state = .splash
         popAll()
+        engine.garages?.stage.enter(.mainFE)
         guard let s = push("MW_LS_Splash") else { showMainMenu(); return }
         let p = s.pkg
         // SplashScreen::SplashScreen [D]: sin grupo HD, sin licencia de Nintendo, «Pulsa START» con el texto del idioma
@@ -219,9 +252,15 @@ final class FEUI: RenderOverlay {
     }
 
     func showMainMenu() {
+        let fromSplash = state == .splash
         state = .menu
         popAll()
         engine.ui_enterFrontend()
+        // Fondo: el garaje del frontend (PLATFORMCRIB) con el coche del jugador; cámara de la pantalla «mainmenu» [D]
+        if let st = engine.garages?.stage {
+            if !st.active || !fromSplash { st.enter(.mainFE, animate: !st.active) }
+            st.screenAngle("mainmenu")
+        }
         // UIMain::Setup [D] (sin tarjeta de memoria: sin gestor de perfiles)
         _ = iconMenu("MainMenu", title: 0xb24aae58, options: [
             (0x03704f3d, 0x5815a2b5, { [weak self] in self?.leaveTop { self?.showCareerMenu() } }),
@@ -239,6 +278,7 @@ final class FEUI: RenderOverlay {
     func showCareerMenu() {
         state = .menu
         popAll()
+        engine.garages?.stage.screenAngle("career_manager")
         // uiCareerManager [D]: Continuar / Empezar nuevo
         _ = iconMenu("MainMenu_Sub", title: 0x5815a2b5, options: [
             (0xC1C089CE, 0xE072DB21, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.start() } }),
@@ -256,11 +296,12 @@ final class FEUI: RenderOverlay {
     func startGame() {
         popAll()
         state = .game
+        engine.garages?.stage.leave()
         engine.ui_startGame()
     }
 
     /// Solo el HUD, sin tocar el coche ni la cámara (prueba sin ventana --traffic-test).
-    func startHUDOnly() { popAll(); state = .game }
+    func startHUDOnly() { popAll(); state = .game; engine.garages?.stage.leave() }
 
     func showPause() {
         guard state == .game else { return }
@@ -276,8 +317,25 @@ final class FEUI: RenderOverlay {
     }
 
     func resume() { popAll(); state = .game }
+    func leaveTopScreen(_ then: @escaping () -> Void) { leaveTop(then) }
 
     private func leaveTop(_ then: @escaping () -> Void) { screens.last?.leave(then: then) }
+
+    /// Cuadro de diálogo del juego (Dialog.fng) con un texto libre y «Aceptar»; `then` al cerrarlo.
+    func messageDialog(title: UInt32, text: String, then: (() -> Void)? = nil) {
+        guard let s = push("Dialog") else { then?(); return }
+        let p = s.pkg
+        for o in p.findAll(0x42adb44c) + p.findAll(0xa2fad351) { p.setLabel(o, title) }
+        if let m = p.find(0x1e2640fa) { p.printf(m, text) }
+        p.post(0x792bc959)
+        let b1 = p.find("Button1")
+        for b in [p.find("Button2"), p.find("Button3"), p.find(0xfb8b67d1), p.find(0xfde09072)] { p.setVisible(b, false) }
+        if let t = p.find(0xf9363f30) { p.setLabel(t, 0x2b65a216) }
+        if let b1 { p.setScript(b1, FEH.show); p.setCurrentButton(b1) }
+        let close: () -> Void = { [weak self, weak s] in s?.leave { self?.screens.removeAll { $0 === s }; then?() } }
+        s.actions = [close]
+        s.onBack = close
+    }
 
     /// «Próximamente» con el cuadro de diálogo del propio juego (Dialog.fng) y el nombre de la opción como título.
     private func comingSoon(_ title: UInt32) {
@@ -316,8 +374,10 @@ final class FEUI: RenderOverlay {
             if let s = screens.last, s.pkg.age > 600, m.accept || m.start {
                 s.leave { [weak self] in self?.showMainMenu() }
             }
-        case .menu, .pause:
+        case .menu, .pause, .garage:
             if let s = screens.last, !s.leaving {
+                if let f = s.onLeftRight { if m.left { f(-1) } else if m.right { f(1) } }
+                if let f = s.onUpDown { if m.up { f(-1) } else if m.down { f(1) } }
                 if let sc = s.scroller {
                     if m.left, sc.scroll(-1) { s.refreshHeader() }
                     if m.right, sc.scroll(1) { s.refreshHeader() }
@@ -328,7 +388,8 @@ final class FEUI: RenderOverlay {
                     }
                 } else if m.accept, let a = s.actions.first { a() }
                 if m.back || (state == .pause && m.start) {
-                    if s.scroller == nil { s.actions.first?() }
+                    if let b = s.onBack { b() }
+                    else if s.scroller == nil { s.actions.first?() }
                     else if state == .pause { s.leave { [weak self] in self?.resume() } }
                     else if s.pkg.name.hasPrefix("MainMenu_Sub") { s.leave { [weak self] in self?.showMainMenu() } }
                     else if s.pkg.name.hasPrefix("MainMenu") { s.leave { [weak self] in self?.showSplash() } }
@@ -339,6 +400,7 @@ final class FEUI: RenderOverlay {
         for s in screens {
             s.scroller?.update(dt: dt)
             s.pkg.update(ms: ms)
+            s.tick?()
             if s.leaving {
                 s.leaveAge += ms
                 if (s.leaveAge > 250 && !s.pkg.animating) || s.leaveAge > 1500, let done = s.onExit { s.onExit = nil; done() }
@@ -363,7 +425,8 @@ final class FEUI: RenderOverlay {
             o.screen.pkg.update(ms: ms)
             if overlays[k].ms <= 0 { overlays.remove(at: k) }
         }
-        // Fondo de los menús: vuelta lenta sobre la ciudad
+        // Menús del frontend: la cámara del motor se queda sobre el refugio 1 (así la ciudad sigue cargada para empezar sin
+        // esperas); lo que se ve es el escenario del garaje (Garage/FEGarage.swift)
         if state == .menu || state == .splash {
             orbit += dt * 0.05
             engine.ui_frontendCamera(angle: orbit)
@@ -395,7 +458,16 @@ final class FEUI: RenderOverlay {
     // MARK: Pruebas (--ui-test)
 
     /// Muestra una pantalla concreta para capturas: «Splash», «MainMenu», «Career», «Pause», «HUD», «Dialog» o cualquier paquete.
-    func showForTest(_ what: String) {
+    func showForTest(_ test: String) {
+        // «MainMenu@2»: deja elegida la 3.ª opción del carrusel (pruebas del IconScroller)
+        let parts = test.split(separator: "@", maxSplits: 1).map(String.init)
+        let what = parts[0]
+        defer {
+            if parts.count > 1, let n = Int(parts[1]), let s = screens.last, let sc = s.scroller {
+                for _ in 0..<max(0, n) { _ = sc.scroll(1) }
+                sc.snap(); s.refreshHeader()
+            }
+        }
         switch what.lowercased() {
         case "splash", "mw_ls_splash": showSplash()
         case "mainmenu", "main": showMainMenu()

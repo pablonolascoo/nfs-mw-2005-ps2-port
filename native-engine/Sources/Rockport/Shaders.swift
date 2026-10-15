@@ -25,6 +25,17 @@ struct DrawUniforms {
     float4   params;      // x = alphaCutoff (solo recorte), y = metalicidad, z = rugosidad (coche), w = -
 };
 
+// Recorte de los garajes sin carga (Garage/GarageRender.swift `CutoutUniforms`): hueco de la puerta y volumen interior
+// del edificio. Lo que cae dentro de una de las dos cajas no se dibuja.
+struct Cutout { float4x4 a; float4x4 b; float4 on; };
+static bool inCutout(constant Cutout& C, float3 w) {
+    if (C.on.x < 0.5) return false;
+    float3 p = (C.a * float4(w, 1)).xyz;
+    if (all(abs(p) < 1.0)) return true;
+    p = (C.b * float4(w, 1)).xyz;
+    return all(abs(p) < 1.0);
+}
+
 struct VertexIn {
     float3 pos    [[attribute(0)]];
     float2 uv     [[attribute(1)]];
@@ -62,14 +73,16 @@ static float3 applyFog(constant FrameUniforms& F, float3 c, float3 world) {
 
 // Opaco: textura (sRGB → lineal al muestrear) × color de vértice (luz horneada del juego).
 fragment float4 fs_opaque(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]],
-                          texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                          texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float4 t = tex.sample(s, in.uv);
     return float4(applyFog(F, t.rgb * in.color.rgb, in.world), 1);
 }
 
 // Recorte alfa (vallas, árboles, rejas): pasa si alfa > alphaCutoff del material (0x28/255 en el juego, `_alphaRef`).
 fragment float4 fs_mask(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant DrawUniforms& D [[buffer(2)]],
-                        texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                        texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float4 t = tex.sample(s, in.uv);
     if (t.a <= D.params.x) discard_fragment();
     return float4(applyFog(F, t.rgb * in.color.rgb, in.world), 1);
@@ -77,7 +90,8 @@ fragment float4 fs_mask(VOut in [[stage_in]], constant FrameUniforms& F [[buffer
 
 // Sombras horneadas (SHD_*): capa semitransparente sobre el suelo, sin escribir profundidad.
 fragment float4 fs_shadow(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]],
-                          texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                          texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float4 t = tex.sample(s, in.uv);
     float a = t.a * (1 - fogFactor(F, in.world));
     return float4(t.rgb * in.color.rgb, a);
@@ -85,7 +99,8 @@ fragment float4 fs_shadow(VOut in [[stage_in]], constant FrameUniforms& F [[buff
 
 // Mezcla normal ("mezcla"/"recorte_mezcla": carteles, pintadas, suciedad): alfa = textura × vértice, sin escribir profundidad.
 fragment float4 fs_decal(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]],
-                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float4 t = tex.sample(s, in.uv);
     float a = t.a * in.color.a;
     if (a < 0.01) discard_fragment();
@@ -94,7 +109,8 @@ fragment float4 fs_decal(VOut in [[stage_in]], constant FrameUniforms& F [[buffe
 
 // Aditivo (luces, brillos): se suma y se apaga con la niebla.
 fragment float4 fs_additive(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]],
-                            texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                            texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float4 t = tex.sample(s, in.uv);
     float k = t.a * (1 - fogFactor(F, in.world));
     return float4(t.rgb * in.color.rgb * k, 1);
@@ -102,7 +118,8 @@ fragment float4 fs_additive(VOut in [[stage_in]], constant FrameUniforms& F [[bu
 
 // Agua del mapa (ANM_WATERA_*): en el juego son 14 texturas animadas; aquí se desplaza la UV con el tiempo.
 fragment float4 fs_water(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]],
-                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]], constant Cutout& C [[buffer(3)]]) {
+    if (inCutout(C, in.world)) discard_fragment();
     float time = F.camPos.w;
     float4 t = tex.sample(s, in.uv + float2(time * 0.03, time * 0.017));
     float a = min(in.color.a * 1.4, 1.0);

@@ -14,14 +14,30 @@ struct MenuButtons {
     }
 }
 
+/// Pantalla partida (Multiplayer/): qué mandos pueden mover los menús del juego (FEUI). nil = todos (lo de siempre).
+/// Los menús de carrera rápida los lleva el jugador 1; en la carrera, cualquiera de los jugadores puede pausar (como el
+/// juego, que lee los dos puertos en pantalla partida [D: cFEngJoyInput::HandleJoy]).
+enum MenuOwners { static var allowed: Set<ObjectIdentifier>? }
+
 extension Controllers {
     /// Pulsaciones nuevas de menú en todos los mandos (GameController + HID).
     func pollMenu() -> MenuButtons {
         start()
         var out = MenuButtons()
         for p in pads {
-            guard let g = p.controller.extendedGamepad else { continue }
-            func edge(_ k: String, _ v: Bool) -> Bool { let key = "menu." + k; let was = p.prev[key] ?? false; p.prev[key] = v; return v && !was }
+            if let a = MenuOwners.allowed, !a.contains(ObjectIdentifier(p)) { continue }
+            out.merge(menuButtons(p, prefix: "menu."))
+        }
+        out.merge(hid.pollMenu())
+        return out
+    }
+
+    /// Menú de un solo mando con flancos propios (`prefix` separa a quien lee: la interfaz o la pantalla de unirse).
+    func menuButtons(_ p: Pad, prefix: String) -> MenuButtons {
+        var out = MenuButtons()
+        do {
+            guard let g = p.controller.extendedGamepad else { return out }
+            func edge(_ k: String, _ v: Bool) -> Bool { let key = prefix + k; let was = p.prev[key] ?? false; p.prev[key] = v; return v && !was }
             let sx = g.leftThumbstick.xAxis.value, sy = g.leftThumbstick.yAxis.value
             out.up = out.up || edge("up", g.dpad.up.isPressed || sy > 0.6)
             out.down = out.down || edge("down", g.dpad.down.isPressed || sy < -0.6)
@@ -31,7 +47,6 @@ extension Controllers {
             out.back = out.back || edge("back", g.buttonB.isPressed || g.buttonY.isPressed)
             out.start = out.start || edge("start", g.buttonMenu.isPressed)
         }
-        out.merge(hid.pollMenu())
         return out
     }
 }
@@ -40,10 +55,20 @@ extension HIDPads {
     func pollMenu() -> MenuButtons {
         var out = MenuButtons()
         for p in pads {
-            func edge(_ k: String, _ v: Bool) -> Bool { let key = "menu." + k; let was = p.prev[key] ?? false; p.prev[key] = v; return v && !was }
+            if let a = MenuOwners.allowed, !a.contains(ObjectIdentifier(p)) { continue }
+            out.merge(menuButtons(p, prefix: "menu."))
+        }
+        return out
+    }
+
+    /// Menú de un solo mando HID con flancos propios.
+    func menuButtons(_ p: Pad, prefix: String) -> MenuButtons {
+        var out = MenuButtons()
+        do {
+            func edge(_ k: String, _ v: Bool) -> Bool { let key = prefix + k; let was = p.prev[key] ?? false; p.prev[key] = v; return v && !was }
             if p.kind == .ds3 {
                 let r = p.report
-                guard r[0] == 0x01 else { continue }
+                guard r[0] == 0x01 else { return out }
                 let b1 = r[2], b2 = r[3]
                 out.up = out.up || edge("up", b1 & 0x10 != 0); out.down = out.down || edge("down", b1 & 0x40 != 0)
                 out.left = out.left || edge("left", b1 & 0x80 != 0); out.right = out.right || edge("right", b1 & 0x20 != 0)

@@ -165,9 +165,13 @@ final class Renderer {
     /// el resto, lo que escribe tools/src/lib/glb.ts (metallicFactor 0, roughnessFactor 0,85).
     static func carPBR(_ d: DrawRange) -> float2 { d.pbr ?? (d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85)) }
 
+    /// Texturas de escena por tamaño de destino (varias pantallas de distinto tamaño: Multiplayer/MultiDisplay.swift).
+    private var targetCache: [SIMD2<Int>: (MTLTexture, MTLTexture)] = [:]
+
     /// Asegura texturas de escena del tamaño máximo (la resolución dinámica usa una parte con el viewport).
     private func ensureTargets(width: Int, height: Int) {
         if let s = sceneColor, s.width == width, s.height == height { return }
+        if let c = targetCache[SIMD2(width, height)] { sceneColor = c.0; sceneDepth = c.1; return }
         let cd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: width, height: height, mipmapped: false)
         cd.usage = [.renderTarget, .shaderRead]; cd.storageMode = .private
         sceneColor = device.makeTexture(descriptor: cd)
@@ -175,16 +179,72 @@ final class Renderer {
         let dd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .depth32Float, width: width, height: height, mipmapped: false)
         dd.usage = .renderTarget; dd.storageMode = .memoryless
         sceneDepth = device.makeTexture(descriptor: dd)
+        if let c = sceneColor, let d = sceneDepth {
+            if targetCache.count >= 4 { targetCache.removeAll() }
+            targetCache[SIMD2(width, height)] = (c, d)
+        }
     }
 
     /// Codifica el fotograma completo en `cb`, escribiendo el resultado final en `target`.
     /// `scale` = fracción de la resolución de `target` a la que se dibuja la escena.
     func encode(_ cb: MTLCommandBuffer, frame: SceneFrame, target: MTLTexture, scale: Float) {
+        encode(cb, views: [RenderView(frame: frame, rect: RenderRect(x: 0, y: 0, w: 1, h: 1))], target: target, scale: scale)
+    }
+
+    /// Varias vistas en el mismo `target` (pantalla partida, Multiplayer/): cada una con su cámara, su recorte por frustum y su
+    /// rectángulo (fracción del destino). Todas se dibujan en la misma textura HDR a `scale` y una sola pasada final aplica el
+    /// tono PS2 a todo. Con una vista a pantalla completa es exactamente el camino de siempre.
+    func encode(_ cb: MTLCommandBuffer, views: [RenderView], target: MTLTexture, scale: Float) {
         let W = target.width, H = target.height
         ensureTargets(width: W, height: H)
-        guard let sceneColor, let sceneDepth else { return }
+        guard let sceneColor, let sceneDepth, !views.isEmpty else { return }
         let rw = max(64, min(W, Int(Float(W) * scale))), rh = max(64, min(H, Int(Float(H) * scale)))
 
+        let rp = MTLRenderPassDescriptor()
+        rp.colorAttachments[0].texture = sceneColor
+        rp.colorAttachments[0].loadAction = views.count == 1 ? .dontCare : .clear
+        rp.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
+        rp.colorAttachments[0].storeAction = .store
+        rp.depthAttachment.texture = sceneDepth
+        rp.depthAttachment.loadAction = .clear
+        rp.depthAttachment.clearDepth = 0
+        rp.depthAttachment.storeAction = .dontCare
+        guard let enc = cb.makeRenderCommandEncoder(descriptor: rp) else { return }
+        enc.label = views.count == 1 ? "escena" : "escena ×\(views.count)"
+        enc.setCullMode(.none)       // los materiales del juego son de doble cara
+        var draws = 0, tris = 0
+        for v in views {
+            // Rectángulo de la vista en la textura de escena (a resolución dinámica), en píxeles enteros
+            let x0 = Int((Float(rw) * v.rect.x).rounded()), y0 = Int((Float(rh) * v.rect.y).rounded())
+            let x1 = Int((Float(rw) * (v.rect.x + v.rect.w)).rounded()), y1 = Int((Float(rh) * (v.rect.y + v.rect.h)).rounded())
+            guard x1 - x0 >= 8, y1 - y0 >= 8 else { continue }
+            enc.setViewport(MTLViewport(originX: Double(x0), originY: Double(y0), width: Double(x1 - x0), height: Double(y1 - y0), znear: 0, zfar: 1))
+            enc.setScissorRect(MTLScissorRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0))
+            let r = encodeScene(enc, frame: v.frame)
+            draws += r.draws; tris += r.tris
+        }
+        enc.endEncoding()
+        lastDrawCalls = draws; lastTriangles = tris
+
+        // Pasada final: escala a pantalla + tono PS2
+        let pp = MTLRenderPassDescriptor()
+        pp.colorAttachments[0].texture = target
+        pp.colorAttachments[0].loadAction = .dontCare
+        pp.colorAttachments[0].storeAction = .store
+        guard let post = cb.makeRenderCommandEncoder(descriptor: pp) else { return }
+        post.label = "tono PS2"
+        post.setRenderPipelineState(pipelines["post"]!)
+        var P = PostUniforms(uvScale: float2(Float(rw) / Float(W), Float(rh) / Float(H)), strength: gradeStrength)
+        post.setFragmentBytes(&P, length: MemoryLayout<PostUniforms>.stride, index: 0)
+        post.setFragmentTexture(sceneColor, index: 0)
+        post.setFragmentSamplerState(postSampler, index: 0)
+        post.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        post.endEncoding()
+        for o in overlays { o.encodeScreen(cb, target: target) }   // HUD sobre la imagen final
+    }
+
+    /// Todas las pasadas de escena de una vista (el viewport y el recorte ya están puestos).
+    private func encodeScene(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) -> (draws: Int, tris: Int) {
         let viewProj = frame.proj * frame.view
         let fogC = srgbToLinear(Config.skyHorizon)
         var F = FrameUniforms(viewProj: viewProj, invViewProj: viewProj.inverse,
@@ -200,22 +260,10 @@ final class Renderer {
                               lightSun: float4(srgbToLinear(Config.sunColor) * Config.sunIntensity, 0))
         let frustum = Frustum(viewProj)
         let visible = frame.meshes.filter { frustum.intersects($0.bounds) }
-
-        let rp = MTLRenderPassDescriptor()
-        rp.colorAttachments[0].texture = sceneColor
-        rp.colorAttachments[0].loadAction = .dontCare
-        rp.colorAttachments[0].storeAction = .store
-        rp.depthAttachment.texture = sceneDepth
-        rp.depthAttachment.loadAction = .clear
-        rp.depthAttachment.clearDepth = 0
-        rp.depthAttachment.storeAction = .dontCare
-        guard let enc = cb.makeRenderCommandEncoder(descriptor: rp) else { return }
-        enc.label = "escena"
-        enc.setViewport(MTLViewport(originX: 0, originY: 0, width: Double(rw), height: Double(rh), znear: 0, zfar: 1))
-        enc.setScissorRect(MTLScissorRect(x: 0, y: 0, width: rw, height: rh))
-        enc.setCullMode(.none)       // los materiales del juego son de doble cara
         enc.setVertexBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
         enc.setFragmentBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
+        var cut = GarageCutout.uniforms   // garajes sin carga: recorte del edificio (Shaders.swift `Cutout`)
+        enc.setFragmentBytes(&cut, length: MemoryLayout<CutoutUniforms>.stride, index: 3)
         var boundWrap = 3
         enc.setFragmentSamplerState(samplers[3], index: 0)
 
@@ -305,23 +353,19 @@ final class Renderer {
             }
         }
         for o in overlays { o.encodeTransparent(enc, frame: frame); draws += o.drawCalls }
-        enc.endEncoding()
-        lastDrawCalls = draws; lastTriangles = tris
-
-        // Pasada final: escala a pantalla + tono PS2
-        let pp = MTLRenderPassDescriptor()
-        pp.colorAttachments[0].texture = target
-        pp.colorAttachments[0].loadAction = .dontCare
-        pp.colorAttachments[0].storeAction = .store
-        guard let post = cb.makeRenderCommandEncoder(descriptor: pp) else { return }
-        post.label = "tono PS2"
-        post.setRenderPipelineState(pipelines["post"]!)
-        var P = PostUniforms(uvScale: float2(Float(rw) / Float(W), Float(rh) / Float(H)), strength: gradeStrength)
-        post.setFragmentBytes(&P, length: MemoryLayout<PostUniforms>.stride, index: 0)
-        post.setFragmentTexture(sceneColor, index: 0)
-        post.setFragmentSamplerState(postSampler, index: 0)
-        post.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
-        post.endEncoding()
-        for o in overlays { o.encodeScreen(cb, target: target) }   // HUD sobre la imagen final
+        return (draws, tris)
     }
+}
+
+/// Rectángulo de una vista como fracción del destino (0…1, origen arriba a la izquierda, como el viewport de Metal).
+struct RenderRect: Equatable {
+    var x: Float, y: Float, w: Float, h: Float
+    static let full = RenderRect(x: 0, y: 0, w: 1, h: 1)
+    var aspectFactor: Float { w / max(h, 1e-4) }
+}
+
+/// Una vista de la escena: lo que se ve (cámara y objetos) y dónde va en el destino.
+struct RenderView {
+    var frame: SceneFrame
+    var rect: RenderRect
 }

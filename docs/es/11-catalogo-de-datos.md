@@ -22,6 +22,7 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Cómo conduce cada coche (física, cámaras, zonas muertas del mando)? | `physics.json` (113 `pvehicle`) | `physics-attribs.ts` | 13, 15 |
 | ¿Qué tráfico sale en cada barrio y cómo actúa la policía según el calor? | `ai.json` (10 patrones, 21 niveles de persecución, 59 zonas) | `ai-attribs.ts` | 14 |
 | ¿Qué dice la radio de la policía en cada momento? | `radio/radio.json` + `radio/COPSPEECH.BIG` (9854 clips, 559 bancos, 139 eventos) | `radio.ts` | 16 |
+| ¿Cómo suena cada coche, el turbo, los derrapes, la sirena, los golpes? | `sound/sound.json` + `sound/<CARPETA>/*.ABK, *.GIN` (301 bancos, 2350 sonidos, 160 motores, 103 coches, 608 golpes) | `sound.ts` | 16 |
 | ¿Cómo son los interiores de garaje? | `interiors/*.glb` (5) | `convert.ts interior` | 07 |
 | ¿Vista cenital del mapa? | `rockport-plano.png` + `.json` (escala) | `topdown.ts` | 03 |
 | ¿Qué se puede abrir en el visor? | `index.json` → `items[814]` | todos | 04 |
@@ -51,6 +52,7 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 - `cars.json.cars[nombre]`: `tires` = 4 × `[x, y, z, radio]`, `className`, `spokes`, `skidWidth`, `kitWidthScale`, `kitOffsetFront/Rear`, `camber`, `feCompression`, `rimSize` (ver doc 10).
 - `ai.json`: `trafficPatterns`, `heatTable` (heat_01…10), `pursuitLevels`, `pursuitSupport`, `aiVehicle`, `vehicles` (pvehicle → modelo), `infractions`, `zones` (escondites, patrón por barrio, sin policía, inicio de persecución) (ver doc 14).
 - `radio/`: `COPSPEECH.BIG` (clips MicroTalk del disco) y `radio.json` con `clips` [desplazamiento, bytes, muestras], `banks` (frase, clips, valores de parámetro) y `events` (alternativas → piezas → condiciones) (ver doc 16 §5–6). No se sube.
+- `sound/`: bancos `ABKC` y motores `.GIN` del disco tal cual (33 MB) y `sound.json` con `banks` (por sonido: índice, códec, Hz, muestras, canales, desplazamientos, bucle), `gins`, `engines`/`turbos`/`shifts`/`acceltrans` (VLT), `cars` (pvehicle → sonidos), `surfaces`, `global`, `stitches` y `roles` (ver doc 16 §7–9). No se sube.
 - `cars/*.glb`: cada nodo lleva `extras.pieza` (ranura, kit, estilo, de serie) y, si tiene, `extras.marcadores`.
 
 ## 5. Cómo regenerar una sola parte
@@ -62,5 +64,6 @@ bun src/cli/car-attribs.ts ../original/SLES-53559.iso SLES-53559  # cars.json
 bun src/cli/physics-attribs.ts ../original/SLES-53559.iso SLES-53559  # physics.json
 bun src/cli/ai-attribs.ts ../original/SLES-53559.iso SLES-53559   # ai.json (tráfico y policía)
 bun src/cli/radio.ts ../original/SLES-53559.iso SLES-53559      # radio/ (radio de la policía)
+bun src/cli/sound.ts ../original/SLES-53559.iso SLES-53559      # sound/ (motores, efectos, sirenas) · --check contra vgmstream
 bun src/cli/garages.ts    ../original/SLES-53559.iso SLES-53559   # garages.json
 ```

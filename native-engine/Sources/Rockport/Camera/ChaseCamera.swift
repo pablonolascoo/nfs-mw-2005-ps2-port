@@ -1,7 +1,8 @@
 // Cámara de persecución con los valores del juego: clase camerainfo (FOV, HEIGHT, LAG, ANGLE, STIFFNESS, LATOFFSET,
 // TILTING) de cada vista del coche (ecar.CameraInfo_Close/Far/Bumper/Hood…) [V: physics.json].
 // El movimiento de la cámara del juego (CubicCameraMover, Camera/Movers/Cubic.cpp) NO está decompilado: el muelle,
-// el retraso de rumbo y el FOV con la velocidad son propios [H]. Se usa el primer valor de cada par (pantalla completa) [I].
+// el retraso de rumbo y el FOV con la velocidad son propios [H]. Cada valor es un par: el primero es el de pantalla completa
+// y el segundo el de pantalla partida (CameraInfo: FullScreenPOVArray / SplitScreenPOVArray [D]); `splitScreen` elige.
 import Foundation
 import simd
 
@@ -15,6 +16,8 @@ final class ChaseCamera {
     private var heading: Float = 0
     private var initialized = false
     private var fovExtra: Float = 0
+    /// Pantalla partida (Multiplayer/): usa el segundo valor de cada par de camerainfo.
+    var splitScreen = false
 
     /// Orden de las vistas como en el menú del juego: parachoques, capó, cerca, lejos [I].
     static let order = ["bumper", "hood", "close", "far"]
@@ -45,8 +48,9 @@ final class ChaseCamera {
             eye += (want - eye) * min(1, dt * 6); target = car.position + f * 3 + float3(0, 0, 1.1); up = upCar
             fovY = 55; return
         }
-        let height = v.HEIGHT.first ?? 1.7, lag = v.LAG.first ?? -5, angle = v.ANGLE.first ?? 0
-        let stiff = v.STIFFNESS.first ?? 0.5, lat = v.LATOFFSET.first ?? 0
+        func pick<T>(_ a: [T]) -> T? { splitScreen && a.count > 1 ? a[1] : a.first }
+        let height = pick(v.HEIGHT) ?? 1.7, lag = pick(v.LAG) ?? -5, angle = pick(v.ANGLE) ?? 0
+        let stiff = pick(v.STIFFNESS) ?? 0.5, lat = pick(v.LATOFFSET) ?? 0
         let inside = lag > 0                                  // parachoques y capó: LAG positivo, dentro del coche
         // Rumbo de la cámara: sigue al coche con retraso; derrapando mira algo hacia donde va el coche [H]
         var want = car.yaw
@@ -68,7 +72,7 @@ final class ChaseCamera {
             wantTarget = base - f * 20 + float3(0, 0, 1)
         } else if inside {
             // LAG/HEIGHT desde el centro del coche, mirando adelante con ANGLE grados hacia abajo
-            let fwdOff = v.LAG.first.map { name == "bumper" ? max($0, Float(car.halfLength) - 0.3) : $0 } ?? 0
+            let fwdOff = pick(v.LAG).map { name == "bumper" ? max($0, Float(car.halfLength) - 0.3) : $0 } ?? 0
             wantEye = base + f * fwdOff + left * lat + float3(0, 0, height)
             let pitch = angle * .pi / 180
             wantTarget = wantEye + f * (cos(pitch) * 20) - float3(0, 0, sin(pitch) * 20)
@@ -86,11 +90,11 @@ final class ChaseCamera {
         }
         target = wantTarget
         // Inclinación con el coche si TILTING (un poco, para no marear) [H]
-        up = (v.TILTING.first ?? true) ? simd_normalize(float3(0, 0, 1) + left * sin(car.roll) * 0.3) : float3(0, 0, 1)
+        up = (pick(v.TILTING) ?? true) ? simd_normalize(float3(0, 0, 1) + left * sin(car.roll) * 0.3) : float3(0, 0, 1)
         // FOV: el de la vista + hasta 8° con la velocidad y 6° con nitro [H]
         let wantExtra = inside ? 0 : min(8, speed / 80 * 8) + (car.isNOSEngaged ? 6 : 0)
         fovExtra += (wantExtra - fovExtra) * min(1, dt * 3)
-        fovY = ChaseCamera.verticalFov((v.FOV.first ?? 78) + fovExtra, aspect: aspect)
+        fovY = ChaseCamera.verticalFov((pick(v.FOV) ?? 78) + fovExtra, aspect: aspect)
     }
 
     private var name: String { current?.name ?? "" }

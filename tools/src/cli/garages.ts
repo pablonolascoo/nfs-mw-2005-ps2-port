@@ -1,7 +1,9 @@
 // Garajes y tiendas: para cada zona del juego (menu_gate_*), localiza su edificio en el mapa y la cara de la puerta.
 // Entrada: map-data/<ID>/zones.json (vlt-dump). Salida: map-data/<ID>/garages.json.
 // Regla [V en 7 de 8 talleres]: la zona queda frente a una cara del edificio; se toma el eje local (±X, ±Y) más alineado
-// con la dirección edificio→zona. Sin edificio identificado: la puerta mira hacia el punto de reaparición [H].
+// con la dirección edificio→zona. Sin edificio del juego (refugios 2, 4 y 5): se busca la persiana real más cercana
+// (triángulos ARC_HOSPITAL_GARAGEDOOR de cualquier edificio a menos de 160 m de la zona) y se usa ese edificio [I];
+// si no hay ninguna, la puerta mira hacia el punto de reaparición [H].
 import { outDir } from "../lib/paths";
 import { GameDisc } from "../lib/zdir";
 import { parseChunks } from "../lib/bchunk";
@@ -13,7 +15,8 @@ import { hex8 } from "../lib/hash";
 const [iso, disc] = Bun.argv.slice(2);
 const out = outDir(disc);
 const zones = (await Bun.file(`${out}/zones.json`).json()).zones as { collection: string; zoneType: string; position: number[]; radius: number; respawn?: { position: number[]; rotation: number } }[];
-const BUILDING: Record<string, RegExp> = { safehouse: /SafehouseA|SafeGarage/i, carlot: /CarParkDealership/i, customshop: /ChopShop/i };
+// Refugios: XB_CT_SafehouseA (1), XB_SafeHouse (2), XB_FishSafehouse (4), XB_TC_SafeHouse (5) [V: los cuatro tienen persiana]
+const BUILDING: Record<string, RegExp> = { safehouse: /SafehouseA|SafeGarage|^XB_.*Safe ?House/i, carlot: /CarParkDealership/i, customshop: /ChopShop/i };
 const d = await GameDisc.open(iso);
 const secs = readSectionTable(await d.readEntry(d.find("TRACKS\\L2RA.BUN")!));
 const st = await d.readEntry(d.find("TRACKS\\STREAML2RA.BUN")!);
@@ -21,10 +24,30 @@ const cands: { name: string; min: number[]; max: number[]; rot: number[]; pos: n
 const local = new Map<number, { min: number[]; max: number[] }>();
 const solidsByHash = new Map<number, Solid>();
 let doorTex = 0;
+// Cualquier edificio con persiana real (para los refugios sin edificio propio)
+// Hash de la textura de la persiana (ARC_HOSPITAL_GARAGEDOOR…): primero se busca en los paquetes de texturas
+let DOOR_HASH = 0;
+for (const s of secs) {
+  const b = st.subarray(s.offset, s.offset + s.size), ch = parseChunks(b);
+  if (!ch.some(c => c.id === 0xb3300000)) continue;
+  const t = readTexturePack(b).textures.find(t => t.name.startsWith("ARC_HOSPITAL_GARAGEDOOR"));
+  if (t) { DOOR_HASH = t.nameHash; break; }
+}
+const doorSolids = new Set<number>();
+const doorCands: (typeof cands)[number][] = [];
 for (const s of secs) { const b = st.subarray(s.offset, s.offset + s.size), ch = parseChunks(b);
-  for (const so of readSolidListsDeep(b, ch)) if (Object.values(BUILDING).some(r => r.test(so.name))) { local.set(so.nameHash, { min: so.aabbMin, max: so.aabbMax }); solidsByHash.set(so.nameHash, so); }
+  for (const so of readSolidListsDeep(b, ch)) {
+    const isDoor = so.textureHashes.includes(DOOR_HASH);
+    if (isDoor) doorSolids.add(so.nameHash);
+    if (isDoor || Object.values(BUILDING).some(r => r.test(so.name))) { local.set(so.nameHash, { min: so.aabbMin, max: so.aabbMax }); solidsByHash.set(so.nameHash, so); }
+  }
   if (!doorTex && ch.some(c => c.id === 0xb3300000)) for (const t of readTexturePack(b).textures) if (t.name.startsWith("ARC_HOSPITAL_GARAGEDOOR")) doorTex = t.nameHash;
-  for (const sc of readScenery(b, ch)) for (const i of sc.instances) { const info = sc.infos[i.info], n = info?.name ?? ""; if (Object.values(BUILDING).some(r => r.test(n))) cands.push({ name: n, min: i.bbMin, max: i.bbMax, rot: i.rotation, pos: i.position, hash: modelHash(info) ?? 0 }); } }
+  for (const sc of readScenery(b, ch)) for (const i of sc.instances) {
+    const info = sc.infos[i.info], n = info?.name ?? "", h = modelHash(info) ?? 0;
+    const c = { name: n, min: i.bbMin, max: i.bbMax, rot: i.rotation, pos: i.position, hash: h };
+    if (Object.values(BUILDING).some(r => r.test(n))) cands.push(c);
+    else doorCands.push(c);
+  } }
 /**
  * Puertas reales del edificio: triángulos con la textura ARC_HOSPITAL_GARAGEDOOR (la usan todos los garajes) [V],
  * pasados a mundo y agrupados por cercanía. Devuelve centro, normal hacia fuera, ancho y alto de cada hueco.
@@ -59,6 +82,12 @@ function obb(c: (typeof cands)[number]) {
   const len = axes.map(a => Math.hypot(...a));
   return { center, axes: axes.map((a, i) => a.map(v => v / len[i])), half: lh.map((h, i) => h * len[i]) };
 }
+console.error(`persianas: ${doorSolids.size} sólidos, ${doorCands.filter(c => doorSolids.has(c.hash)).length} instancias`);
+if (process.env.GARAGE_DEBUG) for (const z of zones.filter(z => z.zoneType === "safehouse")) {
+  const zp = z.position;
+  const all = [...cands, ...doorCands].map(c => ({ n: c.name, d: Math.hypot((c.min[0] + c.max[0]) / 2 - zp[0], (c.min[1] + c.max[1]) / 2 - zp[1]), door: doorSolids.has(c.hash), w: c.max[0] - c.min[0] }));
+  console.error(z.collection, all.filter(a => /safe|garage/i.test(a.n) || a.door).sort((a, b) => a.d - b.d).slice(0, 6).map(a => `${a.n} ${a.d.toFixed(0)}m${a.door ? " persiana" : ""}`).join(" · "));
+}
 const result = zones.map(z => {
   const zp = z.position;
   const b = cands.filter(c => BUILDING[z.zoneType].test(c.name) && (c.max[0] - c.min[0]) > 8)
@@ -87,6 +116,22 @@ const result = zones.map(z => {
     const t = (zp[0] - face[0]) * -outDir[1] + (zp[1] - face[1]) * outDir[0];
     const door = [face[0] + -outDir[1] * t, face[1] + outDir[0] * t, zp[2]];
     return { collection: z.collection, zoneType: z.zoneType, zone: zp, radius: z.radius, building: { name: b.name, center: b.c, along, across, height: o.half[2] * 2, floor: o.center[2] - o.half[2] }, out: outDir, door, source: "edificio" };
+  }
+  // Sin edificio propio: la persiana real más cercana de otro edificio (de frente a la zona, ancha de verdad)
+  const near = doorCands.filter(c => doorSolids.has(c.hash) && Math.hypot((c.min[0] + c.max[0]) / 2 - zp[0], (c.min[1] + c.max[1]) / 2 - zp[1]) < 160)
+    .flatMap(c => doorsOf(c).map(dr => ({ c, dr, dist: Math.hypot(dr.center[0] - zp[0], dr.center[1] - zp[1]) })))
+    .filter(x => x.dr.width > 3.5 && x.dr.height > 2.5 && x.dr.width < 9)
+    .sort((p, q) => p.dist - q.dist)[0];
+  if (near) {
+    const { c, dr } = near, o = obb(c);
+    const toZ = [zp[0] - dr.center[0], zp[1] - dr.center[1]];
+    if (dr.normal[0] * toZ[0] + dr.normal[1] * toZ[1] < 0) dr.normal = dr.normal.map(v => -v);
+    if (o) {
+      const X = [o.axes[0][0], o.axes[0][1]], Y = [o.axes[1][0], o.axes[1][1]];
+      const opts = [{ d: X, h: o.half[0], w: o.half[1] }, { d: [-X[0], -X[1]], h: o.half[0], w: o.half[1] }, { d: Y, h: o.half[1], w: o.half[0] }, { d: [-Y[0], -Y[1]], h: o.half[1], w: o.half[0] }];
+      const dAxis = opts.sort((p, q) => (q.d[0] * dr.normal[0] + q.d[1] * dr.normal[1]) - (p.d[0] * dr.normal[0] + p.d[1] * dr.normal[1]))[0];
+      return { collection: z.collection, zoneType: z.zoneType, zone: zp, radius: z.radius, building: { name: c.name, center: o.center, along: dAxis.h * 2, across: dAxis.w * 2, height: o.half[2] * 2, floor: o.center[2] - o.half[2] }, out: [dr.normal[0], dr.normal[1]], door: [dr.center[0], dr.center[1], dr.bottom], doorSize: [dr.width, dr.height], doorTexture: hex8(DOOR_HASH), source: "persiana cercana" };
+    }
   }
   const r = z.respawn?.position ?? [zp[0] + 1, zp[1], zp[2]];
   const v = [r[0] - zp[0], r[1] - zp[1]], n = Math.hypot(v[0], v[1]) || 1;

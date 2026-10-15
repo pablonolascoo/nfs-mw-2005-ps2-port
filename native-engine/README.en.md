@@ -98,6 +98,8 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Pad light bar mode for this session (not saved). Also `ROCKPORT_LIGHTBAR` |
 | `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Where the police radio plays · print each line to the console |
 | `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Window-less: audio outputs and pads · disc radio (vs vgmstream) · pad Opus/SBC/HID reports · light bar colours |
+| `--sound-off` · `--volume 0…1` | Game sound off · master volume (also `settings.json` → `"sound"`) |
+| `--sound-dump` · `--sound-test [CAR]` · `--sound-trace` · `--sound-live [s]` | Window-less: decoded banks and engines (vs vgmstream) · scripted run rendered to `.build/sound-test/<CAR>.wav` · RPM and mix trace · real Mac output for a few seconds (silent with `--volume 0`) |
 
 ## Folder layout
 
@@ -303,7 +305,7 @@ Notes:
 - Car lighting is the viewer's, not the game's: the game uses environment maps [D].
 - Aftermarket rims, spoilers and roof scoops (`WHEELS`, `SPOILER`, `ROOF` packs) are not mounted yet: the car is stock.
 - The BMW driver texture (`4e8cf857`) is not on the disc: it shows dark grey, as in the viewer [V].
-- No sound, races or menus yet. Traffic and police without helicopter or physical car-to-car collisions (doc 14).
+- Sound: without the engines' AEMS layer or the game's mix maps (doc 16 §9). Traffic and police without helicopter or physical car-to-car collisions (doc 14).
 - Wall crashes: own impulses, not the game's `RigidBody::DoBarrierCollision` (doc 13).
 - Controllers not yet tested on real hardware (doc 15).
 
@@ -336,6 +338,18 @@ Notes:
 - **Camera**: the car's `camerainfo` views (bumper, hood, close, far); own motion [H] (the game's is not decompiled).
 - **PS2 look always on**: the G key was removed.
 - Shots: `.build/shots/drive-physics.png` (cornering with body roll and steered wheels) and `.build/shots/drive-cameras.png` (all 4 views).
+
+## Game sound: engines, effects and sirens (2026-10-15)
+
+- **Disc banks** (`tools/src/cli/sound.ts` → `sound/`, `DATA_FORMAT` 5): 301 AEMS `ABKC` banks and 160 `.GIN` granular engines copied
+  as they are; the app decodes PS-ADPCM, EA-XA v2 and EA-XAS (`Audio/SFXBank.swift`, `EngineGinsu.swift`), identical to vgmstream.
+- **Engine** (`Audio/EngineSound.swift`): the game's chain —audio RPM through the car's curve, gear shifts with their RPM curves,
+  on/off-throttle mix of two .GIN (`SFXCTL_HybridMotor`), the Ginsu granular synthesizer ported line by line—, turbo with charge and
+  blow-offs, nitrous, pops. Every car with its game sound (the BMW M3 GTR sounds like the TVR Cerbera, as on PS2).
+- **World** (`Audio/SFXWorld.swift`, `SFXMixer.swift`): skids, wind, road noise, impacts with the game's "stitches", race rivals with a
+  full engine, police with siren and engine in 3D (Doppler, pan, distance filter), traffic hum and horns. A single audio node;
+  0.2 % of one core. Split screen: `localCarsProvider` / `listenersProvider`.
+- Details and tags: [doc 16 §7–10](../docs/en/16-audio-and-voices.md). Missing: the AEMS layer (MIPS modules) and the game's mix maps.
 
 ## Light bar and police radio (2026-10-15)
 

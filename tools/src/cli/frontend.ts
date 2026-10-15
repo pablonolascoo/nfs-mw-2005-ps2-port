@@ -36,11 +36,15 @@ async function read(name: string) {
   return b;
 }
 
-// Archivos con paquetes FEng [V: búsqueda de chunks 0x30203/0x30210 en todo SLES-53559]
-const PACKAGE_FILES = ["FRONTEND\\FRONTB.LZC", "GLOBAL\\GLOBALA.BUN", "GLOBAL\\GLOBALB.LZC", "GLOBAL\\INGAMEB.LZC", "GLOBAL\\WIDESCREEN_GLOBAL.BUN"];
+// Archivos con paquetes FEng [V: búsqueda de chunks 0x30203/0x30210 en todo SLES-53559]. INGAMESPLITSCREEN.BUN trae los HUD de
+// pantalla partida (HUD_Player1/2, HUD_Drag_Player1/2) [V: SLES-53559; GameFlow.cpp lo carga solo en pantalla partida [D]].
+const PACKAGE_FILES = ["FRONTEND\\FRONTB.LZC", "GLOBAL\\GLOBALA.BUN", "GLOBAL\\GLOBALB.LZC", "GLOBAL\\INGAMEB.LZC", "GLOBAL\\WIDESCREEN_GLOBAL.BUN",
+  "GLOBAL\\INGAMESPLITSCREEN.BUN"];
 // Packs de texturas de la interfaz (los mismos archivos + HUD, fuentes por idioma, tarjetas) [V]
 const TEXTURE_FILES = [...PACKAGE_FILES, "GLOBAL\\INGAMEA.BUN", "LANGUAGES\\LANGUAGETEXTURES.BIN", "GLOBAL\\HUDTEXRACE.BIN", "GLOBAL\\HUDTEXSPLIT.BIN",
-  "GLOBAL\\HUDTEXDRAG.BIN", "GLOBAL\\HUDTEXDRAGSPLIT.BIN", "GLOBAL\\CARDTEXTURES.BIN", "GLOBAL\\DYNTEX.BIN", "GLOBAL\\RIVALS.BIN", ...[...Array(11)].map((_, i) => `GLOBAL\\HUDS_CUSTOM_${String(i).padStart(2, "0")}.BIN`)];
+  "GLOBAL\\HUDTEXDRAG.BIN", "GLOBAL\\HUDTEXDRAGSPLIT.BIN", "GLOBAL\\CARDTEXTURES.BIN", "GLOBAL\\DYNTEX.BIN", "GLOBAL\\RIVALS.BIN", ...[...Array(11)].map((_, i) => `GLOBAL\\HUDS_CUSTOM_${String(i).padStart(2, "0")}.BIN`),
+  // Mapas de las pruebas de la carrera rápida (TRACK_MAP_<id>, 512×512, 297 [V]) que UITrackMapStreamer pone en Track_Select [D]
+  "TRACKS\\L2RA\\TRACKMAPS.BIN"];
 // Idioma por disco: PAL → castellano (SLES-53559 lleva el texto en español [V]); NTSC-U → inglés. El inglés va siempre de reserva.
 const LANGS = id.startsWith("SLUS") ? ["ENGLISH"] : ["SPANISH", "ENGLISH"];
 
@@ -96,7 +100,7 @@ for (const { pk } of packages) {
 for (const f of fonts.values()) { if (textures.has(f.textureHash)) needed.add(f.textureHash); else missing.set(f.textureHash, `fuente ${f.texture}`); }
 // Texturas que el código del HUD elige por nombre (FEngSetTextureHash): se exportan todas las de los packs del HUD y del juego.
 // Iconos de menú que pone el código (MAIN_ICON_*, INGAME_ICON_*…): se exportan todos los packs de interfaz.
-for (const [h, t] of textures) if (/HUD|INGAME|GLOBALA|GLOBALB|FRONTB|WIDESCREEN|RIVALS/.test(t.source)) needed.add(h);
+for (const [h, t] of textures) if (/HUD|INGAME|GLOBALA|GLOBALB|FRONTB|WIDESCREEN|RIVALS|TRACKMAPS/.test(t.source)) needed.add(h);
 // DYNTEX: rótulos por idioma que el código pone a mano (BUSTED_SPA, EVADED_ENG…), consejos de carga y mandos [V: DYNTEX.BIN]
 for (const [h, t] of textures) if (t.source.includes("DYNTEX") && /^(BUSTED|EVADED|DEFEATED|IMPOUNDED|TIP_|LOADING_CONTROLLER_PS2|INGAME_ICON|MILESTONE|RACE_ICON|EVENT_ICON)/.test(t.name)) needed.add(h);
 

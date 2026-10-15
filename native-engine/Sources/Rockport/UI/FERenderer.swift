@@ -87,8 +87,22 @@ struct FELayout {
         scaleX = stretch ? max(scale, Float(width) / 640) : scale
         ox = (Float(width) - 640 * scaleX) / 2; oy = (Float(height) - 480 * scale) / 2
     }
+
+    /// Pantalla partida (Multiplayer/SplitHUD.swift): la ventana del lienzo `canvas` (x0, y0, x1, y1 en unidades FEng, origen
+    /// en el centro) se encaja con su aspecto y centrada en el rectángulo `rect` (píxeles del destino: x, y, ancho, alto).
+    /// Con la ventana (−320, −240, 320, 240) y el destino entero es lo mismo que `init(width:height:)`.
+    init(width: Int, height: Int, rect: SIMD4<Float>, canvas: SIMD4<Float>) {
+        self.width = Float(width); self.height = Float(height)
+        let cw = canvas.z - canvas.x, ch = canvas.w - canvas.y
+        scale = min(rect.z / cw, rect.w / ch)
+        scaleX = scale
+        ox = rect.x + rect.z / 2 - ((canvas.x + canvas.z) / 2 + 320) * scale
+        oy = rect.y + rect.w / 2 - ((canvas.y + canvas.w) / 2 + 240) * scale
+        visibleWidthOverride = rect.z
+    }
+    private var visibleWidthOverride: Float?
     /// Media anchura visible en unidades del lienzo (320 en 4:3; 426,7 en 16:9).
-    var visibleHalfWidth: Float { width / scale / 2 }
+    var visibleHalfWidth: Float { (visibleWidthOverride ?? width) / scale / 2 }
     /// Coordenadas FEng (origen en el centro del lienzo) → NDC.
     func ndc(_ p: SIMD2<Float>) -> SIMD2<Float> {
         let x = ox + (p.x + 320) * scaleX, y = oy + (p.y + 240) * scale
@@ -281,18 +295,28 @@ final class FERenderer {
 
     /// Dibuja los paquetes (en orden: el último queda encima) sobre `target`, que ya tiene la escena.
     func encode(_ cb: MTLCommandBuffer, target: MTLTexture, packages: [FEPackageRT]) {
+        encode(cb, target: target, batches: [FEBatch(packages: packages, layout: nil, scissor: nil)])
+    }
+
+    /// Paquetes en grupos, cada uno con su marco (nil = el lienzo entero en el destino) y su recorte en píxeles
+    /// (pantalla partida: el HUD de cada jugador en su cuarto de pantalla). Un solo búfer y un solo codificador.
+    func encode(_ cb: MTLCommandBuffer, target: MTLTexture, batches: [FEBatch]) {
         let L0 = FELayout(width: target.width, height: target.height)
         let LS = FELayout(width: target.width, height: target.height, stretch: true)
         verts.removeAll(keepingCapacity: true); draws.removeAll(keepingCapacity: true)
-        for p in packages where p.visible {
-            let L = p.stretch ? LS : L0
-            for it in collect(p) {
-                switch it.obj.type {
-                case 1, 9, 10, 11, 12: emitImage(it, p, L)
-                case 2: emitString(it, p, L)
-                default: break   // películas, listas: no se dibujan aquí
+        var cuts: [(draw: Int, scissor: MTLScissorRect?)] = []
+        for b in batches {
+            cuts.append((draws.count, b.scissor))
+            for p in b.packages where p.visible {
+                let L = b.layout ?? (p.stretch ? LS : L0)
+                for it in collect(p) {
+                    switch it.obj.type {
+                    case 1, 9, 10, 11, 12: emitImage(it, p, L)
+                    case 2: emitString(it, p, L)
+                    default: break   // películas, listas: no se dibujan aquí
+                    }
+                    if verts.count > FERenderer.maxVerts - 6000 { break }
                 }
-                if verts.count > FERenderer.maxVerts - 6000 { break }
             }
         }
         lastDraws = draws.count
@@ -308,7 +332,13 @@ final class FERenderer {
         enc.label = "interfaz FEng"
         enc.setVertexBuffer(buf, offset: 0, index: 0)
         enc.setFragmentSamplerState(clampS, index: 1)
-        for d in draws {
+        let full = MTLScissorRect(x: 0, y: 0, width: target.width, height: target.height)
+        var cut = 0
+        for (i, d) in draws.enumerated() {
+            while cut < cuts.count && cuts[cut].draw <= i {
+                if cuts.count > 1 { enc.setScissorRect(cuts[cut].scissor ?? full) }
+                cut += 1
+            }
             switch d.mode {
             case .image: enc.setRenderPipelineState(pImage[d.additive]!)
             case .masked: enc.setRenderPipelineState(pMasked[d.additive]!); enc.setFragmentTexture(d.mask, index: 1)
@@ -320,6 +350,13 @@ final class FERenderer {
         }
         enc.endEncoding()
     }
+}
+
+/// Grupo de paquetes con su marco y su recorte (FERenderer.encode(batches:)).
+struct FEBatch {
+    var packages: [FEPackageRT]
+    var layout: FELayout?
+    var scissor: MTLScissorRect?
 }
 
 /// Maquetación de texto como FEngFont::RenderString [D]: justificación, saltos «^» y «\n», ajuste de línea, interletraje.

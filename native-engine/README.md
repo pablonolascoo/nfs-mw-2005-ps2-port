@@ -98,6 +98,8 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Modo de la barra de luz del mando en esta sesión (no se guarda). También `ROCKPORT_LIGHTBAR` |
 | `--radio-out auto\|pad\|mac\|off` · `--radio-log` | Por dónde suena la radio de la policía · escribir cada frase en la consola |
 | `--audio-devices` · `--radio-test` · `--pad-audio-test` · `--lightbar-test` | Sin ventana: salidas de audio y mandos · radio del disco (contra vgmstream) · Opus/SBC/informes HID del mando · colores de la barra |
+| `--sound-off` · `--volume 0…1` | Sonido del juego apagado · volumen general (también en `settings.json` → `"sound"`) |
+| `--sound-dump` · `--sound-test [COCHE]` · `--sound-trace` · `--sound-live [s]` | Sin ventana: bancos y motores decodificados (contra vgmstream) · recorrido con guion renderizado a `.build/sound-test/<COCHE>.wav` · traza de RPM y mezcla · salida real del Mac unos segundos (con `--volume 0` no se oye) |
 
 ## Estructura de carpetas
 
@@ -301,6 +303,18 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - **Tono PS2 siempre activo**: se quitó la tecla G.
 - Capturas: `.build/shots/drive-physics.png` (curva con balanceo y ruedas giradas) y `.build/shots/drive-cameras.png` (las 4 vistas).
 
+## Sonido del juego: motores, efectos y sirenas (2026-10-15)
+
+- **Bancos del disco** (`tools/src/cli/sound.ts` → `sound/`, `DATA_FORMAT` 5): 301 bancos AEMS `ABKC` y 160 motores granulares `.GIN`
+  copiados tal cual; la app decodifica PS-ADPCM, EA-XA v2 y EA-XAS (`Audio/SFXBank.swift`, `EngineGinsu.swift`), idénticos a vgmstream.
+- **Motor** (`Audio/EngineSound.swift`): la cadena del juego —RPM de audio por la curva del coche, cambios con sus curvas de RPM,
+  mezcla acelerando/desacelerando de dos .GIN (`SFXCTL_HybridMotor`), sintetizador granular Ginsu portado línea a línea—, turbo con
+  carga y descargas, nitro, petardeos. Cada coche con su sonido del juego (el BMW M3 GTR suena como el TVR Cerbera, igual que en PS2).
+- **Mundo** (`Audio/SFXWorld.swift`, `SFXMixer.swift`): derrapes, viento, rodadura, golpes con los «stitches» del juego, rivales de carrera
+  con motor completo, policía con sirena y motor en 3D (Doppler, paneo, filtro por distancia), tráfico con rumor y cláxones.
+  Un solo nodo de audio; 0,2 % de un núcleo. Pantalla partida: `localCarsProvider` / `listenersProvider`.
+- Detalle y etiquetas: [doc 16 §7–10](../docs/es/16-audio-y-voces.md). Falta la capa AEMS (módulos MIPS) y los mapas de mezcla del juego.
+
 ## Barra de luz y radio de la policía (2026-10-15)
 
 - **Barra de luz** (`Input/LightBarConfig.swift`): opción de tuneo por coche —pintura, color propio, policía, calor, apagada— guardada en
@@ -374,7 +388,7 @@ Notas:
 - La luz del coche es la del visor, no la del juego: el juego usa mapas de entorno [D].
 - Llantas, alerones y tomas de techo de tuneo (packs `WHEELS`, `SPOILER`, `ROOF`) aún no se montan: el coche va de serie.
 - El conductor del BMW (`4e8cf857`) no tiene textura en el disco: sale gris oscuro, como en el visor [V].
-- No hay sonido, carreras ni menús. Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
+- Sonido: sin la capa AEMS de los motores ni los mapas de mezcla del juego (doc 16 §9). Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
 - Choques con muros: impulsos propios, no `RigidBody::DoBarrierCollision` del juego (doc 13).
 - Mandos sin probar aún con hardware real (doc 15).
 

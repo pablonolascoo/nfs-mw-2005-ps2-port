@@ -33,6 +33,8 @@ final class HIDPads {
 
     private var manager: IOHIDManager?
     private(set) var pads: [Pad] = []
+    /// Aviso al enchufar/desenchufar (pantalla partida: Multiplayer/).
+    var onPadsChanged: (() -> Void)?
     static let ps2Adapters: Set<Int> = [0x0810_0001, 0x0810_0003, 0x0E8F_0003, 0x0E8F_3013, 0x0925_8866, 0x0925_1700, 0x2563_0575]
 
     func start() {
@@ -90,6 +92,7 @@ final class HIDPads {
             }, ctx)
         }
         print(String(format: "Mando conectado: %@ (%04X:%04X, %@) · IOKit HID", name, v, p, kind.rawValue))
+        onPadsChanged?()
     }
 
     private func removed(_ dev: IOHIDDevice) {
@@ -97,6 +100,7 @@ final class HIDPads {
         print("Mando desconectado: \(pads[i].name)")
         pads[i].reportBuffer?.deallocate()
         pads.remove(at: i)
+        onPadsChanged?()
     }
 
     // MARK: Lectura
@@ -106,6 +110,12 @@ final class HIDPads {
         for p in pads { out.merge(p.kind == .ds3 ? readDS3(p) : readGeneric(p)) }
         return out
     }
+
+    /// Un solo mando (pantalla partida). No mezclar con `poll()` en el mismo fotograma: comparten flancos.
+    func readPad(_ p: Pad) -> PadState { p.kind == .ds3 ? readDS3(p) : readGeneric(p) }
+
+    /// Vibración de un solo mando (solo DualShock 3 por USB).
+    func rumble(_ p: Pad, strong: Float, weak: Float) { if p.kind == .ds3 { setDS3(p, strong: strong, weak: weak) } }
 
     private func edge(_ p: Pad, _ k: String, _ v: Bool) -> Bool { let was = p.prev[k] ?? false; p.prev[k] = v; return v && !was }
 

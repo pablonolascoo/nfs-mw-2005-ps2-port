@@ -12,7 +12,7 @@ import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "
 import { compiled } from "../lib/paths";
 
 /** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
-export const DATA_FORMAT = 4; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz
+export const DATA_FORMAT = 5; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz · 5 = sound/ (motores Ginsu, bancos ABK, sound.json) + fe-cameras.json (cámaras de los garajes y menús, FE_ATTRIB.BIN)
 
 const [mode, ...rest] = Bun.argv.slice(2);
 
@@ -34,7 +34,9 @@ if (mode === "step") {
     case "collision": await import("./collision"); break;
     case "topdown": await import("./topdown"); break;
     case "radio": await (await import("./radio")).main(Bun.argv.slice(2)); break;
+    case "sound": await (await import("./sound")).main(Bun.argv.slice(2)); break;
     case "races": await import("./races"); break;
+    case "fe-cameras": await import("./fe-cameras"); break;
     default: console.error(`Paso desconocido: ${name}`); process.exit(2);
   }
 } else if (mode === "install") {
@@ -53,11 +55,13 @@ if (mode === "step") {
     ["Interiores de garajes", "convert", [iso, id, "interior", "CAREER_SAFEHOUSE", "PLATFORMCRIB", "CAR_LOT", "CUSTOMIZATION_SHOP", "CUSTOMIZATION_SHOP_BACKROOM"]],
     ["Coches", "convert", [iso, id, "car"]],      // la lista de coches se añade tras el inventario
     ["Puertas de garajes", "garages", [iso, id]],
+    ["Cámaras de los garajes", "fe-cameras", [iso, id]],
     ["Ruedas de los coches", "car-attribs", [iso, id]],
     ["Coches de la Lista Negra (presets y vinilos)", "presets", [iso, id]],
     ["Física de los coches", "physics-attribs", [iso, id]],
     ["Tráfico y policía", "ai-attribs", [iso, id]],
     ["Radio de la policía", "radio", [iso, id]],
+    ["Sonido (motores, efectos, sirenas)", "sound", [iso, id]],
     ["Interfaz del juego (menús, HUD, textos)", "frontend", [iso, id]],
     ["Red de carreteras", "roads", [iso, id]],
     ["Colisión", "collision", [iso, id]],
