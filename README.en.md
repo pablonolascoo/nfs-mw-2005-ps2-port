@@ -49,35 +49,34 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | <img src="site/img/resultados.jpg" alt="Original results screen"> | <img src="site/img/listanegra-pantalla.jpg" alt="Blacklist screen with Sonny, #15"> |
 
 ## What works today
-| Area | Status |
+
+### The game (native macOS engine, v0.5)
+| | Status |
 |---|---|
-| Disc container (ZDIR/ZZDATA), file names | ✅ 95 % of files named |
-| Compression HUFF / JDLZ / RAWW | ✅ byte-exact |
-| PS2 geometry (VIF packets, strip restarts) | ✅ 181,535 strips decoded, 0 errors |
-| PS2 textures PSMT8 / PSMT4 (GS swizzle) | ✅ |
-| Whole Rockport: 718 sections, 106,714 objects, 5.8 M triangles | ✅ exported to glTF |
-| Cars with textures, paint, glass, lights and 4 wheels (TireOffsets) | ✅ |
-| **Native macOS engine (Swift + Metal)**: full screen, screen resolution, 60 fps, PS2 tone, drivable car — [native-engine/](native-engine/README.en.md) | ✅ first version |
-| Research web viewer (Three.js) | ✅ |
-| Decompilation (dbalatoni13/nfsmw) builds on Apple Silicon | ✅ with Rosetta 2 |
-| Gameplay database (VLT): 6,287 collections, 255 events, Blacklist, 15 garage/shop zones | ✅ |
-| Frontend interiors (garages, car lot, tuning shop) | ✅ exported |
-| Whole city at 60 fps (HLOD tiles, texture arrays, workers, dynamic resolution) | ✅ |
-| Garages without loading screens: real door opens, interior already loaded, park, showcase, drive out | ✅ |
-| Mods: original data layered over your ISO (`mods/`), example "Unique garages" | ✅ |
-| Road network (4385 nodes, 6538 Bézier segments, lanes) and collision (243k triangles) | ✅ decoded and validated |
-| **Game's own driving physics** (decomp), 4 cameras, controllers (Xbox, PS3/PS4/PS5, PS2 via USB) with light bar and touchpad — [doc 13](docs/en/13-driving-physics.md), [doc 15](docs/en/15-controllers.md) | ✅ v0.2 |
-| **Traffic, police and pursuits** with the game's tables: heat, backup, formations, roadblocks — [doc 14](docs/en/14-traffic-and-police.md) | ✅ v0.2 |
-| **The game's original interface** at native resolution: title, main menu, career, pause and MW HUD, Spanish/English text from your disc — [doc 17](docs/en/17-interface.md) | ✅ v0.3 |
-| **Story cars with their exact liveries**: classic silver/blue BMW M3 GTR, Razor's Mustang and all 15 Blacklist cars (82 preset rides, vinyls composited like the game) — [doc 10](docs/en/10-cars.md) | ✅ v0.3 |
-| **Police radio** from your disc (own MicroTalk decoder), event-driven, through the PS4/PS5 pad speaker or the Mac; configurable light bar — [doc 15](docs/en/15-controllers.md), [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.3 |
-| Original voices and scene audio extracted from your disc (local use) — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
-| **Playable races and Blacklist**: sprint, circuit, knockout, drag, speedtrap, tollbooth and challenges; rivals with the game's AI and cars; 15 → 1 progression, pink slips, district padlocks and save game — [doc 18](docs/en/18-races-and-blacklist.md) | ✅ v0.4 |
-| **100 % original HUD** with the game's radar, race screens, results, Blacklist and pursuit endings — [doc 17](docs/en/17-interface.md) | ✅ v0.4 |
-| **Garages without loading screens** in the native engine: the door opens, you drive in, park and get the safehouse, car lot (buy cars) and shop menus (paint, vinyls, rims, spoilers, kits, light bar) — [doc 07](docs/en/07-driving-and-garages.md) | ✅ v0.5 |
-| **Original sound**: each car's engine with the game's synthesis, turbo, shifts, nitrous, skids, impacts, sirens and horns — [doc 16](docs/en/16-audio-and-voices.md) | ✅ v0.5 |
-| **Quick Race and split screen**: 2 players (original) and 3-4 (extension), several displays, one controller per player — [doc 19](docs/en/19-quick-race-and-multiplayer.md) | ✅ v0.5 |
+| All of Rockport full screen at your screen's resolution and 60 fps, with the warm PS2 tone always on | ✅ |
+| **Original interface**: "Press START", menus, pause and a 100 % original HUD, with text from your disc — [doc 17](docs/en/17-interface.md) | ✅ |
+| **The game's own driving physics** (decompiled), 4 cameras — [doc 13](docs/en/13-driving-physics.md) | ✅ |
+| **Story cars with their exact liveries**: silver/blue BMW M3 GTR, Razor's Mustang, all 15 Blacklist cars — [doc 10](docs/en/10-cars.md) | ✅ |
+| **Races and Blacklist**: sprint, circuit, knockout, drag, speedtrap, tollbooth and challenges; 15 → 1 progression, pink slips and save game — [doc 18](docs/en/18-races-and-blacklist.md) | ✅ |
+| **Traffic, police and pursuits** with the game's tables, police radio from your disc — [doc 14](docs/en/14-traffic-and-police.md) | ✅ |
+| **Garages without loading screens**: safehouse, car lot and customization shop — [doc 07](docs/en/07-driving-and-garages.md) | ✅ |
+| **Original sound**: each car's engine, turbo, shifts, nitrous, skids, impacts, sirens — [doc 16](docs/en/16-audio-and-voices.md) | ✅ |
+| **Quick Race and split screen** (2 players as the original; 3–4 and multi-display as extensions) — [doc 19](docs/en/19-quick-race-and-multiplayer.md) | ✅ |
+| **Controllers**: Xbox, PS3/PS4/PS5 and PS2 via USB, with light bar, touchpad and DualSense triggers — [doc 15](docs/en/15-controllers.md) | ✅ (untested on real hardware) |
+| The game's lighting: car reflections, shadows, fog and light shafts | 🚧 in progress |
 | Movies, music, career map, car-to-car collisions, helicopter | 🔜 |
+
+### The reverse engineering
+| | Status |
+|---|---|
+| Disc container, file names (95 %), HUFF/JDLZ/RAWW compression byte-exact | ✅ |
+| PS2 geometry and textures (VIF, GS swizzle), 181,535 strips with zero errors | ✅ |
+| Rockport: 718 sections, 106,714 objects, 5.8 M triangles | ✅ |
+| Game database (VLT): 6,287 collections, 255 events | ✅ |
+| Road network (4385 nodes, Bézier, lanes) and collision (243k triangles) | ✅ |
+| Interface (FEng), sound (ABK, GIN, MicroTalk), preset cars and vinyls, race routes | ✅ |
+| The [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) decomp building on Apple Silicon | ✅ |
+| Research web viewer (Three.js) and data mods (`mods/`) | ✅ |
 
 ## Quick Race and split screen
 
@@ -116,8 +115,8 @@ Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs
 ### First launch
 1. Open **Rockport** from Applications. First time: right-click → **Open** (the app is not signed by Apple yet).
 2. Click **CHOOSE MY PS2 ISO** and pick your copy. It detects PAL **SLES-53559** or NTSC-U **SLUS-21351** on its own.
-3. Wait for the bar (about 1 minute). When it finishes, the game starts full screen at your screen's resolution.
-4. Press **C** (or **Menu / Options** on a pad) to switch from the free camera to the car.
+3. Wait for the bar (about 1 minute).
+4. "Press START" → **Career** → **Start new** (or **Continue** if you have a save). There is also **Quick Race** to play alone or split screen.
 
 ### Controls
 
@@ -132,8 +131,9 @@ Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs
 | Change camera (4 game views) | Y · d-pad → / ← | △ · d-pad → / ← | V |
 | Reset the car onto the road | X or View | □ or Share / Create | R |
 | Shift up / down | d-pad ↑ / ↓ | d-pad ↑ / ↓ | E / Q |
-| Free camera / photo mode | Menu | Options / Start | C |
-| Release mouse · Quit | — | — | Tab · Esc |
+| Pause (resume, restart, quit to menu) | Menu | Options / Start | Esc |
+| Free camera / photo mode | — | — | C |
+| Release mouse | — | — | Tab |
 
 - Gears are automatic, as in the game. Use the d-pad to shift by hand whenever you want.
 - The right stick can also throttle (↑) and brake (↓).
@@ -147,7 +147,7 @@ Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs
 | Swipe → / ← on the touchpad | Next / previous camera |
 | Press the touchpad (hold) | Look back while held |
 | Short tap on the touchpad | 1-second glance back |
-| Two fingers on the touchpad | Free camera (photo mode) and back to the car |
+| Two fingers on the touchpad | Photo mode (free camera) and back to the car |
 | Adaptive triggers (PS5 only) | L2 resists when braking and buzzes when the wheels lock. R2 is almost free, shakes at the rev limiter and goes loose with nitrous |
 | Rumble | Follows tyre grip, the rev limiter, nitrous and hits |
 

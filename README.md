@@ -49,35 +49,34 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | <img src="site/img/resultados.jpg" alt="Pantalla de resultados original"> | <img src="site/img/listanegra-pantalla.jpg" alt="Pantalla de la Lista Negra con Sonny, el #15"> |
 
 ## Qué funciona hoy
-| Área | Estado |
+
+### El juego (motor nativo de macOS, v0.5)
+| | Estado |
 |---|---|
-| Contenedor del disco (ZDIR/ZZDATA) y nombres | ✅ 95 % de archivos con nombre |
-| Compresión HUFF / JDLZ / RAWW | ✅ exacta byte a byte |
-| Geometría PS2 (paquetes VIF, cortes de tira) | ✅ 181.535 tiras, 0 errores |
-| Texturas PS2 PSMT8 / PSMT4 (swizzle del GS) | ✅ |
-| Rockport entero: 718 secciones, 106.714 objetos, 5,8 M triángulos | ✅ exportado a glTF |
-| Coches con texturas, pintura, cristales, pilotos y 4 ruedas (TireOffsets) | ✅ |
-| **Motor nativo de macOS (Swift + Metal)**: pantalla completa, resolución de la pantalla, 60 fps, tono PS2, coche conducible — [native-engine/](native-engine/README.md) | ✅ primera versión |
-| Visor web de investigación (Three.js) | ✅ |
-| Descompilación (dbalatoni13/nfsmw) en Apple Silicon | ✅ con Rosetta 2 |
-| Base de datos del juego (VLT): 6.287 colecciones, 255 eventos, Blacklist, 15 zonas de garaje/tienda | ✅ |
-| Interiores del menú (garajes, concesionario, taller) | ✅ exportados |
-| Ciudad entera a 60 fps (casillas HLOD, arrays de texturas, workers, resolución dinámica) | ✅ |
-| Garajes sin pantallas de carga en el visor de investigación: se abre la puerta real, interior ya cargado, aparcas y sales conduciendo | ✅ |
-| Mods: datos propios sobre tu ISO (`mods/`), ejemplo «Garajes únicos» | ✅ |
-| Red de carreteras (4385 nodos, 6538 tramos Bézier, carriles) y colisión (243 mil triángulos) | ✅ decodificada y validada |
-| **Física de conducción del juego original** (decomp), 4 cámaras, mandos (Xbox, PS3/PS4/PS5, PS2 por USB) con barra de luz y táctil — [doc 13](docs/es/13-fisica-conduccion.md), [doc 15](docs/es/15-mandos.md) | ✅ v0.2 |
-| **Tráfico, policía y persecuciones** con las tablas del juego: notoriedad, refuerzos, formaciones, controles — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ v0.2 |
-| **Interfaz original del juego** a resolución nativa: «Pulsa START», menú principal, carrera, pausa y HUD de MW, con los textos en castellano de tu disco — [doc 17](docs/es/17-interfaz.md) | ✅ v0.3 |
-| **Coches de la historia con su pintura exacta**: BMW M3 GTR gris con franjas azules, Mustang de Razor y los 15 de la Lista Negra (82 coches preparados, vinilos montados como el juego) — [doc 10](docs/es/10-coches.md) | ✅ v0.3 |
-| **Radio de la policía** de tu disco (decodificador MicroTalk propio), según lo que pasa, por el altavoz del mando PS4/PS5 o el Mac; barra de luz configurable — [doc 15](docs/es/15-mandos.md), [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.3 |
-| Voces originales y audio de escenas extraídos de tu disco (uso local) — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
-| **Carreras y Lista Negra jugables**: sprint, circuito, eliminación, drag, radar, peaje y desafíos; rivales con la IA del juego y sus coches; progresión 15 → 1, coches de rosa, candados de distrito y partida guardada — [doc 18](docs/es/18-carreras-y-lista-negra.md) | ✅ v0.4 |
-| **HUD 100 % original** con radar del juego, pantallas de carrera, resultados, Lista Negra y final de persecución — [doc 17](docs/es/17-interfaz.md) | ✅ v0.4 |
-| **Garajes sin pantallas de carga** en el motor nativo: se abre la puerta, entras, aparcas y salen los menús del refugio, el concesionario (comprar coches) y el taller (pintura, vinilos, llantas, alerones, kits, barra de luz) — [doc 07](docs/es/07-conduccion-y-garajes.md) | ✅ v0.5 |
-| **Sonido original**: motor de cada coche con la síntesis del juego, turbo, cambios, nitro, derrapes, golpes, sirenas y bocinas — [doc 16](docs/es/16-audio-y-voces.md) | ✅ v0.5 |
-| **Carrera rápida y pantalla partida** de 2 jugadores (original) y 3-4 (ampliación), varias pantallas, un mando por jugador — [doc 19](docs/es/19-carrera-rapida-y-multijugador.md) | ✅ v0.5 |
+| Rockport entero a pantalla completa, a la resolución de tu pantalla y a 60 fps, con el tono cálido de PS2 siempre puesto | ✅ |
+| **Interfaz original**: «Pulsa START», menús, pausa y HUD 100 % del juego, con los textos en castellano de tu disco — [doc 17](docs/es/17-interfaz.md) | ✅ |
+| **Conducción con la física del juego** (decompilada), 4 cámaras — [doc 13](docs/es/13-fisica-conduccion.md) | ✅ |
+| **Coches de la historia con su pintura exacta**: BMW M3 GTR gris y azul, Mustang de Razor, los 15 de la Lista Negra — [doc 10](docs/es/10-coches.md) | ✅ |
+| **Carreras y Lista Negra**: sprint, circuito, eliminación, drag, radar, peaje y desafíos; progresión 15 → 1, coches de rosa y partida guardada — [doc 18](docs/es/18-carreras-y-lista-negra.md) | ✅ |
+| **Tráfico, policía y persecuciones** con las tablas del juego, radio de la policía en castellano — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ |
+| **Garajes sin pantallas de carga**: refugio, concesionario y taller de tuneo — [doc 07](docs/es/07-conduccion-y-garajes.md) | ✅ |
+| **Sonido original**: motor de cada coche, turbo, cambios, nitro, derrapes, golpes, sirenas — [doc 16](docs/es/16-audio-y-voces.md) | ✅ |
+| **Carrera rápida y pantalla partida** (2 jugadores como el original; 3-4 y varias pantallas como ampliación) — [doc 19](docs/es/19-carrera-rapida-y-multijugador.md) | ✅ |
+| **Mandos** Xbox, PS3/PS4/PS5 y PS2 por USB, con barra de luz, táctil y gatillos del DualSense — [doc 15](docs/es/15-mandos.md) | ✅ (sin probar con hardware real) |
+| Iluminación del juego: reflejos del coche, sombras, niebla y luces volumétricas | 🚧 en curso |
 | Películas, música, mapa de la carrera profesional, choques entre coches, helicóptero | 🔜 |
+
+### La ingeniería inversa
+| | Estado |
+|---|---|
+| Contenedor del disco, nombres de archivo (95 %), compresión HUFF/JDLZ/RAWW byte a byte | ✅ |
+| Geometría y texturas de PS2 (VIF, swizzle del GS), 181.535 tiras sin un error | ✅ |
+| Rockport: 718 secciones, 106.714 objetos, 5,8 M triángulos | ✅ |
+| Base de datos del juego (VLT): 6.287 colecciones, 255 eventos | ✅ |
+| Red de carreteras (4385 nodos, Bézier, carriles) y colisión (243 mil triángulos) | ✅ |
+| Interfaz (FEng), sonido (ABK, GIN, MicroTalk), coches preparados y vinilos, rutas de carrera | ✅ |
+| Decompilación [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) compilando en Apple Silicon | ✅ |
+| Visor web de investigación (Three.js) y mods de datos (`mods/`) | ✅ |
 
 ## Carrera rápida y pantalla partida
 
@@ -116,8 +115,8 @@ Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-bel
 ### Primer arranque
 1. Abre **Rockport** desde Aplicaciones. La primera vez: clic derecho → **Abrir** (la app aún no está firmada por Apple).
 2. Pulsa **ELEGIR MI ISO DE PS2** y selecciona tu copia. Detecta sola PAL **SLES-53559** o NTSC-U **SLUS-21351**.
-3. Espera a la barra (alrededor de 1 minuto). Al terminar, el juego arranca a pantalla completa y a la resolución de tu pantalla.
-4. Pulsa **C** (o **Menú / Options** en el mando) para pasar de la cámara libre al coche.
+3. Espera a la barra (alrededor de 1 minuto).
+4. «Pulsa START» → **Modo carrera** → **Empezar nuevo** (o **Continuar** si ya tienes partida). También tienes **Carrera rápida** para jugar solo o a pantalla partida.
 
 ### Controles
 
@@ -132,8 +131,9 @@ Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-bel
 | Cambiar de cámara (4 vistas del juego) | Y · cruceta → / ← | △ · cruceta → / ← | V |
 | Recolocar el coche en la calle | X o Ver | □ o Share / Create | R |
 | Subir / bajar marcha | cruceta ↑ / ↓ | cruceta ↑ / ↓ | E / Q |
-| Cámara libre / modo foto | Menú | Options / Start | C |
-| Soltar el ratón · Salir | — | — | Tab · Esc |
+| Pausa (continuar, reiniciar, salir al menú) | Menú | Options / Start | Esc |
+| Cámara libre / modo foto | — | — | C |
+| Soltar el ratón | — | — | Tab |
 
 - El cambio es automático, como en el juego. La cruceta sirve para cambiar a mano cuando quieras.
 - Con el stick derecho también puedes acelerar (↑) y frenar (↓).
@@ -147,7 +147,7 @@ Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-bel
 | Deslizar el dedo → / ← en el panel táctil | Cámara siguiente / anterior |
 | Pulsar el panel táctil (mantener) | Mirar atrás mientras lo mantienes |
 | Toque corto en el panel | Vistazo atrás de 1 segundo |
-| Dos dedos en el panel | Cámara libre (modo foto) y vuelta al coche |
+| Dos dedos en el panel | Modo foto (cámara libre) y vuelta al coche |
 | Gatillos adaptativos (solo PS5) | L2 ofrece resistencia al frenar y vibra si las ruedas se bloquean. R2 casi libre, tiembla en el corte de inyección y se suelta con el nitro |
 | Vibración | Según el agarre de las ruedas, el corte de inyección, el nitro y los golpes |
 

@@ -124,6 +124,7 @@ final class Engine {
         time += Double(dt)
         // Con la interfaz, Start abre la pausa (UI/FEScreens.swift); sin ella, alterna el modo foto
         if ui == nil, GameInput.shared.takeToggleRequest(polling: mode == .fly) { toggleMode() }   // Start / dos dedos: modo foto
+        else if ui != nil, ui?.capturesInput != true, GameInput.shared.takePhotoRequest(polling: mode == .fly) { toggleMode() }   // con interfaz: solo dos dedos
         switch mode {
         case .fly:
             if ui?.capturesInput == true { break }             // menús: la cámara la mueve la interfaz

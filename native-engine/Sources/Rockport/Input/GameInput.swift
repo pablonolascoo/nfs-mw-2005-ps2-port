@@ -20,6 +20,14 @@ final class GameInput {
 
     private var prevKeys = Set<UInt16>()
     private var pendingToggle = false
+    private var pendingPhoto = false
+
+    /// Dos dedos en el panel táctil: modo foto también con la interfaz activa (Start queda para la pausa). Se consume una vez.
+    func takePhotoRequest(polling: Bool) -> Bool {
+        if polling && Controllers.shared.poll().photoMode { pendingPhoto = true }   // en modo foto nadie más lee los mandos
+        defer { pendingPhoto = false }
+        return pendingPhoto
+    }
 
     /// Lee teclado y mandos una vez por fotograma.
     func poll(keys: Set<UInt16>) -> Frame {
@@ -45,6 +53,7 @@ final class GameInput {
         f.prevCamera = pad.prevCamera
         f.toggleFreeCamera = pad.toggleFreeCamera
         if pad.toggleFreeCamera { pendingToggle = true }
+        if pad.photoMode { pendingPhoto = true }
         prevKeys = keys
         return f
     }

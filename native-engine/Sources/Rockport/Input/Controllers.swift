@@ -16,13 +16,15 @@ struct PadState {
     var gas: Float = 0, brake: Float = 0, steer: Float = 0, handBrake: Float = 0
     var nos = false, lookBack = false, shiftUp = false, shiftDown = false
     var nextCamera = false, prevCamera = false, reset = false, toggleFreeCamera = false
+    /// Dos dedos en el panel táctil (DualShock 4 / DualSense): modo foto. Distinto de Start, que con la interfaz abre la pausa.
+    var photoMode = false
     var active = false
     mutating func merge(_ o: PadState) {
         gas = max(gas, o.gas); brake = max(brake, o.brake); handBrake = max(handBrake, o.handBrake)
         if abs(o.steer) > abs(steer) { steer = o.steer }
         nos = nos || o.nos; lookBack = lookBack || o.lookBack; shiftUp = shiftUp || o.shiftUp; shiftDown = shiftDown || o.shiftDown
         nextCamera = nextCamera || o.nextCamera; prevCamera = prevCamera || o.prevCamera
-        reset = reset || o.reset; toggleFreeCamera = toggleFreeCamera || o.toggleFreeCamera; active = active || o.active
+        reset = reset || o.reset; toggleFreeCamera = toggleFreeCamera || o.toggleFreeCamera; photoMode = photoMode || o.photoMode; active = active || o.active
     }
 }
 
@@ -199,7 +201,7 @@ final class Controllers {
             case "dcha": s.nextCamera = true
             case "izq": s.prevCamera = true
             case "toque": glanceBackUntil = clock + 1.0; p.glanceUntil = clock + 1.0
-            case "dos": s.toggleFreeCamera = true
+            case "dos": s.toggleFreeCamera = true; s.photoMode = true
             default: break
             }
         }
