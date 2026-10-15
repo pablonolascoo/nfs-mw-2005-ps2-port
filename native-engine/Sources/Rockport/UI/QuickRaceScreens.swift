@@ -140,7 +140,7 @@ final class QRTrackOptions: QRScreen {
         if let id = flow.settings.eventByMode[flow.mode.rawValue] { event = RaceSystem.shared?.db.event(id) }
         // Cabecera: «opciones» del tipo de prueba (UIQRTrackOptions::Setup [D]); los textos del título van con texto propio
         // (bandera 2), así que se escriben con FEPrintf [V: Track_Options.fng]
-        text(0xB71B576D, str(QuickRaceData.optionsTitle(flow.mode), "opciones"))
+        text(0x51FC2235, str(QuickRaceData.optionsTitle(flow.mode), "opciones"))      // grupo del título (FONT_MW_TITLE) [V]
         // «Por defecto» (○ en el juego, DefaultRaceSettings): ○ vuelve atrás en este port
         show(0xD9A22505, false); show(0x28B8FD2F, false)
         show(0x7C430E80, false)
@@ -173,12 +173,14 @@ final class QRTrackOptions: QRScreen {
             // NumOpponents [D]: 1…(4 − jugadores); en pantalla partida (extensión) 0…(4 − jugadores)
             let maxOpp = max(0, min(event?.opponents.count ?? 3, 4 - s.players))
             let minOpp = s.split ? 0 : 1
-            s.settings.opponents = max(minOpp, min(maxOpp, s.settings.opponents))
+            func get() -> Int { s.split ? s.settings.splitOpponents : s.settings.opponents }
+            func set(_ v: Int) { if s.split { s.settings.splitOpponents = v } else { s.settings.opponents = v } }
+            set(max(minOpp, min(maxOpp, get())))
             if maxOpp >= minOpp {
-                rows.append(Row(title: 0x3384A679, titleText: nil, value: { "\(s.settings.opponents)" }, change: { d in
-                    var o = s.settings.opponents + d
+                rows.append(Row(title: 0x3384A679, titleText: nil, value: { "\(get())" }, change: { d in
+                    var o = get() + d
                     if o < minOpp { o = maxOpp } else if o > maxOpp { o = minOpp }
-                    s.settings.opponents = o
+                    set(o)
                 }))
                 rows.append(Row(title: 0x4D156786, titleText: nil, value: { [unowned self] in
                     self.str([0x61973E01, 0x3747F6D0, 0x6198E2EE][s.settings.skill], ["Fácil", "Medio", "Difícil"][s.settings.skill]) },
@@ -288,7 +290,7 @@ final class QRCarSelect: QRScreen {
         // Jugador N (pantalla partida): FEObj_PLAYER_TEXT_GROUP [D]
         if flow.split {
             let g = obj(0xE3FE27FE)
-            pkg.setVisible(g, true)
+            pkg.setVisible(g, true); pkg.setScript(g, 0x1CA7C0)
             if player < 2 { label(0xE3FE27FE, player == 0 ? 0x7B070984 : 0x7B070985) }
             else { for o in pkg.findAll(0x42EF4C2E) { pkg.printf(o, (es ? "Jugador " : "Player ") + "\(player + 1)") } }
         } else { show(0xE3FE27FE, false) }
@@ -319,7 +321,11 @@ final class QRCarSelect: QRScreen {
             let fmt = str(0x4EF2A115, "Desbloquea este coche derrotando a %s, nº %d de la Blacklist.")
             text(0x2D25B2C4, fmt.replacingOccurrences(of: "%s", with: rival).replacingOccurrences(of: "%d", with: "\(bin)"))
         }
-        obj(0x3E01AD1D)?.handle = feHash("GENERIC_LOGO_128")
+        // Logotipo de la marca (CARSELECT_MANUFACTURER_<marca>): esas texturas no están en los paquetes de interfaz del disco
+        // que se convierten; el de reserva GENERIC_LOGO_128 es un «tp» de pruebas, así que se oculta [V]
+        show(0x3E01AD1D, false)
+        // Panel de la lista (icono del cubo, nombre y flechas): SHOW
+        pkg.setScript(obj(0x97D17518), 0x1CA7C0)
         obj(0xB05DD708)?.handle = c.logo
         // Nombre del coche (en el juego aparece al cargar el modelo: FADE_IN_TEXT)
         // (el paquete trae un segundo CARNAME con «Debug:»: solo el primero)

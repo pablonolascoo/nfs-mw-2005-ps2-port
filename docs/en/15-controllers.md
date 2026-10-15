@@ -211,3 +211,11 @@ Tests without a pad: `Rockport --audio-devices` (CoreAudio outputs and Bluetooth
 ### To do (radio and light)
 - Test with a real DualSense and DualShock 4, over USB and Bluetooth; tune volume and preamp gain.
 - Haptics with the radio (bass to sub-packet 0x12) if it sounds good on the pad.
+
+## 9. Several players: one controller per player
+
+In split screen (doc 19) every player has their own controller (or the keyboard) and their input is never mixed with the
+others: `Multiplayer/PlayerDevices.swift` reads each controller separately (`Controllers.readPad`, `HIDPads.readPad`), paints its
+light bar in the player's colour and lights its player LED (`GCController.playerIndex`). Each controller's rumble and triggers
+follow its own car. Controller table, how players join ("Press START") and what happens when one is unplugged:
+[doc 19 §5](19-quick-race-and-multiplayer.md).

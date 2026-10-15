@@ -12,6 +12,7 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Qué casilla de 400 m cargo? | `world.json` → `tiles[212]`, `tiles/*.glb` (424) | `convert.ts tiles` | 03, 06 |
 | ¿Dónde están las vallas de carrera y los candados? | `world.json` → `groups[752]`, `groups/*.glb` | `convert.ts tiles` | 03 |
 | ¿Dónde están garajes, concesionarios y talleres? | `zones.json` (15), `garages.json` (15) | `vlt-dump.ts`, `garages.ts` | 05, 07 |
+| ¿Cómo es la cámara de cada menú y garaje? ¿Precio de los coches del concesionario? | `fe-cameras.json` (108 ángulos, 186 pantallas, 34 coches) | `fe-cameras.ts` | 07 |
 | ¿Qué carreras, Lista Negra e hitos hay? | `gameplay.json` → `summary` | `vlt-dump.ts` | 05 |
 | ¿Ruta, puertas, rivales, vallas y reglas de cada prueba; bins y desafíos? | `races.json` (254 pruebas), `collision/groups/<n>.bin` | `races.ts`, `collision.ts` | 18 |
 | ¿Cualquier valor de la base de datos del juego? | `gameplay.json` → `collections[6287]` | `vlt-dump.ts` | 05 |

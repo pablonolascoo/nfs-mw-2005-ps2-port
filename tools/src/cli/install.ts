@@ -12,7 +12,7 @@ import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "
 import { compiled } from "../lib/paths";
 
 /** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
-export const DATA_FORMAT = 5; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz · 5 = sound/ (motores Ginsu, bancos ABK, sound.json) + fe-cameras.json (cámaras de los garajes y menús, FE_ATTRIB.BIN)
+export const DATA_FORMAT = 7; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz · 5 = sound/ (motores Ginsu, bancos ABK, sound.json) + fe-cameras.json (cámaras de los garajes y menús, FE_ATTRIB.BIN) · 6 = frontend/ con los HUD de pantalla partida y los 297 mapas de pruebas (carrera rápida) · 7 = posiciones V4-32 en metros (cúpulas, rascacielos y montañas del mundo e interiores), refugios 2/4/5 con su edificio en garages.json, coches del concesionario en fe-cameras.json
 
 const [mode, ...rest] = Bun.argv.slice(2);
 

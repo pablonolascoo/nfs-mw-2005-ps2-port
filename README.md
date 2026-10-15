@@ -74,6 +74,14 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | **HUD 100 % original** con radar del juego, pantallas de carrera, resultados, Lista Negra y final de persecución — [doc 17](docs/es/17-interfaz.md) | ✅ v0.4 |
 | Garajes en el motor nativo, sonido de motor, películas, choques entre coches | 🔜 |
 
+## Carrera rápida y pantalla partida
+
+<img src="site/img/pantalla-partida.jpg" alt="Pantalla partida a 4 jugadores en el motor nativo" width="100%">
+
+La carrera rápida va con las pantallas del juego: tipo de prueba, selección de pista con el mapa de cada prueba, opciones y selección de coche. **Pantalla partida para 2 jugadores como el original** (horizontal, con el HUD de pantalla partida del disco) y, como ampliación del port, **3 y 4 jugadores** y **varias pantallas a la vez** (por ejemplo, 2 jugadores en cada monitor).
+
+Cada jugador usa su propio mando (Xbox, DualSense, DualShock 4, DualShock 3, adaptador de PS2 o el teclado) **sin mezclas**: «Pulsa START» para unirte, el primero es el jugador 1 y lleva los menús, cada mando mueve solo su coche, la barra de luz y el LED toman el color de tu jugador, y si se desenchufa un mando la partida se para hasta que vuelva. `--race 15.1.1 --players 2` empieza directamente; `--displays all` usa todas las pantallas. Detalle: [doc 19](docs/es/19-carrera-rapida-y-multijugador.md).
+
 ## Jugar en tu Mac
 1. Descarga `Rockport-<versión>.dmg` de [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) y arrastra **Rockport** a Aplicaciones.
 2. Ábrelo (la primera vez: clic derecho → Abrir; aún no está notarizado).
@@ -206,6 +214,7 @@ Cada documento existe en español (`docs/es/`) y en inglés (`docs/en/`). Para r
 | 16 | Audio y voces | [es](docs/es/16-audio-y-voces.md) | [en](docs/en/16-audio-and-voices.md) |
 | 17 | Interfaz original | [es](docs/es/17-interfaz.md) | [en](docs/en/17-interface.md) |
 | 18 | Carreras y Lista Negra | [es](docs/es/18-carreras-y-lista-negra.md) | [en](docs/en/18-races-and-blacklist.md) |
+| 19 | Carrera rápida y multijugador | [es](docs/es/19-carrera-rapida-y-multijugador.md) | [en](docs/en/19-quick-race-and-multiplayer.md) |
 
 Cada afirmación lleva **[V]** verificado en datos reales, **[D]** sacado de la decomp, **[I]** inferido o **[H]** hipótesis.
 

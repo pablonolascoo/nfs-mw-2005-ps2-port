@@ -106,9 +106,10 @@ Not committed (`.gitignore`).
 ### Working screens
 | Screen | Package | State |
 |---|---|---|
-| Press START | `MW_LS_Splash` | Logo, "Press START" with its stamp and blink animation. Background: the 3D city slowly orbiting (the game showed the garage) |
-| Main menu | `MainMenu` | The game's icon carousel: Career, Challenge Series, Quick Race, My Cars, Options. Only Career continues; the rest open `Dialog.fng` with "Coming soon." |
-| Career | `MainMenu_Sub` | Resume / Start new → free roam |
+| Press START | `MW_LS_Splash` | Logo, "Press START" with its stamp and blink animation. Background: the front-end garage (`PLATFORMCRIB`) with the player's car (doc 07 §3.1) |
+| Main menu | `MainMenu` | The game's icon carousel: Career, Challenge Series, Quick Race, My Cars, Options. Only Career continues; the rest open `Dialog.fng` with "Coming soon.". Background: the garage with the `mainmenu` camera (`angle3`) |
+| World garages | `MainMenu_Sub` (safehouse), `Car_Select` (car lot and My Cars), `CustomizeMain`/`CustomizeCategory`/`CustomizeParts` (shop) | Doc 07 §3.3 |
+| Career | `MainMenu_Sub` | Resume / Start new → free roam with the career car and its tuning. Camera `career_manager` |
 | Pause | `Pause_Main` | Resume free roam, Restart (safehouse 1), Options (coming soon), Quit to menu |
 | HUD | `HUD_SingleRace` / `HUD_Drag` | The whole game HUD with its logic: see §8 (radar, pursuit, races, messages) |
 | Results, Blacklist, car won | `PostRace_Results`, `InGameReputationOverview`, `Showcase` | §8.7 |
@@ -124,8 +125,30 @@ The custom HUD (`HUDPursuit.swift`) only appears with `--debug-hud` (§8.5). Sta
 ```
 Screenshots in `native-engine/.build/shots/ui/` (1920×1080 and 2940×1912).
 
+### Icon carousel (`IconScroller`) [D][V]
+- **Centre = `OPTION_MASTER`**, not `ICON_SCROLL_REGION`: the constructor (SLUS 0x280348) calls `FEngFindObject(package, a2)` with
+  a2 = `"OPTION_MASTER"` (string at 0x4DFDE8), takes its centre and **hides** it [V: assembly]. The decomp names it
+  `scroll_region` by mistake. In `MainMenu` the master sits 17 units right of the region, exactly inside the brackets; before, the
+  selected icon was off-centre and the master (`MAIN_ICON_CAR_SELECT`, z 10) was drawn **over** the icon: that was the
+  "overlapping icon". `ICON_SCROLL_REGION` (white 340×70 BasePoly) is an editor guide and is not shown [I].
+- Book-ends: 2 `END_OF_SCROLLER` on each side (the translucent dot next to the first and last icon, as in the game).
+- `PositionOption`: x = centre + animated value + XPos; scale = linear ramp over ±175 (width 350), 1 within ±1.5; inward shift
+  w·(1−scale)³; clipped outside ±175; vertically centred.
+- `UpdateFade`: colour = per-channel blend `IdleColor` → `FadeColor` by scale (grey: alpha 150). In game (Blacklist)
+  `IdleColor` = 0xFFFFAE40 and `FadeColor` = 0x00FFAE40: orange icons [D: uiRepSheetMain].
+- `RefreshHeader`: on the first/last icon it posts `0xD7118934`/`0xB9B17747` to the package (that side's arrows dim).
+- `IsGreyOut`: a greyed option the carousel skips (shop Performance).
+- On package entry, if an object's `INIT` chains into another script (e.g. INIT → HIDE of the Blacklist cash), the chain is kept
+  instead of forcing `APPEAR` [V: data].
+- Blacklist: requirements panel visible (the decomp posts `RIVAL_CHALLENGE_ACTIVATED`, which hides it, exactly when the rival is
+  not available; the `UpdateInfo` branch is unsolved [I]); bounty and cash alternate in the header (ON/OFF scripts of
+  0xB514E2D8/0xF91A59F6, 300 ms [V]); done and required values alternate with their flip animation (0x576/0xCEF7).
+- End of pursuit (`PostRace_MilestoneRewards`): after `APPEAR` the big icon flies to its slot in the strip with `POS0`
+  (`FEMSG_SCREEN_TICK` [D]).
+- Test: `--ui-test MainMenu@2` selects the 3rd option. Before/after shots in `native-engine/.build/shots/garage/`.
+
 ## 7. To do
-- Movies (EA logos, intro), the garage-with-car background in menus; the arrest NIS (only its camera layer exists).
+- Movies (EA logos, intro); the arrest NIS (only its camera layer exists).
 - Generic button navigation (`FEButtonMap`) and other screens (options, quick race, shops, race sheet, milestones).
 - UI sounds (sound messages are ignored).
 - Data the HUD can already show but the game does not produce yet: backup, hiding spots, cops destroyed/damaged, helicopter,

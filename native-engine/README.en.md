@@ -92,7 +92,11 @@ Generate the data first with `cd tools && bun run build-all <your ISO>` (see `CO
 | `--car-preset <NAME>` | Game car from `presets.json`: `M3GTRCAREERSTART` (default), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Loads every tile and checks geometry and textures |
 | `--race <ID>` · `--career` | Start a quick race directly (EventID "15.1.1") · enter the career |
+| `--race <ID> --players N` · `--displays all\|1\|2` | N-player split screen (2…4): "Press START" first to assign controllers · displays to use (not saved; `settings.json` → `multiplayer.displays`) |
+| `--split-test N [--race ID] [--seconds S] [--displays D] [--unplug-test] [--screenshot base.png]` | Headless: N players on autopilot; `-start/-mid/-end` captures per display, GPU/CPU timings and JSON |
+| `--quickrace-test [--split N] [--screenshot base.png]` | Headless: walks the Quick Race screens (and "Press START") up to the start, one capture per screen |
 | `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Headless: run the event with the autopilot; positions, times, `-start/-mid/-results/-finish` captures and JSON |
+| `--garage-test <zone> [--garage-mode drive\|inside\|list] [--garage-screen S] [--screenshot base.png]` | Headless: enters a garage (doc 07 §3.4) |
 | `--career-test [--save path]` · `--race-audit` | Headless: simulated Blacklist 15 → 1 · routes of every event against `RaceLength` |
 | `--physics-test [CAR] [--physics-trace]` | Window-less: game physics on a flat plane: 0–100, top speed, braking, cornering, handbrake, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Pad light bar mode for this session (not saved). Also `ROCKPORT_LIGHTBAR` |
@@ -124,7 +128,9 @@ native-engine/
 │  ├─ Car.swift             car: wheels, paint, interpolated physics pose
 │  ├─ Physics/              the game's physics (doc 13): RigidBody, Tire, SuspensionRacer, EngineRacer, PVehicle, test
 │  ├─ Input/                keyboard and controllers (doc 15): GameController, IOKit HID, light, triggers, rumble
-│  ├─ Camera/               chase camera with the game's camerainfo views
+│  ├─ Camera/               chase camera with the game's camerainfo views (and the split-screen ones)
+│  ├─ Garage/               menu background and seamless garages: scene, front-end camera, menus, tuning (doc 07)
+│  ├─ Multiplayer/          split screen: controller per player, views, split HUD, several displays (doc 19)
 │  └─ MathUtil.swift        matrices, boxes, frustum
 └─ .build/                  build output and screenshots (git-ignored)
 ```
@@ -300,14 +306,32 @@ Notes:
 ## Known limitations
 
 - Seen from the air, the space between roads is the sea plane: the game map only has geometry along streets [V].
-- Some distant backdrop objects seem to float above the horizon (far-level background props) [I].
 - The far level uses average texture colour: the switch to a near tile is visible.
 - Car lighting is the viewer's, not the game's: the game uses environment maps [D].
-- Aftermarket rims, spoilers and roof scoops (`WHEELS`, `SPOILER`, `ROOF` packs) are not mounted yet: the car is stock.
+- Aftermarket roof scoops (`ROOF` pack) are not offered in the shop yet; rims and spoilers are (doc 07 §3.3).
 - The BMW driver texture (`4e8cf857`) is not on the disc: it shows dark grey, as in the viewer [V].
 - Sound: without the engines' AEMS layer or the game's mix maps (doc 16 §9). Traffic and police without helicopter or physical car-to-car collisions (doc 14).
 - Wall crashes: own impulses, not the game's `RigidBody::DoBarrierCollision` (doc 13).
 - Controllers not yet tested on real hardware (doc 15).
+
+## Seamless garages and the menu background (2026-10-15)
+
+- **Menu background like the game**: "Press START", the main menu and the career menu show the front-end garage
+  (`PLATFORMCRIB`: industrial rooftop with cranes and the sky dome) with the player's car (the career car with its tuning; by
+  default the story BMW M3 GTR), placed like `GarageMainScreen` and with the `GLOBAL\FE_ATTRIB.BIN` cameras
+  (`SelectCarCameraMover`: entry → final → each screen's angle, with its camera roll) [D][V].
+- **Garages without loading screens** (`Garage/`): the game's 15 garages. Drive slowly up to the real door: the building is cut
+  out in the world shaders, the roller door lifts and the menu interior is already inside; drive in, park and the place's original
+  menus appear with the front-end camera around the car: **safehouse** (Blacklist, My cars, Save), **car lot** (buy cars with the
+  `FE_ATTRIB.BIN` price and unlock) and **customization shop** (paint, vinyls, rims, spoilers, body kit and the **controller light
+  bar**, fitted to the car instantly). Reverse out and the door closes. Safehouses 2, 4 and 5 now have their real building
+  (`XB_SafeHouse`, `XB_FishSafehouse`, `XB_TC_SafeHouse`). Example mod: `mods/garajes-unicos`.
+- **Converter fix**: strips with float positions (V4-32) collapsed into a point; now the garages' sky dome and **5,071 world
+  strips** (downtown skyscrapers, sky, background mountains) appear.
+- **Icon carousel**: the centre is `OPTION_MASTER` (assembly), which is also hidden: no more overlapping icons; orange icons in
+  game; arrows dim at the ends. Blacklist with its requirements panel and bounty/cash.
+- Tests: `--garage-test <zone> [--garage-mode drive|inside|list] [--garage-screen …]`. Details:
+  [doc 07](../docs/en/07-driving-and-garages.md) and [doc 17](../docs/en/17-interface.md).
 
 ## Races and the Blacklist (2026-10-15)
 
@@ -325,6 +349,25 @@ Notes:
   `RaceSystem.shared?.abandon()`. The HUD belongs to the UI (`UI/RaceHUD.swift`).
 - **Tests**: `--race-test <ID> --autodrive --screenshot base.png`, `--career-test`, `--race-audit`. Details and results:
   [doc 18](../docs/en/18-races-and-blacklist.md).
+
+## Quick Race and split screen (2026-10-15)
+
+- **Quick Race with the game's screens** (`UI/QuickRace*.swift`, doc 19): menu (Quick play / Custom race / Split screen), race
+  type, **Track_Select with each event's map** (`TRACK_MAP_<id>` from `TrackMaps.bin`, zoomed to the route like
+  `UITrackMapStreamer`), region, length and best time; **Track_Options** (direction, laps, traffic, opponents, skill, catch-up
+  and police); **Car_Select** per player with stock cars (unlocked by `frontend.UnlockedAt`), the story car and the Blacklist
+  cars according to the save; results and back to the menu.
+- **Original split screen** (2 players, horizontal, player 1 on top): the disc's `HUD_Player1/2` HUD (`INGAMESPLITSCREEN.BUN`),
+  bar tachometer, shared radar with the other car, split-screen `camerainfo` cameras. **Extension**: 3 and 4 players in
+  quarters (with 3, an aerial view in the free quarter), optional AI opponents, traffic and police, **several displays** (one
+  window per display, 4 on 2 = 2 + 2).
+- **One controller, one player** (`Multiplayer/PlayerDevices.swift`): "Press START" (`PressStart.fng`) assigns controllers; the
+  first one is player 1; each car reads only its controller (or the keyboard); light bar and player LED in the player's colour;
+  per-controller rumble; unplugged controller = pause with `ControllerUnplugged.fng` until START is pressed.
+- **Rendering**: several views in the same texture with a single PS2-grade pass; streaming around every camera. Measured at
+  2940×1912 in the city: 2 players GPU 3.5 ms, 4 players 5.2 ms (median) [V].
+- Tests: `--split-test 2|3|4`, `--split-test 4 --displays 2`, `--split-test 2 --unplug-test`, `--quickrace-test [--split 2]`.
+  Details: [doc 19](../docs/en/19-quick-race-and-multiplayer.md).
 
 ## Game physics, controllers and camera (2026-10-12)
 
@@ -383,7 +426,7 @@ Notes:
 3. ✅ **Gamepad** (GameController + IOKit HID) — wheels and video settings (scale, FOV) still to do.
 4. ✅ **Game physics** from the decomp and each car's VLT attributes (doc 13) — game collisions, damage and tunings still to do.
 5. **Audio** (EA SCHl/MPC) and music.
-6. **Seamless garages** (already in the viewer) and car selection.
+6. ~~Seamless garages and car selection~~ (done: doc 07). The career map and the rap sheet are still missing.
 7. **Races and Blacklist** from `gameplay.json` + `roads.json`.
 8. More performance: compressed textures (ASTC/BC7), the game's section occlusion, argument buffers.
 9. More faithful car shadow and lights; environment reflections.

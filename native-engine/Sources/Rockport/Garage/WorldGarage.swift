@@ -173,6 +173,8 @@ final class WorldGarages {
     /// Log de las pruebas (--garage-test).
     var log: ((String) -> Void)?
     private var displayGround: FlatGround?
+    /// La zona solo abre la puerta si el jugador ha estado fuera de ella antes (ver .closed).
+    private var armed = false
     /// Corrección de la cámara del frontend dentro del garaje (giro extra y escala del radio).
     private var camFix: (dh: Float, k: Float) = (0, 1)
 
@@ -395,7 +397,7 @@ final class WorldGarages {
         // Precarga del garaje más cercano (a menos de 150 m) mientras el actual esté cerrado
         if phase == .closed {
             let near = infos.map { ($0, simd_distance(SIMD2(p.x, p.y), SIMD2($0.door[0], $0.door[1]))) }.min { $0.1 < $1.1 }
-            if let (info, dist) = near, dist < 150, current?.info.collection != info.collection { current = place(info) }
+            if let (info, dist) = near, dist < 150, current?.info.collection != info.collection { current = place(info); armed = false }
             else if let c = current, simd_distance(SIMD2(p.x, p.y), SIMD2(c.doorP.x, c.doorP.y)) > 220 { current = nil }
         }
         guard let g = current else { return }
@@ -406,9 +408,17 @@ final class WorldGarages {
         let kmh = car.kmh
         switch phase {
         case .closed:
-            // Como la zona menu_gate del juego: llegar despacio delante de la puerta
+            // Como la zona menu_gate del juego: llegar despacio delante de la puerta, viniendo de fuera (al salir del
+            // garaje o al reaparecer en el refugio no se vuelve a abrir hasta alejarse) [I]
             let zoneD = simd_distance(SIMD2(p.x, p.y), SIMD2(g.info.zone[0], g.info.zone[1]))
-            if (zoneD < g.info.radius + 8 || (past > 0 && past < 14 && lateral < g.doorW)) && kmh < 45 {
+            let inTrigger = (zoneD < g.info.radius + 8 || (past > 0 && past < 14 && lateral < g.doorW))
+            if !inTrigger && (zoneD > g.info.radius + 14 || past > 18) { armed = true }
+            // Dentro de la propia zona del juego (radio + 2 m) basta con estar; cerca de la puerta, hay que acercarse
+            let approaching = simd_dot(car.velocity, -g.out) > 1 || past < 6 || zoneD < g.info.radius + 2
+            if ProcessInfo.processInfo.environment["ROCKPORT_GARAGE_DEBUG"] != nil, Int(phaseTime * 60) % 60 == 0 {
+                log?(String(format: "  cerrado: zona %.1f m · puerta %.1f m · lateral %.1f · %.0f km/h · armado %@ · acercándose %@", zoneD, past, lateral, kmh, armed ? "sí" : "no", approaching ? "sí" : "no"))
+            }
+            if armed && inTrigger && approaching && kmh < 45 {
                 setPhase(.opening); setCutout(true); g.door?.target = 1
             }
         case .opening:
@@ -423,7 +433,7 @@ final class WorldGarages {
             break
         case .leaving:
             if past > 4, (g.door?.open ?? 1) >= 1 { g.door?.target = 0 }
-            if past > 2, (g.door?.open ?? 0) <= 0.001 { setCutout(false); setPhase(.closed) }
+            if past > 2, (g.door?.open ?? 0) <= 0.001 { setCutout(false); setPhase(.closed); armed = false }
             if past < -3 { setPhase(.inside); g.door?.target = 1 }
         }
         updateWalls()
@@ -555,6 +565,7 @@ final class WorldGarages {
             setPhase(.inside)
         } else {
             car.place(g.doorP + g.out * 18 + float3(0, 0, 2), yaw: g.yawOut + .pi, collision: engine.collision)
+            armed = true
         }
         return g
     }

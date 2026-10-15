@@ -8629,7 +8629,7 @@
    "near": "tiles/-1_-1.glb",
    "far": "tiles/-1_-1_far.glb",
    "tris": 14142,
-   "farTris": 1861,
+   "farTris": 1968,
    "objects": 298,
    "zMin": 50.57332992553711,
    "zMax": 219.1339111328125
@@ -8642,7 +8642,7 @@
    "near": "tiles/-1_-2.glb",
    "far": "tiles/-1_-2_far.glb",
    "tris": 13558,
-   "farTris": 1833,
+   "farTris": 1903,
    "objects": 286,
    "zMin": 60.631736755371094,
    "zMax": 338.9969482421875
@@ -8657,8 +8657,8 @@
    "tris": 62,
    "farTris": 0,
    "objects": 1,
-   "zMin": 26.1722412109375,
-   "zMax": 36.155311584472656
+   "zMin": 26.484786987304688,
+   "zMax": 297.1745300292969
   },
   {
    "id": "-1_0",
@@ -8668,10 +8668,10 @@
    "near": "tiles/-1_0.glb",
    "far": "tiles/-1_0_far.glb",
    "tris": 409,
-   "farTris": 38,
+   "farTris": 78,
    "objects": 6,
-   "zMin": -43.55104064941406,
-   "zMax": 158.30093383789062
+   "zMin": -43.79963684082031,
+   "zMax": 598.137939453125
   },
   {
    "id": "-1_10",
@@ -8681,10 +8681,10 @@
    "near": "tiles/-1_10.glb",
    "far": "tiles/-1_10_far.glb",
    "tris": 31680,
-   "farTris": 4436,
+   "farTris": 4482,
    "objects": 510,
-   "zMin": 19.865264892578125,
-   "zMax": 646.5848388671875
+   "zMin": 20.189544677734375,
+   "zMax": 716.3892211914062
   },
   {
    "id": "-1_11",
@@ -8696,8 +8696,8 @@
    "tris": 292,
    "farTris": 7,
    "objects": 4,
-   "zMin": 150.7574462890625,
-   "zMax": 1105.8880615234375
+   "zMin": 150.949951171875,
+   "zMax": 1208.379638671875
   },
   {
    "id": "-1_4",
@@ -8707,9 +8707,9 @@
    "near": "tiles/-1_4.glb",
    "far": "tiles/-1_4_far.glb",
    "tris": 170,
-   "farTris": 0,
+   "farTris": 132,
    "objects": 4,
-   "zMin": 222.86947631835938,
+   "zMin": 222.58680725097656,
    "zMax": 398.5625
   },
   {
@@ -8720,10 +8720,10 @@
    "near": "tiles/-1_5.glb",
    "far": "tiles/-1_5_far.glb",
    "tris": 27913,
-   "farTris": 3951,
+   "farTris": 4087,
    "objects": 552,
    "zMin": 208.37774658203125,
-   "zMax": 398.5625
+   "zMax": 398.5635070800781
   },
   {
    "id": "-1_6",
@@ -8733,7 +8733,7 @@
    "near": "tiles/-1_6.glb",
    "far": "tiles/-1_6_far.glb",
    "tris": 4773,
-   "farTris": 291,
+   "farTris": 309,
    "objects": 36,
    "zMin": 186.82421875,
    "zMax": 303.5284118652344
@@ -8746,7 +8746,7 @@
    "near": "tiles/-1_7.glb",
    "far": "tiles/-1_7_far.glb",
    "tris": 45706,
-   "farTris": 5909,
+   "farTris": 6049,
    "objects": 649,
    "zMin": 178.74517822265625,
    "zMax": 270.2265625
@@ -8759,9 +8759,9 @@
    "near": "tiles/-1_8.glb",
    "far": "tiles/-1_8_far.glb",
    "tris": 27166,
-   "farTris": 4172,
+   "farTris": 4278,
    "objects": 347,
-   "zMin": 181.71070861816406,
+   "zMin": 181.94212341308594,
    "zMax": 280.07598876953125
   },
   {
@@ -8772,10 +8772,10 @@
    "near": "tiles/-1_9.glb",
    "far": "tiles/-1_9_far.glb",
    "tris": 50148,
-   "farTris": 6748,
+   "farTris": 6907,
    "objects": 711,
-   "zMin": -228.10562133789062,
-   "zMax": 438.47479248046875
+   "zMin": -228.36099243164062,
+   "zMax": 633.5476684570312
   },
   {
    "id": "-2_-1",
@@ -8785,7 +8785,7 @@
    "near": "tiles/-2_-1.glb",
    "far": "tiles/-2_-1_far.glb",
    "tris": 180,
-   "farTris": 0,
+   "farTris": 12,
    "objects": 1,
    "zMin": 121.02767181396484,
    "zMax": 222.99642944335938
@@ -8798,9 +8798,9 @@
    "near": "tiles/-2_-2.glb",
    "far": "tiles/-2_-2_far.glb",
    "tris": 208,
-   "farTris": 38,
+   "farTris": 56,
    "objects": 1,
-   "zMin": 113.59668731689453,
+   "zMin": 113.81854248046875,
    "zMax": 158.25604248046875
   },
   {
@@ -8811,9 +8811,9 @@
    "near": "tiles/-2_10.glb",
    "far": "tiles/-2_10_far.glb",
    "tris": 544,
-   "farTris": 63,
+   "farTris": 106,
    "objects": 9,
-   "zMin": 247.9691925048828,
+   "zMin": 248.1151885986328,
    "zMax": 326.55767822265625
   },
   {
@@ -8824,10 +8824,10 @@
    "near": "tiles/-2_4.glb",
    "far": "tiles/-2_4_far.glb",
    "tris": 88,
-   "farTris": 15,
+   "farTris": 64,
    "objects": 2,
-   "zMin": 236.92626953125,
-   "zMax": 353.25
+   "zMin": 237.12109375,
+   "zMax": 362.30389404296875
   },
   {
    "id": "-2_5",
@@ -8837,9 +8837,9 @@
    "near": "tiles/-2_5.glb",
    "far": "tiles/-2_5_far.glb",
    "tris": 2118,
-   "farTris": 202,
+   "farTris": 494,
    "objects": 51,
-   "zMin": 52.20220947265625,
+   "zMin": 51.7656135559082,
    "zMax": 397.5
   },
   {
@@ -8850,10 +8850,10 @@
    "near": "tiles/-2_6.glb",
    "far": "tiles/-2_6_far.glb",
    "tris": 25537,
-   "farTris": 2990,
+   "farTris": 3190,
    "objects": 414,
-   "zMin": -239.768310546875,
-   "zMax": 298.3851318359375
+   "zMin": -239.6328125,
+   "zMax": 663.5140380859375
   },
   {
    "id": "-2_7",
@@ -8863,7 +8863,7 @@
    "near": "tiles/-2_7.glb",
    "far": "tiles/-2_7_far.glb",
    "tris": 25110,
-   "farTris": 3587,
+   "farTris": 3742,
    "objects": 421,
    "zMin": 185.8376007080078,
    "zMax": 294.96875
@@ -8876,7 +8876,7 @@
    "near": "tiles/-2_8.glb",
    "far": "tiles/-2_8_far.glb",
    "tris": 2523,
-   "farTris": 259,
+   "farTris": 281,
    "objects": 17,
    "zMin": 185.1796875,
    "zMax": 267.6287841796875
@@ -8889,7 +8889,7 @@
    "near": "tiles/-2_9.glb",
    "far": "tiles/-2_9_far.glb",
    "tris": 2843,
-   "farTris": 1245,
+   "farTris": 1340,
    "objects": 41,
    "zMin": 228.02317810058594,
    "zMax": 349.0637512207031
@@ -8902,10 +8902,10 @@
    "near": "tiles/-3_5.glb",
    "far": "tiles/-3_5_far.glb",
    "tris": 1585,
-   "farTris": 50,
+   "farTris": 141,
    "objects": 20,
-   "zMin": 84.33084869384766,
-   "zMax": 316.84765625
+   "zMin": 84.69795989990234,
+   "zMax": 327.09320068359375
   },
   {
    "id": "-3_6",
@@ -8915,9 +8915,9 @@
    "near": "tiles/-3_6.glb",
    "far": "tiles/-3_6_far.glb",
    "tris": 25190,
-   "farTris": 3142,
+   "farTris": 3358,
    "objects": 413,
-   "zMin": 96.37500762939453,
+   "zMin": 96.0024185180664,
    "zMax": 333.16015625
   },
   {
@@ -8928,10 +8928,10 @@
    "near": "tiles/-3_7.glb",
    "far": "tiles/-3_7_far.glb",
    "tris": 1325,
-   "farTris": 404,
+   "farTris": 544,
    "objects": 30,
-   "zMin": 126.6614990234375,
-   "zMax": 504.7004089355469
+   "zMin": 126.38531494140625,
+   "zMax": 904.3527221679688
   },
   {
    "id": "-4_5",
@@ -8954,7 +8954,7 @@
    "near": "tiles/-4_6.glb",
    "far": "tiles/-4_6_far.glb",
    "tris": 4745,
-   "farTris": 1278,
+   "farTris": 1317,
    "objects": 102,
    "zMin": 195.20889282226562,
    "zMax": 330.15625
@@ -8967,7 +8967,7 @@
    "near": "tiles/-4_7.glb",
    "far": "tiles/-4_7_far.glb",
    "tris": 536,
-   "farTris": 425,
+   "farTris": 465,
    "objects": 11,
    "zMin": 145.171875,
    "zMax": 275.05078125
@@ -8980,7 +8980,7 @@
    "near": "tiles/0_-1.glb",
    "far": "tiles/0_-1_far.glb",
    "tris": 37835,
-   "farTris": 5549,
+   "farTris": 5654,
    "objects": 817,
    "zMin": 58.10438919067383,
    "zMax": 283.333984375
@@ -8993,7 +8993,7 @@
    "near": "tiles/0_-2.glb",
    "far": "tiles/0_-2_far.glb",
    "tris": 22901,
-   "farTris": 3361,
+   "farTris": 3483,
    "objects": 468,
    "zMin": 61.46063232421875,
    "zMax": 249.8623809814453
@@ -9006,10 +9006,10 @@
    "near": "tiles/0_0.glb",
    "far": "tiles/0_0_far.glb",
    "tris": 2885,
-   "farTris": 1207,
+   "farTris": 1268,
    "objects": 36,
    "zMin": 90.4274673461914,
-   "zMax": 257.1120910644531
+   "zMax": 257.1132507324219
   },
   {
    "id": "0_1",
@@ -9022,7 +9022,7 @@
    "farTris": 54,
    "objects": 2,
    "zMin": 96.70689392089844,
-   "zMax": 200.36868286132812
+   "zMax": 283.1339416503906
   },
   {
    "id": "0_10",
@@ -9032,7 +9032,7 @@
    "near": "tiles/0_10.glb",
    "far": "tiles/0_10_far.glb",
    "tris": 40162,
-   "farTris": 5974,
+   "farTris": 5988,
    "objects": 853,
    "zMin": 180.6269989013672,
    "zMax": 331.10919189453125
@@ -9045,7 +9045,7 @@
    "near": "tiles/0_11.glb",
    "far": "tiles/0_11_far.glb",
    "tris": 17915,
-   "farTris": 3839,
+   "farTris": 3877,
    "objects": 308,
    "zMin": 227.76953125,
    "zMax": 348.5907897949219
@@ -9058,9 +9058,9 @@
    "near": "tiles/0_3.glb",
    "far": "tiles/0_3_far.glb",
    "tris": 90,
-   "farTris": 0,
+   "farTris": 81,
    "objects": 2,
-   "zMin": 159.623291015625,
+   "zMin": 159.56065368652344,
    "zMax": 323.0390625
   },
   {
@@ -9071,9 +9071,9 @@
    "near": "tiles/0_4.glb",
    "far": "tiles/0_4_far.glb",
    "tris": 9584,
-   "farTris": 1191,
+   "farTris": 1306,
    "objects": 218,
-   "zMin": 170.66717529296875,
+   "zMin": 170.796875,
    "zMax": 333.06640625
   },
   {
@@ -9084,10 +9084,10 @@
    "near": "tiles/0_5.glb",
    "far": "tiles/0_5_far.glb",
    "tris": 11754,
-   "farTris": 1556,
+   "farTris": 1840,
    "objects": 220,
-   "zMin": 13.978759765625,
-   "zMax": 373.48828125
+   "zMin": 13.634414672851562,
+   "zMax": 408.5955505371094
   },
   {
    "id": "0_6",
@@ -9097,7 +9097,7 @@
    "near": "tiles/0_6.glb",
    "far": "tiles/0_6_far.glb",
    "tris": 29294,
-   "farTris": 5627,
+   "farTris": 5644,
    "objects": 323,
    "zMin": 161.4150390625,
    "zMax": 245.29222106933594
@@ -9110,7 +9110,7 @@
    "near": "tiles/0_7.glb",
    "far": "tiles/0_7_far.glb",
    "tris": 54917,
-   "farTris": 5897,
+   "farTris": 6128,
    "objects": 667,
    "zMin": 176.99395751953125,
    "zMax": 253.14047241210938
@@ -9123,7 +9123,7 @@
    "near": "tiles/0_8.glb",
    "far": "tiles/0_8_far.glb",
    "tris": 41862,
-   "farTris": 3160,
+   "farTris": 3233,
    "objects": 514,
    "zMin": 184.59451293945312,
    "zMax": 253.22195434570312
@@ -9136,7 +9136,7 @@
    "near": "tiles/0_9.glb",
    "far": "tiles/0_9_far.glb",
    "tris": 53909,
-   "farTris": 7613,
+   "farTris": 7668,
    "objects": 1056,
    "zMin": 184.21875,
    "zMax": 270.1315002441406
@@ -9149,10 +9149,10 @@
    "near": "tiles/1_-1.glb",
    "far": "tiles/1_-1_far.glb",
    "tris": 16503,
-   "farTris": 6878,
+   "farTris": 10446,
    "objects": 156,
-   "zMin": 39.47694778442383,
-   "zMax": 356.4668884277344
+   "zMin": 39.26325225830078,
+   "zMax": 372.8943786621094
   },
   {
    "id": "1_-2",
@@ -9162,9 +9162,9 @@
    "near": "tiles/1_-2.glb",
    "far": "tiles/1_-2_far.glb",
    "tris": 48491,
-   "farTris": 5485,
+   "farTris": 6108,
    "objects": 929,
-   "zMin": 50.31991195678711,
+   "zMin": 50.47655487060547,
    "zMax": 400.41552734375
   },
   {
@@ -9175,7 +9175,7 @@
    "near": "tiles/1_-3.glb",
    "far": "tiles/1_-3_far.glb",
    "tris": 17089,
-   "farTris": 2834,
+   "farTris": 2986,
    "objects": 297,
    "zMin": 88.77436065673828,
    "zMax": 376.3291320800781
@@ -9190,8 +9190,8 @@
    "tris": 49,
    "farTris": 0,
    "objects": 1,
-   "zMin": -35.600975036621094,
-   "zMax": 0.08181571960449219
+   "zMin": -35.12226867675781,
+   "zMax": 395.6726989746094
   },
   {
    "id": "1_0",
@@ -9201,7 +9201,7 @@
    "near": "tiles/1_0.glb",
    "far": "tiles/1_0_far.glb",
    "tris": 65513,
-   "farTris": 7040,
+   "farTris": 7223,
    "objects": 931,
    "zMin": 88.450927734375,
    "zMax": 242.1244659423828
@@ -9214,9 +9214,9 @@
    "near": "tiles/1_1.glb",
    "far": "tiles/1_1_far.glb",
    "tris": 43341,
-   "farTris": 4700,
+   "farTris": 4966,
    "objects": 861,
-   "zMin": 91.03392028808594,
+   "zMin": 91.0866928100586,
    "zMax": 295.2260437011719
   },
   {
@@ -9227,7 +9227,7 @@
    "near": "tiles/1_10.glb",
    "far": "tiles/1_10_far.glb",
    "tris": 50845,
-   "farTris": 7162,
+   "farTris": 7186,
    "objects": 696,
    "zMin": 184.67538452148438,
    "zMax": 285.778564453125
@@ -9240,9 +9240,9 @@
    "near": "tiles/1_11.glb",
    "far": "tiles/1_11_far.glb",
    "tris": 24250,
-   "farTris": 6723,
+   "farTris": 6773,
    "objects": 339,
-   "zMin": 117.45805358886719,
+   "zMin": 117.2612075805664,
    "zMax": 351.15081787109375
   },
   {
@@ -9255,8 +9255,8 @@
    "tris": 51,
    "farTris": 0,
    "objects": 1,
-   "zMin": 130.5087890625,
-   "zMax": 247.356689453125
+   "zMin": 130.2481231689453,
+   "zMax": 347.31304931640625
   },
   {
    "id": "1_2",
@@ -9279,9 +9279,9 @@
    "near": "tiles/1_3.glb",
    "far": "tiles/1_3_far.glb",
    "tris": 102,
-   "farTris": 0,
+   "farTris": 78,
    "objects": 2,
-   "zMin": 105.4105453491211,
+   "zMin": 105.09976196289062,
    "zMax": 309.83984375
   },
   {
@@ -9292,7 +9292,7 @@
    "near": "tiles/1_4.glb",
    "far": "tiles/1_4_far.glb",
    "tris": 21353,
-   "farTris": 3480,
+   "farTris": 3777,
    "objects": 385,
    "zMin": 105.09765625,
    "zMax": 332.78125
@@ -9305,10 +9305,10 @@
    "near": "tiles/1_5.glb",
    "far": "tiles/1_5_far.glb",
    "tris": 22881,
-   "farTris": 5027,
+   "farTris": 5146,
    "objects": 337,
-   "zMin": 120.4716796875,
-   "zMax": 252.05078125
+   "zMin": 120.75077819824219,
+   "zMax": 280.86187744140625
   },
   {
    "id": "1_6",
@@ -9318,7 +9318,7 @@
    "near": "tiles/1_6.glb",
    "far": "tiles/1_6_far.glb",
    "tris": 74640,
-   "farTris": 12031,
+   "farTris": 12107,
    "objects": 1048,
    "zMin": 146.06236267089844,
    "zMax": 225.44375610351562
@@ -9331,7 +9331,7 @@
    "near": "tiles/1_7.glb",
    "far": "tiles/1_7_far.glb",
    "tris": 37776,
-   "farTris": 4277,
+   "farTris": 4296,
    "objects": 497,
    "zMin": 151.93264770507812,
    "zMax": 278.9426574707031
@@ -9344,7 +9344,7 @@
    "near": "tiles/1_8.glb",
    "far": "tiles/1_8_far.glb",
    "tris": 100915,
-   "farTris": 9914,
+   "farTris": 9948,
    "objects": 1652,
    "zMin": 188.16712951660156,
    "zMax": 250.01304626464844
@@ -9357,7 +9357,7 @@
    "near": "tiles/1_9.glb",
    "far": "tiles/1_9_far.glb",
    "tris": 33726,
-   "farTris": 4505,
+   "farTris": 4584,
    "objects": 647,
    "zMin": 196.34765625,
    "zMax": 292.1333923339844
@@ -9383,9 +9383,9 @@
    "near": "tiles/10_0.glb",
    "far": "tiles/10_0_far.glb",
    "tris": 54672,
-   "farTris": 9502,
+   "farTris": 10036,
    "objects": 1103,
-   "zMin": -15.881136894226074,
+   "zMin": -15.86605167388916,
    "zMax": 141.86160278320312
   },
   {
@@ -9396,9 +9396,9 @@
    "near": "tiles/10_1.glb",
    "far": "tiles/10_1_far.glb",
    "tris": 71506,
-   "farTris": 11286,
+   "farTris": 11312,
    "objects": 1274,
-   "zMin": 18.07105255126953,
+   "zMin": 18.18960952758789,
    "zMax": 146.49615478515625
   },
   {
@@ -9409,10 +9409,10 @@
    "near": "tiles/10_2.glb",
    "far": "tiles/10_2_far.glb",
    "tris": 63227,
-   "farTris": 8174,
+   "farTris": 8646,
    "objects": 1108,
-   "zMin": -9.85704231262207,
-   "zMax": 129.47239685058594
+   "zMin": -9.697747230529785,
+   "zMax": 131.43426513671875
   },
   {
    "id": "10_3",
@@ -9422,7 +9422,7 @@
    "near": "tiles/10_3.glb",
    "far": "tiles/10_3_far.glb",
    "tris": 50556,
-   "farTris": 7056,
+   "farTris": 7382,
    "objects": 838,
    "zMin": -0.3125,
    "zMax": 102.10429382324219
@@ -9435,7 +9435,7 @@
    "near": "tiles/10_4.glb",
    "far": "tiles/10_4_far.glb",
    "tris": 51893,
-   "farTris": 5968,
+   "farTris": 6014,
    "objects": 822,
    "zMin": -6.304996013641357,
    "zMax": 114.95768737792969
@@ -9448,7 +9448,7 @@
    "near": "tiles/10_5.glb",
    "far": "tiles/10_5_far.glb",
    "tris": 39278,
-   "farTris": 4669,
+   "farTris": 4725,
    "objects": 722,
    "zMin": -0.8671875,
    "zMax": 115.93494415283203
@@ -9461,9 +9461,9 @@
    "near": "tiles/10_6.glb",
    "far": "tiles/10_6_far.glb",
    "tris": 31352,
-   "farTris": 4709,
+   "farTris": 5205,
    "objects": 653,
-   "zMin": -4.323459625244141,
+   "zMin": -4.706142425537109,
    "zMax": 110.42475128173828
   },
   {
@@ -9474,7 +9474,7 @@
    "near": "tiles/10_7.glb",
    "far": "tiles/10_7_far.glb",
    "tris": 22309,
-   "farTris": 2260,
+   "farTris": 2313,
    "objects": 426,
    "zMin": -4.174689292907715,
    "zMax": 76.52350616455078
@@ -9487,10 +9487,10 @@
    "near": "tiles/10_8.glb",
    "far": "tiles/10_8_far.glb",
    "tris": 18079,
-   "farTris": 3803,
+   "farTris": 4084,
    "objects": 255,
-   "zMin": -23.089962005615234,
-   "zMax": 53.85400390625
+   "zMin": -23.030109405517578,
+   "zMax": 83.58019256591797
   },
   {
    "id": "10_9",
@@ -9500,10 +9500,10 @@
    "near": "tiles/10_9.glb",
    "far": "tiles/10_9_far.glb",
    "tris": 187,
-   "farTris": 4,
+   "farTris": 12,
    "objects": 4,
-   "zMin": -29.114543914794922,
-   "zMax": 52.547706604003906
+   "zMin": -29.323158264160156,
+   "zMax": 140.93731689453125
   },
   {
    "id": "11_0",
@@ -9513,7 +9513,7 @@
    "near": "tiles/11_0.glb",
    "far": "tiles/11_0_far.glb",
    "tris": 90768,
-   "farTris": 11798,
+   "farTris": 11830,
    "objects": 1480,
    "zMin": -9.881302833557129,
    "zMax": 56.24396514892578
@@ -9526,9 +9526,9 @@
    "near": "tiles/11_1.glb",
    "far": "tiles/11_1_far.glb",
    "tris": 88709,
-   "farTris": 13492,
+   "farTris": 13559,
    "objects": 1548,
-   "zMin": -12.045609474182129,
+   "zMin": -11.6796875,
    "zMax": 102.59986877441406
   },
   {
@@ -9539,7 +9539,7 @@
    "near": "tiles/11_2.glb",
    "far": "tiles/11_2_far.glb",
    "tris": 96173,
-   "farTris": 11393,
+   "farTris": 11438,
    "objects": 1708,
    "zMin": 6.867286682128906,
    "zMax": 101.5567626953125
@@ -9565,7 +9565,7 @@
    "near": "tiles/11_5.glb",
    "far": "tiles/11_5_far.glb",
    "tris": 1810,
-   "farTris": 316,
+   "farTris": 390,
    "objects": 34,
    "zMin": -0.6279621124267578,
    "zMax": 90.30503845214844
@@ -9578,9 +9578,9 @@
    "near": "tiles/11_6.glb",
    "far": "tiles/11_6_far.glb",
    "tris": 54,
-   "farTris": 22,
+   "farTris": 54,
    "objects": 1,
-   "zMin": -1.002437710762024,
+   "zMin": -0.6240575909614563,
    "zMax": 46.8125
   },
   {
@@ -9604,7 +9604,7 @@
    "near": "tiles/12_1.glb",
    "far": "tiles/12_1_far.glb",
    "tris": 10258,
-   "farTris": 2248,
+   "farTris": 2374,
    "objects": 221,
    "zMin": -2.1328125,
    "zMax": 135.84368896484375
@@ -9632,8 +9632,8 @@
    "tris": 36,
    "farTris": 0,
    "objects": 1,
-   "zMin": -22.00054168701172,
-   "zMax": 314.9058837890625
+   "zMin": -22.09471893310547,
+   "zMax": 721.947021484375
   },
   {
    "id": "13_0",
@@ -9643,10 +9643,10 @@
    "near": "tiles/13_0.glb",
    "far": "tiles/13_0_far.glb",
    "tris": 315,
-   "farTris": 134,
+   "farTris": 309,
    "objects": 2,
    "zMin": -6.192033767700195,
-   "zMax": 28.483747482299805
+   "zMax": 64.31689453125
   },
   {
    "id": "13_13",
@@ -9658,8 +9658,8 @@
    "tris": 28,
    "farTris": 0,
    "objects": 1,
-   "zMin": -23.498050689697266,
-   "zMax": 529.9244995117188
+   "zMin": -23.98613166809082,
+   "zMax": 1108.176513671875
   },
   {
    "id": "13_3",
@@ -9669,7 +9669,7 @@
    "near": "tiles/13_3.glb",
    "far": "tiles/13_3_far.glb",
    "tris": 153,
-   "farTris": 117,
+   "farTris": 153,
    "objects": 1,
    "zMin": -3.448864459991455,
    "zMax": 45.2933235168457
@@ -9684,8 +9684,8 @@
    "tris": 46,
    "farTris": 0,
    "objects": 1,
-   "zMin": -9.7469482421875,
-   "zMax": -6.70684814453125
+   "zMin": -9.495361328125,
+   "zMax": 768.7703247070312
   },
   {
    "id": "14_-10",
@@ -9710,8 +9710,8 @@
    "tris": 46,
    "farTris": 0,
    "objects": 1,
-   "zMin": -6.306259632110596,
-   "zMax": -2.6911888122558594
+   "zMin": -6.692203998565674,
+   "zMax": 918.765869140625
   },
   {
    "id": "16_11",
@@ -9736,8 +9736,8 @@
    "tris": 157,
    "farTris": 0,
    "objects": 1,
-   "zMin": 3.459341049194336,
-   "zMax": 184.68280029296875
+   "zMin": 3.7727832794189453,
+   "zMax": 422.1363220214844
   },
   {
    "id": "18_5",
@@ -9747,10 +9747,10 @@
    "near": "tiles/18_5.glb",
    "far": "tiles/18_5_far.glb",
    "tris": 445,
-   "farTris": 30,
+   "farTris": 445,
    "objects": 1,
-   "zMin": -14.079078674316406,
-   "zMax": 157.06283569335938
+   "zMin": -14.25451374053955,
+   "zMax": 351.7849426269531
   },
   {
    "id": "2_-1",
@@ -9760,10 +9760,10 @@
    "near": "tiles/2_-1.glb",
    "far": "tiles/2_-1_far.glb",
    "tris": 53426,
-   "farTris": 6277,
+   "farTris": 7308,
    "objects": 817,
    "zMin": 57.181739807128906,
-   "zMax": 369.4082946777344
+   "zMax": 372.8943786621094
   },
   {
    "id": "2_-2",
@@ -9773,10 +9773,10 @@
    "near": "tiles/2_-2.glb",
    "far": "tiles/2_-2_far.glb",
    "tris": 49456,
-   "farTris": 8695,
+   "farTris": 9274,
    "objects": 957,
-   "zMin": 68.47537231445312,
-   "zMax": 275.5235290527344
+   "zMin": 68.14295196533203,
+   "zMax": 288.0718994140625
   },
   {
    "id": "2_-3",
@@ -9786,7 +9786,7 @@
    "near": "tiles/2_-3.glb",
    "far": "tiles/2_-3_far.glb",
    "tris": 33566,
-   "farTris": 4876,
+   "farTris": 5323,
    "objects": 566,
    "zMin": 86.54061126708984,
    "zMax": 242.8416748046875
@@ -9799,10 +9799,10 @@
    "near": "tiles/2_0.glb",
    "far": "tiles/2_0_far.glb",
    "tris": 69647,
-   "farTris": 10416,
+   "farTris": 11059,
    "objects": 991,
-   "zMin": 56.54411315917969,
-   "zMax": 356.0840759277344
+   "zMin": 56.45682907104492,
+   "zMax": 372.8943786621094
   },
   {
    "id": "2_1",
@@ -9812,10 +9812,10 @@
    "near": "tiles/2_1.glb",
    "far": "tiles/2_1_far.glb",
    "tris": 49054,
-   "farTris": 6939,
+   "farTris": 7092,
    "objects": 870,
-   "zMin": -3.1452484130859375,
-   "zMax": 348.509521484375
+   "zMin": -2.9542617797851562,
+   "zMax": 613.9374389648438
   },
   {
    "id": "2_10",
@@ -9825,9 +9825,9 @@
    "near": "tiles/2_10.glb",
    "far": "tiles/2_10_far.glb",
    "tris": 48298,
-   "farTris": 5410,
+   "farTris": 5515,
    "objects": 633,
-   "zMin": 100.39330291748047,
+   "zMin": 100.68611907958984,
    "zMax": 299.5570373535156
   },
   {
@@ -9838,9 +9838,9 @@
    "near": "tiles/2_11.glb",
    "far": "tiles/2_11_far.glb",
    "tris": 19991,
-   "farTris": 4204,
+   "farTris": 4350,
    "objects": 281,
-   "zMin": 148.5804443359375,
+   "zMin": 148.59417724609375,
    "zMax": 271.58087158203125
   },
   {
@@ -9851,10 +9851,10 @@
    "near": "tiles/2_12.glb",
    "far": "tiles/2_12_far.glb",
    "tris": 261,
-   "farTris": 0,
+   "farTris": 50,
    "objects": 4,
-   "zMin": -459.627197265625,
-   "zMax": 542.925048828125
+   "zMin": -459.5111083984375,
+   "zMax": 705.8519897460938
   },
   {
    "id": "2_14",
@@ -9866,8 +9866,8 @@
    "tris": 72,
    "farTris": 0,
    "objects": 1,
-   "zMin": 362.5854797363281,
-   "zMax": 661.8958129882812
+   "zMin": 362.9263610839844,
+   "zMax": 954.3750610351562
   },
   {
    "id": "2_2",
@@ -9877,7 +9877,7 @@
    "near": "tiles/2_2.glb",
    "far": "tiles/2_2_far.glb",
    "tris": 948,
-   "farTris": 193,
+   "farTris": 205,
    "objects": 15,
    "zMin": 59.23983383178711,
    "zMax": 320.9823303222656
@@ -9890,9 +9890,9 @@
    "near": "tiles/2_3.glb",
    "far": "tiles/2_3_far.glb",
    "tris": 3725,
-   "farTris": 710,
+   "farTris": 942,
    "objects": 40,
-   "zMin": 22.08732795715332,
+   "zMin": 22.355819702148438,
    "zMax": 258.890625
   },
   {
@@ -9903,10 +9903,10 @@
    "near": "tiles/2_4.glb",
    "far": "tiles/2_4_far.glb",
    "tris": 22225,
-   "farTris": 4460,
+   "farTris": 4692,
    "objects": 322,
    "zMin": 76.515625,
-   "zMax": 269.953125
+   "zMax": 320.5611572265625
   },
   {
    "id": "2_5",
@@ -9916,10 +9916,10 @@
    "near": "tiles/2_5.glb",
    "far": "tiles/2_5_far.glb",
    "tris": 55856,
-   "farTris": 9008,
+   "farTris": 9037,
    "objects": 809,
    "zMin": 127.98046875,
-   "zMax": 271.09765625
+   "zMax": 288.87890625
   },
   {
    "id": "2_6",
@@ -9929,9 +9929,9 @@
    "near": "tiles/2_6.glb",
    "far": "tiles/2_6_far.glb",
    "tris": 47127,
-   "farTris": 7694,
+   "farTris": 7761,
    "objects": 713,
-   "zMin": 141.51394653320312,
+   "zMin": 141.3330078125,
    "zMax": 221.72683715820312
   },
   {
@@ -9942,7 +9942,7 @@
    "near": "tiles/2_7.glb",
    "far": "tiles/2_7_far.glb",
    "tris": 24639,
-   "farTris": 3761,
+   "farTris": 3827,
    "objects": 374,
    "zMin": 151.8701934814453,
    "zMax": 250.16038513183594
@@ -9955,7 +9955,7 @@
    "near": "tiles/2_8.glb",
    "far": "tiles/2_8_far.glb",
    "tris": 61181,
-   "farTris": 10603,
+   "farTris": 10879,
    "objects": 1315,
    "zMin": 195.9848175048828,
    "zMax": 492.0498046875
@@ -9968,10 +9968,10 @@
    "near": "tiles/2_9.glb",
    "far": "tiles/2_9_far.glb",
    "tris": 87829,
-   "farTris": 9383,
+   "farTris": 9708,
    "objects": 1428,
-   "zMin": 91.35578918457031,
-   "zMax": 454.329345703125
+   "zMin": 91.08150482177734,
+   "zMax": 564.4837646484375
   },
   {
    "id": "20_6",
@@ -9983,8 +9983,8 @@
    "tris": 55,
    "farTris": 0,
    "objects": 1,
-   "zMin": -5.00543212890625,
-   "zMax": -1.7376861572265625
+   "zMin": -5.337615966796875,
+   "zMax": 831.206298828125
   },
   {
    "id": "23_5",
@@ -9996,8 +9996,8 @@
    "tris": 28,
    "farTris": 0,
    "objects": 1,
-   "zMin": -6.306259632110596,
-   "zMax": 478.308837890625
+   "zMin": -6.692177772521973,
+   "zMax": 918.7659301757812
   },
   {
    "id": "3_-1",
@@ -10007,9 +10007,9 @@
    "near": "tiles/3_-1.glb",
    "far": "tiles/3_-1_far.glb",
    "tris": 38988,
-   "farTris": 6549,
+   "farTris": 6944,
    "objects": 681,
-   "zMin": 69.45747375488281,
+   "zMin": 68.97811126708984,
    "zMax": 267.7609558105469
   },
   {
@@ -10020,7 +10020,7 @@
    "near": "tiles/3_-2.glb",
    "far": "tiles/3_-2_far.glb",
    "tris": 16698,
-   "farTris": 3784,
+   "farTris": 3912,
    "objects": 292,
    "zMin": 70.238525390625,
    "zMax": 260.9389953613281
@@ -10033,10 +10033,10 @@
    "near": "tiles/3_-3.glb",
    "far": "tiles/3_-3_far.glb",
    "tris": 8285,
-   "farTris": 1702,
+   "farTris": 1800,
    "objects": 178,
-   "zMin": -20.079851150512695,
-   "zMax": 268.17584228515625
+   "zMin": -20.441909790039062,
+   "zMax": 858.4509887695312
   },
   {
    "id": "3_0",
@@ -10046,10 +10046,10 @@
    "near": "tiles/3_0.glb",
    "far": "tiles/3_0_far.glb",
    "tris": 56527,
-   "farTris": 8769,
+   "farTris": 10581,
    "objects": 1005,
    "zMin": 11.49197006225586,
-   "zMax": 499.844482421875
+   "zMax": 533.5159301757812
   },
   {
    "id": "3_1",
@@ -10059,10 +10059,10 @@
    "near": "tiles/3_1.glb",
    "far": "tiles/3_1_far.glb",
    "tris": 36863,
-   "farTris": 5893,
+   "farTris": 6079,
    "objects": 618,
    "zMin": 75.64920806884766,
-   "zMax": 237.36221313476562
+   "zMax": 237.3632049560547
   },
   {
    "id": "3_10",
@@ -10072,10 +10072,10 @@
    "near": "tiles/3_10.glb",
    "far": "tiles/3_10_far.glb",
    "tris": 34996,
-   "farTris": 5029,
+   "farTris": 5258,
    "objects": 474,
-   "zMin": 80.28620147705078,
-   "zMax": 321.40625
+   "zMin": 80.68321990966797,
+   "zMax": 486.9317932128906
   },
   {
    "id": "3_11",
@@ -10085,10 +10085,10 @@
    "near": "tiles/3_11.glb",
    "far": "tiles/3_11_far.glb",
    "tris": 15313,
-   "farTris": 2933,
+   "farTris": 2955,
    "objects": 377,
-   "zMin": 164.64402770996094,
-   "zMax": 312.4296875
+   "zMin": 164.86985778808594,
+   "zMax": 343.0448303222656
   },
   {
    "id": "3_12",
@@ -10098,10 +10098,10 @@
    "near": "tiles/3_12.glb",
    "far": "tiles/3_12_far.glb",
    "tris": 172,
-   "farTris": 0,
+   "farTris": 16,
    "objects": 2,
-   "zMin": 158.62115478515625,
-   "zMax": 247.0233154296875
+   "zMin": 159.01486206054688,
+   "zMax": 811.92138671875
   },
   {
    "id": "3_13",
@@ -10113,8 +10113,8 @@
    "tris": 197,
    "farTris": 0,
    "objects": 1,
-   "zMin": -11.07318115234375,
-   "zMax": 391.418701171875
+   "zMin": -11.358673095703125,
+   "zMax": 626.5640869140625
   },
   {
    "id": "3_2",
@@ -10124,10 +10124,10 @@
    "near": "tiles/3_2.glb",
    "far": "tiles/3_2_far.glb",
    "tris": 31085,
-   "farTris": 5607,
+   "farTris": 5651,
    "objects": 504,
-   "zMin": 104.40956115722656,
-   "zMax": 174.875
+   "zMin": 104.84779357910156,
+   "zMax": 174.87522888183594
   },
   {
    "id": "3_3",
@@ -10137,7 +10137,7 @@
    "near": "tiles/3_3.glb",
    "far": "tiles/3_3_far.glb",
    "tris": 48057,
-   "farTris": 5303,
+   "farTris": 5353,
    "objects": 734,
    "zMin": 75.67578125,
    "zMax": 220.96888732910156
@@ -10153,7 +10153,7 @@
    "farTris": 4868,
    "objects": 297,
    "zMin": 124.44087982177734,
-   "zMax": 252.98162841796875
+   "zMax": 280.39227294921875
   },
   {
    "id": "3_5",
@@ -10163,7 +10163,7 @@
    "near": "tiles/3_5.glb",
    "far": "tiles/3_5_far.glb",
    "tris": 50540,
-   "farTris": 10094,
+   "farTris": 10120,
    "objects": 629,
    "zMin": 135.72816467285156,
    "zMax": 226.82861328125
@@ -10176,9 +10176,9 @@
    "near": "tiles/3_6.glb",
    "far": "tiles/3_6_far.glb",
    "tris": 42245,
-   "farTris": 7738,
+   "farTris": 7745,
    "objects": 482,
-   "zMin": 141.5546875,
+   "zMin": 141.99888610839844,
    "zMax": 217.02285766601562
   },
   {
@@ -10202,7 +10202,7 @@
    "near": "tiles/3_8.glb",
    "far": "tiles/3_8_far.glb",
    "tris": 17650,
-   "farTris": 2105,
+   "farTris": 2131,
    "objects": 325,
    "zMin": 192.77540588378906,
    "zMax": 256.27838134765625
@@ -10215,10 +10215,10 @@
    "near": "tiles/3_9.glb",
    "far": "tiles/3_9_far.glb",
    "tris": 53061,
-   "farTris": 6106,
+   "farTris": 6248,
    "objects": 651,
    "zMin": 77.2734375,
-   "zMax": 275.17498779296875
+   "zMax": 443.4122314453125
   },
   {
    "id": "4_-1",
@@ -10228,7 +10228,7 @@
    "near": "tiles/4_-1.glb",
    "far": "tiles/4_-1_far.glb",
    "tris": 42540,
-   "farTris": 9480,
+   "farTris": 9554,
    "objects": 762,
    "zMin": 75.8515625,
    "zMax": 221.98695373535156
@@ -10241,7 +10241,7 @@
    "near": "tiles/4_-2.glb",
    "far": "tiles/4_-2_far.glb",
    "tris": 28117,
-   "farTris": 6942,
+   "farTris": 7002,
    "objects": 398,
    "zMin": 76.83984375,
    "zMax": 178.25390625
@@ -10254,10 +10254,10 @@
    "near": "tiles/4_-3.glb",
    "far": "tiles/4_-3_far.glb",
    "tris": 973,
-   "farTris": 417,
+   "farTris": 451,
    "objects": 17,
-   "zMin": -20.93231201171875,
-   "zMax": 164.02284240722656
+   "zMin": -20.491546630859375,
+   "zMax": 598.137939453125
   },
   {
    "id": "4_0",
@@ -10267,7 +10267,7 @@
    "near": "tiles/4_0.glb",
    "far": "tiles/4_0_far.glb",
    "tris": 58318,
-   "farTris": 9571,
+   "farTris": 9715,
    "objects": 1072,
    "zMin": 80.3271484375,
    "zMax": 313.1184387207031
@@ -10280,7 +10280,7 @@
    "near": "tiles/4_1.glb",
    "far": "tiles/4_1_far.glb",
    "tris": 56297,
-   "farTris": 8559,
+   "farTris": 8735,
    "objects": 848,
    "zMin": 74.20854949951172,
    "zMax": 163.6952667236328
@@ -10293,7 +10293,7 @@
    "near": "tiles/4_10.glb",
    "far": "tiles/4_10_far.glb",
    "tris": 38235,
-   "farTris": 6230,
+   "farTris": 6236,
    "objects": 706,
    "zMin": 162.52734375,
    "zMax": 327.19921875
@@ -10306,10 +10306,10 @@
    "near": "tiles/4_11.glb",
    "far": "tiles/4_11_far.glb",
    "tris": 1767,
-   "farTris": 114,
+   "farTris": 124,
    "objects": 24,
    "zMin": 201.49374389648438,
-   "zMax": 336.17578125
+   "zMax": 382.0090637207031
   },
   {
    "id": "4_2",
@@ -10319,10 +10319,10 @@
    "near": "tiles/4_2.glb",
    "far": "tiles/4_2_far.glb",
    "tris": 79287,
-   "farTris": 12182,
+   "farTris": 12257,
    "objects": 1395,
    "zMin": 99.75562286376953,
-   "zMax": 178.27796936035156
+   "zMax": 178.2797393798828
   },
   {
    "id": "4_3",
@@ -10332,7 +10332,7 @@
    "near": "tiles/4_3.glb",
    "far": "tiles/4_3_far.glb",
    "tris": 18162,
-   "farTris": 2176,
+   "farTris": 2235,
    "objects": 299,
    "zMin": 121.98639678955078,
    "zMax": 189.16477966308594
@@ -10345,10 +10345,10 @@
    "near": "tiles/4_4.glb",
    "far": "tiles/4_4_far.glb",
    "tris": 51194,
-   "farTris": 7010,
+   "farTris": 7020,
    "objects": 708,
-   "zMin": 53.07548522949219,
-   "zMax": 236.82763671875
+   "zMin": 53.552391052246094,
+   "zMax": 378.8454895019531
   },
   {
    "id": "4_5",
@@ -10358,7 +10358,7 @@
    "near": "tiles/4_5.glb",
    "far": "tiles/4_5_far.glb",
    "tris": 56367,
-   "farTris": 10181,
+   "farTris": 10291,
    "objects": 674,
    "zMin": 140.00355529785156,
    "zMax": 222.7460174560547
@@ -10371,7 +10371,7 @@
    "near": "tiles/4_6.glb",
    "far": "tiles/4_6_far.glb",
    "tris": 13258,
-   "farTris": 3247,
+   "farTris": 3259,
    "objects": 128,
    "zMin": 129.76953125,
    "zMax": 199.43873596191406
@@ -10410,7 +10410,7 @@
    "near": "tiles/4_9.glb",
    "far": "tiles/4_9_far.glb",
    "tris": 46223,
-   "farTris": 8808,
+   "farTris": 8885,
    "objects": 619,
    "zMin": 155.74407958984375,
    "zMax": 254.58255004882812
@@ -10423,10 +10423,10 @@
    "near": "tiles/5_-1.glb",
    "far": "tiles/5_-1_far.glb",
    "tris": 35352,
-   "farTris": 7587,
+   "farTris": 8506,
    "objects": 735,
-   "zMin": 72.60798645019531,
-   "zMax": 541.5723876953125
+   "zMin": 72.8089828491211,
+   "zMax": 598.5005493164062
   },
   {
    "id": "5_-2",
@@ -10436,9 +10436,9 @@
    "near": "tiles/5_-2.glb",
    "far": "tiles/5_-2_far.glb",
    "tris": 19242,
-   "farTris": 4456,
+   "farTris": 4736,
    "objects": 195,
-   "zMin": 93.85813903808594,
+   "zMin": 94.04119110107422,
    "zMax": 178.13844299316406
   },
   {
@@ -10449,10 +10449,10 @@
    "near": "tiles/5_-3.glb",
    "far": "tiles/5_-3_far.glb",
    "tris": 186,
-   "farTris": 90,
+   "farTris": 120,
    "objects": 1,
    "zMin": 105.69312286376953,
-   "zMax": 144.486083984375
+   "zMax": 144.489013671875
   },
   {
    "id": "5_-4",
@@ -10464,8 +10464,8 @@
    "tris": 76,
    "farTris": 0,
    "objects": 1,
-   "zMin": 59.57198715209961,
-   "zMax": 61.153377532958984
+   "zMin": 59.857826232910156,
+   "zMax": 464.6939697265625
   },
   {
    "id": "5_0",
@@ -10475,7 +10475,7 @@
    "near": "tiles/5_0.glb",
    "far": "tiles/5_0_far.glb",
    "tris": 51298,
-   "farTris": 9085,
+   "farTris": 9173,
    "objects": 1088,
    "zMin": 83.05816650390625,
    "zMax": 137.18821716308594
@@ -10488,9 +10488,9 @@
    "near": "tiles/5_1.glb",
    "far": "tiles/5_1_far.glb",
    "tris": 20924,
-   "farTris": 5025,
+   "farTris": 5058,
    "objects": 273,
-   "zMin": 81.31736755371094,
+   "zMin": 81.24549865722656,
    "zMax": 190.12318420410156
   },
   {
@@ -10501,7 +10501,7 @@
    "near": "tiles/5_10.glb",
    "far": "tiles/5_10_far.glb",
    "tris": 73135,
-   "farTris": 11202,
+   "farTris": 11282,
    "objects": 929,
    "zMin": 182.11328125,
    "zMax": 308.49688720703125
@@ -10514,10 +10514,10 @@
    "near": "tiles/5_11.glb",
    "far": "tiles/5_11_far.glb",
    "tris": 29003,
-   "farTris": 3999,
+   "farTris": 4301,
    "objects": 386,
    "zMin": 206.203125,
-   "zMax": 336.4922180175781
+   "zMax": 387.8327941894531
   },
   {
    "id": "5_12",
@@ -10530,7 +10530,7 @@
    "farTris": 4,
    "objects": 1,
    "zMin": 270.921875,
-   "zMax": 293.05078125
+   "zMax": 397.546630859375
   },
   {
    "id": "5_2",
@@ -10540,9 +10540,9 @@
    "near": "tiles/5_2.glb",
    "far": "tiles/5_2_far.glb",
    "tris": 42128,
-   "farTris": 9106,
+   "farTris": 9378,
    "objects": 650,
-   "zMin": 0.00003746032598428428,
+   "zMin": 0.0078125,
    "zMax": 177.88369750976562
   },
   {
@@ -10553,10 +10553,10 @@
    "near": "tiles/5_3.glb",
    "far": "tiles/5_3_far.glb",
    "tris": 74617,
-   "farTris": 7814,
+   "farTris": 7906,
    "objects": 1189,
-   "zMin": -81.73129272460938,
-   "zMax": 190.21717834472656
+   "zMin": -82.0418701171875,
+   "zMax": 230.5838623046875
   },
   {
    "id": "5_4",
@@ -10568,8 +10568,8 @@
    "tris": 18739,
    "farTris": 2590,
    "objects": 296,
-   "zMin": 113.44436645507812,
-   "zMax": 197.0738525390625
+   "zMin": 113.75390625,
+   "zMax": 200.83384704589844
   },
   {
    "id": "5_5",
@@ -10579,9 +10579,9 @@
    "near": "tiles/5_5.glb",
    "far": "tiles/5_5_far.glb",
    "tris": 12665,
-   "farTris": 1799,
+   "farTris": 1857,
    "objects": 140,
-   "zMin": 134.52719116210938,
+   "zMin": 134.95960998535156,
    "zMax": 236.63082885742188
   },
   {
@@ -10605,7 +10605,7 @@
    "near": "tiles/5_7.glb",
    "far": "tiles/5_7_far.glb",
    "tris": 34302,
-   "farTris": 6884,
+   "farTris": 6910,
    "objects": 479,
    "zMin": 115.140625,
    "zMax": 237.9050750732422
@@ -10618,7 +10618,7 @@
    "near": "tiles/5_8.glb",
    "far": "tiles/5_8_far.glb",
    "tris": 46744,
-   "farTris": 7037,
+   "farTris": 7133,
    "objects": 669,
    "zMin": 136.02734375,
    "zMax": 253.51690673828125
@@ -10631,7 +10631,7 @@
    "near": "tiles/5_9.glb",
    "far": "tiles/5_9_far.glb",
    "tris": 37326,
-   "farTris": 6756,
+   "farTris": 6782,
    "objects": 482,
    "zMin": 157.24415588378906,
    "zMax": 303.4559631347656
@@ -10644,9 +10644,9 @@
    "near": "tiles/6_-1.glb",
    "far": "tiles/6_-1_far.glb",
    "tris": 18013,
-   "farTris": 3656,
+   "farTris": 3761,
    "objects": 279,
-   "zMin": 40.157711029052734,
+   "zMin": 40.37355422973633,
    "zMax": 177.0767059326172
   },
   {
@@ -10657,7 +10657,7 @@
    "near": "tiles/6_-2.glb",
    "far": "tiles/6_-2_far.glb",
    "tris": 8165,
-   "farTris": 2446,
+   "farTris": 2484,
    "objects": 93,
    "zMin": 89.83658599853516,
    "zMax": 212.574462890625
@@ -10670,10 +10670,10 @@
    "near": "tiles/6_-5.glb",
    "far": "tiles/6_-5_far.glb",
    "tris": 56,
-   "farTris": 0,
+   "farTris": 40,
    "objects": 1,
-   "zMin": -4.391998291015625,
-   "zMax": 131.74990844726562
+   "zMin": -4.1323699951171875,
+   "zMax": 300.83642578125
   },
   {
    "id": "6_0",
@@ -10683,7 +10683,7 @@
    "near": "tiles/6_0.glb",
    "far": "tiles/6_0_far.glb",
    "tris": 42026,
-   "farTris": 7726,
+   "farTris": 7956,
    "objects": 758,
    "zMin": 35.840633392333984,
    "zMax": 166.64865112304688
@@ -10696,9 +10696,9 @@
    "near": "tiles/6_1.glb",
    "far": "tiles/6_1_far.glb",
    "tris": 56227,
-   "farTris": 11245,
+   "farTris": 11661,
    "objects": 954,
-   "zMin": -7.026827812194824,
+   "zMin": -6.87109375,
    "zMax": 169.78903198242188
   },
   {
@@ -10709,10 +10709,10 @@
    "near": "tiles/6_10.glb",
    "far": "tiles/6_10_far.glb",
    "tris": 37939,
-   "farTris": 6294,
+   "farTris": 6411,
    "objects": 560,
-   "zMin": 149.58567810058594,
-   "zMax": 324.2308654785156
+   "zMin": 149.93435668945312,
+   "zMax": 398.6650695800781
   },
   {
    "id": "6_11",
@@ -10722,10 +10722,10 @@
    "near": "tiles/6_11.glb",
    "far": "tiles/6_11_far.glb",
    "tris": 15861,
-   "farTris": 3530,
+   "farTris": 3840,
    "objects": 204,
    "zMin": 234.609375,
-   "zMax": 360.6210632324219
+   "zMax": 414.99365234375
   },
   {
    "id": "6_12",
@@ -10735,10 +10735,10 @@
    "near": "tiles/6_12.glb",
    "far": "tiles/6_12_far.glb",
    "tris": 131,
-   "farTris": 0,
+   "farTris": 16,
    "objects": 3,
-   "zMin": 273.0661926269531,
-   "zMax": 372.4140625
+   "zMin": 272.9415283203125,
+   "zMax": 397.546630859375
   },
   {
    "id": "6_2",
@@ -10748,10 +10748,10 @@
    "near": "tiles/6_2.glb",
    "far": "tiles/6_2_far.glb",
    "tris": 34075,
-   "farTris": 6868,
+   "farTris": 7428,
    "objects": 549,
    "zMin": -1.41796875,
-   "zMax": 253.59130859375
+   "zMax": 301.77264404296875
   },
   {
    "id": "6_3",
@@ -10761,9 +10761,9 @@
    "near": "tiles/6_3.glb",
    "far": "tiles/6_3_far.glb",
    "tris": 17893,
-   "farTris": 2497,
+   "farTris": 2854,
    "objects": 277,
-   "zMin": 72.46526336669922,
+   "zMin": 72.81266021728516,
    "zMax": 238.43963623046875
   },
   {
@@ -10774,7 +10774,7 @@
    "near": "tiles/6_4.glb",
    "far": "tiles/6_4_far.glb",
    "tris": 30780,
-   "farTris": 5168,
+   "farTris": 5267,
    "objects": 399,
    "zMin": 102.296875,
    "zMax": 211.5625
@@ -10789,8 +10789,8 @@
    "tris": 80101,
    "farTris": 6205,
    "objects": 1494,
-   "zMin": -33.12748718261719,
-   "zMax": 180.52944946289062
+   "zMin": -32.63681411743164,
+   "zMax": 391.5397033691406
   },
   {
    "id": "6_6",
@@ -10813,9 +10813,9 @@
    "near": "tiles/6_7.glb",
    "far": "tiles/6_7_far.glb",
    "tris": 13594,
-   "farTris": 1923,
+   "farTris": 1953,
    "objects": 206,
-   "zMin": 53.20860290527344,
+   "zMin": 53.4023323059082,
    "zMax": 263.9447326660156
   },
   {
@@ -10826,10 +10826,10 @@
    "near": "tiles/6_8.glb",
    "far": "tiles/6_8_far.glb",
    "tris": 16242,
-   "farTris": 2628,
+   "farTris": 2665,
    "objects": 230,
-   "zMin": 139.71847534179688,
-   "zMax": 308.99505615234375
+   "zMin": 139.5768585205078,
+   "zMax": 322.1931457519531
   },
   {
    "id": "6_9",
@@ -10839,10 +10839,10 @@
    "near": "tiles/6_9.glb",
    "far": "tiles/6_9_far.glb",
    "tris": 17120,
-   "farTris": 3292,
+   "farTris": 3512,
    "objects": 306,
    "zMin": 104.12109375,
-   "zMax": 303.82183837890625
+   "zMax": 352.0912780761719
   },
   {
    "id": "7_-1",
@@ -10852,9 +10852,9 @@
    "near": "tiles/7_-1.glb",
    "far": "tiles/7_-1_far.glb",
    "tris": 7901,
-   "farTris": 2380,
+   "farTris": 3013,
    "objects": 150,
-   "zMin": -16.06403350830078,
+   "zMin": -16.39273452758789,
    "zMax": 151.41015625
   },
   {
@@ -10865,10 +10865,10 @@
    "near": "tiles/7_-2.glb",
    "far": "tiles/7_-2_far.glb",
    "tris": 66,
-   "farTris": 1,
+   "farTris": 66,
    "objects": 2,
-   "zMin": 22.085966110229492,
-   "zMax": 38.3016471862793
+   "zMin": 22.007230758666992,
+   "zMax": 89.54727172851562
   },
   {
    "id": "7_0",
@@ -10878,7 +10878,7 @@
    "near": "tiles/7_0.glb",
    "far": "tiles/7_0_far.glb",
    "tris": 35885,
-   "farTris": 10003,
+   "farTris": 10278,
    "objects": 700,
    "zMin": -17.13671875,
    "zMax": 165.09317016601562
@@ -10891,7 +10891,7 @@
    "near": "tiles/7_1.glb",
    "far": "tiles/7_1_far.glb",
    "tris": 37922,
-   "farTris": 9922,
+   "farTris": 10169,
    "objects": 638,
    "zMin": 0.549407958984375,
    "zMax": 139.55685424804688
@@ -10906,8 +10906,8 @@
    "tris": 578,
    "farTris": 4,
    "objects": 13,
-   "zMin": 274.0721740722656,
-   "zMax": 329.2768859863281
+   "zMin": 274.4765319824219,
+   "zMax": 411.8841247558594
   },
   {
    "id": "7_11",
@@ -10919,8 +10919,8 @@
    "tris": 175,
    "farTris": 3,
    "objects": 4,
-   "zMin": 47.356231689453125,
-   "zMax": 445.86346435546875
+   "zMin": 47.697113037109375,
+   "zMax": 689.546630859375
   },
   {
    "id": "7_2",
@@ -10930,7 +10930,7 @@
    "near": "tiles/7_2.glb",
    "far": "tiles/7_2_far.glb",
    "tris": 41475,
-   "farTris": 7181,
+   "farTris": 7384,
    "objects": 717,
    "zMin": -8.9375,
    "zMax": 190.3585662841797
@@ -10943,10 +10943,10 @@
    "near": "tiles/7_3.glb",
    "far": "tiles/7_3_far.glb",
    "tris": 25130,
-   "farTris": 2646,
+   "farTris": 3309,
    "objects": 382,
-   "zMin": -11.04183578491211,
-   "zMax": 203.5234375
+   "zMin": -10.7098388671875,
+   "zMax": 215.88902282714844
   },
   {
    "id": "7_4",
@@ -10956,10 +10956,10 @@
    "near": "tiles/7_4.glb",
    "far": "tiles/7_4_far.glb",
    "tris": 39850,
-   "farTris": 5776,
+   "farTris": 5888,
    "objects": 657,
-   "zMin": 99.3878402709961,
-   "zMax": 214.93359375
+   "zMin": 99.28633880615234,
+   "zMax": 216.7232208251953
   },
   {
    "id": "7_5",
@@ -10969,7 +10969,7 @@
    "near": "tiles/7_5.glb",
    "far": "tiles/7_5_far.glb",
    "tris": 48626,
-   "farTris": 4750,
+   "farTris": 4785,
    "objects": 941,
    "zMin": 44.109375,
    "zMax": 169.60711669921875
@@ -10982,10 +10982,10 @@
    "near": "tiles/7_6.glb",
    "far": "tiles/7_6_far.glb",
    "tris": 57184,
-   "farTris": 6262,
+   "farTris": 6325,
    "objects": 1113,
-   "zMin": 14.072372436523438,
-   "zMax": 134.16796875
+   "zMin": 14.58135986328125,
+   "zMax": 310.99456787109375
   },
   {
    "id": "7_7",
@@ -10995,9 +10995,9 @@
    "near": "tiles/7_7.glb",
    "far": "tiles/7_7_far.glb",
    "tris": 44436,
-   "farTris": 6261,
+   "farTris": 6328,
    "objects": 854,
-   "zMin": 7.027220249176025,
+   "zMin": 6.968358516693115,
    "zMax": 321.16796875
   },
   {
@@ -11008,10 +11008,10 @@
    "near": "tiles/7_8.glb",
    "far": "tiles/7_8_far.glb",
    "tris": 42196,
-   "farTris": 5150,
+   "farTris": 5853,
    "objects": 887,
-   "zMin": -4.01431131362915,
-   "zMax": 374.89453125
+   "zMin": -3.663708448410034,
+   "zMax": 386.4130859375
   },
   {
    "id": "7_9",
@@ -11021,10 +11021,10 @@
    "near": "tiles/7_9.glb",
    "far": "tiles/7_9_far.glb",
    "tris": 552,
-   "farTris": 20,
+   "farTris": 76,
    "objects": 12,
    "zMin": 104.12109375,
-   "zMax": 269.6484375
+   "zMax": 335.0906677246094
   },
   {
    "id": "8_-1",
@@ -11034,7 +11034,7 @@
    "near": "tiles/8_-1.glb",
    "far": "tiles/8_-1_far.glb",
    "tris": 24836,
-   "farTris": 6591,
+   "farTris": 6674,
    "objects": 427,
    "zMin": -2.90625,
    "zMax": 58.97111511230469
@@ -11047,9 +11047,9 @@
    "near": "tiles/8_-2.glb",
    "far": "tiles/8_-2_far.glb",
    "tris": 757,
-   "farTris": 75,
+   "farTris": 191,
    "objects": 19,
-   "zMin": 17.067296981811523,
+   "zMin": 17.2265625,
    "zMax": 60.81715393066406
   },
   {
@@ -11062,8 +11062,8 @@
    "tris": 55,
    "farTris": 0,
    "objects": 1,
-   "zMin": -22.592098236083984,
-   "zMax": -21.82211685180664
+   "zMin": -22.710737228393555,
+   "zMax": 174.40463256835938
   },
   {
    "id": "8_0",
@@ -11073,7 +11073,7 @@
    "near": "tiles/8_0.glb",
    "far": "tiles/8_0_far.glb",
    "tris": 23008,
-   "farTris": 5294,
+   "farTris": 5833,
    "objects": 644,
    "zMin": -17.13671875,
    "zMax": 101.1982192993164
@@ -11086,7 +11086,7 @@
    "near": "tiles/8_1.glb",
    "far": "tiles/8_1_far.glb",
    "tris": 33591,
-   "farTris": 6597,
+   "farTris": 6650,
    "objects": 746,
    "zMin": -17.13671875,
    "zMax": 64.61265563964844
@@ -11099,7 +11099,7 @@
    "near": "tiles/8_2.glb",
    "far": "tiles/8_2_far.glb",
    "tris": 89502,
-   "farTris": 12263,
+   "farTris": 12326,
    "objects": 1457,
    "zMin": -9.4140625,
    "zMax": 195.19728088378906
@@ -11112,9 +11112,9 @@
    "near": "tiles/8_3.glb",
    "far": "tiles/8_3_far.glb",
    "tris": 51551,
-   "farTris": 6674,
+   "farTris": 6958,
    "objects": 686,
-   "zMin": -10.863058090209961,
+   "zMin": -11.23794174194336,
    "zMax": 143.64898681640625
   },
   {
@@ -11125,7 +11125,7 @@
    "near": "tiles/8_4.glb",
    "far": "tiles/8_4_far.glb",
    "tris": 57807,
-   "farTris": 6456,
+   "farTris": 6566,
    "objects": 1011,
    "zMin": 69.625,
    "zMax": 240.5513916015625
@@ -11138,7 +11138,7 @@
    "near": "tiles/8_5.glb",
    "far": "tiles/8_5_far.glb",
    "tris": 17839,
-   "farTris": 3003,
+   "farTris": 3098,
    "objects": 356,
    "zMin": -2.125,
    "zMax": 165.80235290527344
@@ -11151,10 +11151,10 @@
    "near": "tiles/8_6.glb",
    "far": "tiles/8_6_far.glb",
    "tris": 21307,
-   "farTris": 4671,
+   "farTris": 4834,
    "objects": 345,
    "zMin": 0.0859375,
-   "zMax": 133.37109375
+   "zMax": 134.07127380371094
   },
   {
    "id": "8_7",
@@ -11164,10 +11164,10 @@
    "near": "tiles/8_7.glb",
    "far": "tiles/8_7_far.glb",
    "tris": 42957,
-   "farTris": 9443,
+   "farTris": 10111,
    "objects": 639,
    "zMin": -12.918437004089355,
-   "zMax": 93.7421875
+   "zMax": 136.71116638183594
   },
   {
    "id": "8_8",
@@ -11177,7 +11177,7 @@
    "near": "tiles/8_8.glb",
    "far": "tiles/8_8_far.glb",
    "tris": 32941,
-   "farTris": 4612,
+   "farTris": 4654,
    "objects": 648,
    "zMin": -4.174689292907715,
    "zMax": 297.59765625
@@ -11190,10 +11190,10 @@
    "near": "tiles/8_9.glb",
    "far": "tiles/8_9_far.glb",
    "tris": 16385,
-   "farTris": 2362,
+   "farTris": 2400,
    "objects": 358,
-   "zMin": -9.034202575683594,
-   "zMax": 145.64102172851562
+   "zMin": -8.755759239196777,
+   "zMax": 263.9146728515625
   },
   {
    "id": "9_-1",
@@ -11203,9 +11203,9 @@
    "near": "tiles/9_-1.glb",
    "far": "tiles/9_-1_far.glb",
    "tris": 37725,
-   "farTris": 6679,
+   "farTris": 7041,
    "objects": 679,
-   "zMin": -7.026900291442871,
+   "zMin": -6.95703125,
    "zMax": 79.43959045410156
   },
   {
@@ -11231,8 +11231,8 @@
    "tris": 55,
    "farTris": 0,
    "objects": 1,
-   "zMin": -43.16788101196289,
-   "zMax": -41.408668518066406
+   "zMin": -42.97795486450195,
+   "zMax": 407.3806457519531
   },
   {
    "id": "9_0",
@@ -11255,7 +11255,7 @@
    "near": "tiles/9_1.glb",
    "far": "tiles/9_1_far.glb",
    "tris": 47957,
-   "farTris": 6807,
+   "farTris": 6947,
    "objects": 1049,
    "zMin": -12.79296875,
    "zMax": 127.00434875488281
@@ -11270,8 +11270,8 @@
    "tris": 56,
    "farTris": 0,
    "objects": 1,
-   "zMin": -6.024583339691162,
-   "zMax": 142.2342987060547
+   "zMin": -6.293360233306885,
+   "zMax": 315.9806823730469
   },
   {
    "id": "9_2",
@@ -11281,7 +11281,7 @@
    "near": "tiles/9_2.glb",
    "far": "tiles/9_2_far.glb",
    "tris": 52647,
-   "farTris": 8151,
+   "farTris": 8205,
    "objects": 958,
    "zMin": -9.2890625,
    "zMax": 129.47239685058594
@@ -11294,10 +11294,10 @@
    "near": "tiles/9_3.glb",
    "far": "tiles/9_3_far.glb",
    "tris": 52069,
-   "farTris": 5508,
+   "farTris": 5543,
    "objects": 782,
    "zMin": 39.40144348144531,
-   "zMax": 126.46702575683594
+   "zMax": 191.37864685058594
   },
   {
    "id": "9_4",
@@ -11307,9 +11307,9 @@
    "near": "tiles/9_4.glb",
    "far": "tiles/9_4_far.glb",
    "tris": 23919,
-   "farTris": 2419,
+   "farTris": 3179,
    "objects": 328,
-   "zMin": -8.03005599975586,
+   "zMin": -7.694350242614746,
    "zMax": 229.20794677734375
   },
   {
@@ -11320,9 +11320,9 @@
    "near": "tiles/9_5.glb",
    "far": "tiles/9_5_far.glb",
    "tris": 56530,
-   "farTris": 6768,
+   "farTris": 7020,
    "objects": 835,
-   "zMin": -8.03005599975586,
+   "zMin": -7.6953125,
    "zMax": 212.9140625
   },
   {
@@ -11346,7 +11346,7 @@
    "near": "tiles/9_7.glb",
    "far": "tiles/9_7_far.glb",
    "tris": 12714,
-   "farTris": 3071,
+   "farTris": 3197,
    "objects": 225,
    "zMin": -4.174689292907715,
    "zMax": 44.886566162109375
@@ -11359,10 +11359,10 @@
    "near": "tiles/9_8.glb",
    "far": "tiles/9_8_far.glb",
    "tris": 62195,
-   "farTris": 11507,
+   "farTris": 11993,
    "objects": 975,
    "zMin": -4.174689292907715,
-   "zMax": 58.90234375
+   "zMax": 94.46380615234375
   },
   {
    "id": "9_9",
@@ -11372,10 +11372,10 @@
    "near": "tiles/9_9.glb",
    "far": "tiles/9_9_far.glb",
    "tris": 3634,
-   "farTris": 881,
+   "farTris": 907,
    "objects": 63,
-   "zMin": -3.0120162963867188,
-   "zMax": 101.28337860107422
+   "zMin": -3.076178789138794,
+   "zMax": 149.05308532714844
   }
  ],
  "tileSize": 400,
@@ -20481,14 +20481,14 @@
    ]
   },
   {
-   "name": "BARRIER_SPLINE_01",
+   "name": "7d80d970",
    "hash": "7d80d970",
    "number": 457,
    "kind": "carrera",
    "barrier": true,
    "driveThrough": false,
    "objects": 8,
-   "glb": "groups/BARRIER_SPLINE_01.glb",
+   "glb": "groups/7d80d970.glb",
    "min": [
     3995.35107421875,
     598.4666748046875,
@@ -22221,14 +22221,14 @@
    ]
   },
   {
-   "name": "BARRIER_SPLINE_07",
+   "name": "7d80d976",
    "hash": "7d80d976",
    "number": 544,
    "kind": "carrera",
    "barrier": true,
    "driveThrough": false,
    "objects": 9,
-   "glb": "groups/BARRIER_SPLINE_07.glb",
+   "glb": "groups/7d80d976.glb",
    "min": [
     4785.4716796875,
     907.8772583007812,
@@ -22261,14 +22261,14 @@
    ]
   },
   {
-   "name": "BARRIER_SPLINE_09",
+   "name": "7d80d978",
    "hash": "7d80d978",
    "number": 546,
    "kind": "carrera",
    "barrier": true,
    "driveThrough": false,
    "objects": 10,
-   "glb": "groups/BARRIER_SPLINE_09.glb",
+   "glb": "groups/7d80d978.glb",
    "min": [
     4763.3564453125,
     907.93115234375,
@@ -22801,14 +22801,14 @@
    ]
   },
   {
-   "name": "BARRIER_SPLINE_02",
+   "name": "7d80d971",
    "hash": "7d80d971",
    "number": 573,
    "kind": "carrera",
    "barrier": true,
    "driveThrough": true,
    "objects": 5,
-   "glb": "groups/BARRIER_SPLINE_02.glb",
+   "glb": "groups/7d80d971.glb",
    "min": [
     3491.702392578125,
     2984.982666015625,
@@ -23021,14 +23021,14 @@
    ]
   },
   {
-   "name": "BARRIER_SPLINE_05",
+   "name": "7d80d974",
    "hash": "7d80d974",
    "number": 584,
    "kind": "carrera",
    "barrier": true,
    "driveThrough": false,
    "objects": 8,
-   "glb": "groups/BARRIER_SPLINE_05.glb",
+   "glb": "groups/7d80d974.glb",
    "min": [
     3492.46044921875,
     2985.313720703125,

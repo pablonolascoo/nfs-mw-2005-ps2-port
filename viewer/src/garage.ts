@@ -35,6 +35,20 @@ export function boxClipPlanes(M: THREE.Matrix4) {
   return planes;
 }
 
+/** Quita el fondo del frontend que no cabe dentro de un edificio: la cúpula del cielo (…_SKY) y la caja exterior del refugio
+ *  (CRIB1_OFFICE_TEXTURE), ambas del sólido BACKDROP_CURRGEN. Desde que el conversor lee bien las posiciones en float (V4-32)
+ *  esas piezas miden cientos de metros y estropeaban el análisis por rayos (doc 07 §2). */
+export function stripBackdrop(obj: THREE.Object3D) {
+  const drop: THREE.Object3D[] = [];
+  obj.traverse(o => {
+    const m = o as THREE.Mesh; if (!m.isMesh) return;
+    let inBackdrop = false; for (let q: THREE.Object3D | null = m; q; q = q.parent) if (q.name === "BACKDROP_CURRGEN") inBackdrop = true;
+    const mat = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.Material;
+    if (inBackdrop && /_SKY$|MIDDAYSKY|OFFICE_TEXTURE/i.test(mat?.name ?? "")) drop.push(m);
+  });
+  for (const d of drop) d.removeFromParent();
+}
+
 interface Layout { floorZ: number; openDir: THREE.Vector2; depth: number; halfWidth: number; height: number }
 
 /** Analiza el interior con rayos: altura del suelo bajo el origen y lado abierto (entrada). */

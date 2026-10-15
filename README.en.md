@@ -74,6 +74,14 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | **100 % original HUD** with the game's radar, race screens, results, Blacklist and pursuit endings — [doc 17](docs/en/17-interface.md) | ✅ v0.4 |
 | Garages in the native engine, engine sound, movies, car-to-car collisions | 🔜 |
 
+## Quick Race and split screen
+
+<img src="site/img/pantalla-partida.jpg" alt="4-player split screen in the native engine" width="100%">
+
+Quick Race uses the game's own screens: race type, track select with each event's map, options and car select. **Two-player split screen as in the original** (horizontal, with the disc's split-screen HUD) and, as a port extension, **3 and 4 players** and **several displays at once** (e.g. 2 players per monitor).
+
+Each player uses their own controller (Xbox, DualSense, DualShock 4, DualShock 3, PS2 adapter or the keyboard) **with no input mixing**: "Press START" to join, the first one is player 1 and drives the menus, each pad only moves its own car, light bar and LED take your player's colour, and the race pauses if a controller is unplugged until it's back. `--race 15.1.1 --players 2` starts directly; `--displays all` uses every display. Details: [doc 19](docs/en/19-quick-race-and-multiplayer.md).
+
 ## Play on your Mac
 1. Download `Rockport-<version>.dmg` from [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases) and drag **Rockport** to Applications.
 2. Open it (first time: right-click → Open, it is not notarised yet).

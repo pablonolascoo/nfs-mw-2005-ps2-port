@@ -83,7 +83,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, MTKViewDelegate {
         engine.enableRaces()
         SFXWorld.shared.attach(engine)   // sonido del juego: motores, efectos, sirenas (Audio/SFXWorld.swift)
         if CommandLine.arguments.contains("--career") { Career.shared.start() }
-        if let ev = RaceTestOptions.value("--race") { QuickRace.shared.start(eventID: ev, engine: engine) }
+        if let ev = RaceTestOptions.value("--race") {
+            // --players N (2…4): pantalla partida; primero «Pulsa START» para repartir los mandos (Multiplayer/, UI/JoinScreen.swift)
+            if let n = MultiplayerSettings.shared.launchPlayers, n > 1, let ui = engine.ui { QuickRaceFlow.shared.launchSplit(eventID: ev, players: n, ui: ui) }
+            else { QuickRace.shared.start(eventID: ev, engine: engine) }
+        }
         view.delegate = self
         window.contentView = view
         window.makeKeyAndOrderFront(nil)

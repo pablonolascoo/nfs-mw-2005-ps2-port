@@ -265,7 +265,7 @@ final class FEUI: RenderOverlay {
         _ = iconMenu("MainMenu", title: 0xb24aae58, options: [
             (0x03704f3d, 0x5815a2b5, { [weak self] in self?.leaveTop { self?.showCareerMenu() } }),
             (0x9a962438, 0xcc8cb746, { [weak self] in self?.comingSoon(0xcc8cb746) }),
-            (0x4e6fbb02, 0x54020a7a, { [weak self] in self?.leaveTop { self?.startQuickRace() } }),
+            (0x4e6fbb02, 0x54020a7a, { [weak self] in self?.leaveTop { if let s = self { QuickRaceFlow.shared.open(s) } } }),   // UI/QuickRaceFlow.swift
             (0xb0c46023, 0x1afd5be6, { [weak self] in self?.comingSoon(0x1afd5be6) }),
             (0x3058fe37, 0x19a8c0af, { [weak self] in self?.comingSoon(0x19a8c0af) }),
         ])
@@ -278,12 +278,21 @@ final class FEUI: RenderOverlay {
     func showCareerMenu() {
         state = .menu
         popAll()
-        engine.garages?.stage.screenAngle("career_manager")
+        if let st = engine.garages?.stage {
+            if !st.active { st.enter(.mainFE, animate: false) }
+            st.screenAngle("career_manager")
+        }
         // uiCareerManager [D]: Continuar / Empezar nuevo
         _ = iconMenu("MainMenu_Sub", title: 0x5815a2b5, options: [
-            (0xC1C089CE, 0xE072DB21, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.start() } }),
-            (0xE7353BE7, 0x17E18F87, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.newGame() } }),
+            (0xC1C089CE, 0xE072DB21, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.start(); self?.careerCar() } }),
+            (0xE7353BE7, 0x17E18F87, { [weak self] in self?.leaveTop { self?.startGame(); Career.shared.newGame(); self?.careerCar() } }),
         ])
+    }
+
+    /// El coche de la partida (con su tuneo del taller, Garage/CarTuning.swift) en el sitio del de por defecto.
+    private func careerCar() {
+        let key = Career.shared.save.currentCar
+        if key != Config.playerPreset || CarTuning.tune(key) != nil { CarTuning.replacePlayerCar(engine, key: key) }
     }
 
     /// Carrera rápida: de momento una prueba al azar de las que el juego marca como AvailableQR

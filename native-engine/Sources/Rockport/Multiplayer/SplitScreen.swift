@@ -48,7 +48,8 @@ final class SplitScreen: RenderOverlay {
     let displays: Int
     /// Pantalla que se está dibujando (la pone quien llama a `views`); el HUD la usa en `encodeScreen`.
     var currentDisplay = 0
-    private var feRenderer: FERenderer?
+    /// Un dibujante de HUD por pantalla (cada uno con su anillo de búferes).
+    private var feRenderers: [Int: FERenderer] = [:]
     private var unplugged: (screen: FEScreen, player: MPPlayer)?
     private var hookInstalled = false
     var drawCalls: Int { 0 }
@@ -96,7 +97,6 @@ final class SplitScreen: RenderOverlay {
         RaceSystem.shared?.playerHUDs = players.map { p -> RaceHUD in p.hud ?? NullRaceHUD() }
         // Menús de la carrera (pausa): cualquiera de los que juegan [D: cFEngJoyInput::HandleJoy lee los dos puertos]
         MenuOwners.allowed = Set(players.compactMap(\.device.key))
-        if feRenderer == nil, let r = try? FERenderer(device: engine.device, outputFormat: .bgra8Unorm) { feRenderer = r }
         // El HUD va antes que la interfaz (pausa y resultados por encima)
         if let i = engine.renderer.overlays.firstIndex(where: { $0 === engine.ui }) { engine.renderer.overlays.insert(self, at: i) }
         else { engine.renderer.overlays.append(self) }
@@ -106,6 +106,13 @@ final class SplitScreen: RenderOverlay {
         }
         Controllers.shared.onPadsChanged = { [weak self] in self?.checkConnections() }
         Controllers.shared.hid.onPadsChanged = { [weak self] in self?.checkConnections() }
+        // Sonido (Audio/SFXWorld.swift): un coche local y un oyente (su cámara) por jugador
+        SFXWorld.shared.localCarsProvider = { [weak self] in self?.playerCars ?? [] }
+        SFXWorld.shared.listenersProvider = { [weak self] in
+            self?.players.map { p in SFXListener(position: p.car.camera.eye, forward: simd_normalize(p.car.camera.target - p.car.camera.eye + 1e-6),
+                                                  velocity: p.car.velocity) } ?? []
+        }
+        if displays > 1 { MultiDisplay.shared.open(extra: displays - 1, engine: engine) }
         print("Pantalla partida: \(players.count) jugadores en \(displays) pantalla(s) · " +
               players.map { "J\($0.index + 1) \($0.device.label(spanish: true)) (\($0.name))" }.joined(separator: " · "))
     }
@@ -122,7 +129,10 @@ final class SplitScreen: RenderOverlay {
         MenuOwners.allowed = nil
         Controllers.shared.onPadsChanged = nil
         Controllers.shared.hid.onPadsChanged = nil
+        SFXWorld.shared.localCarsProvider = nil
+        SFXWorld.shared.listenersProvider = nil
         hideUnplugged()
+        MultiDisplay.shared.close()
         for p in players { p.car.camera.splitScreen = false; p.device.setPlayer(nil, color: nil); p.device.quiet() }
         if SplitScreen.current === self { SplitScreen.current = nil }
     }
@@ -142,6 +152,12 @@ final class SplitScreen: RenderOverlay {
     /// Enganche del fotograma (tras el jugador 1 y la carrera): los demás coches, sus cámaras, vibración y HUD.
     private func step(dt: Float) {
         guard active else { return }
+        // Salir desde la pausa (menú principal): la prueba se abandona y se vuelve a un jugador
+        if let st = engine.ui?.state, st == .menu || st == .splash {
+            if let s = RaceSystem.shared?.session { s.abandon() }
+            if active { end() }
+            return
+        }
         checkConnections()
         if unplugged != nil { pollReconnect(); return }
         if dt > 0 {
@@ -177,7 +193,8 @@ final class SplitScreen: RenderOverlay {
             var input = HudInput.from(car: p.car, english: english)
             if engine.ai != nil, p.index == 0, let ui = engine.ui { input.heat = ui.engine.ui_hudInput().heat }
             // Radar compartido de dos jugadores: el otro coche como segundo icono [D: Minimap::UpdatePlayer2Element]
-            if p.slot.minimap, players.count == 2, let o = players.first(where: { $0 !== p }) {
+            let mates = players.filter { $0.display == p.display }
+            if p.slot.minimap, mates.count == 2, let o = mates.first(where: { $0 !== p }) {
                 let d = SIMD2(o.car.forward.x, o.car.forward.y)
                 h.current?.otherPlayer = (SIMD2(o.car.position.x, o.car.position.y), simd_length(d) > 0.01 ? simd_normalize(d) : SIMD2(1, 0))
             }
@@ -246,7 +263,9 @@ final class SplitScreen: RenderOverlay {
     func encodeOpaque(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {}
     func encodeTransparent(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {}
     func encodeScreen(_ cb: MTLCommandBuffer, target: MTLTexture) {
-        guard active, let fr = feRenderer else { return }
+        guard active else { return }
+        if feRenderers[currentDisplay] == nil { feRenderers[currentDisplay] = try? FERenderer(device: engine.device, outputFormat: .bgra8Unorm) }
+        guard let fr = feRenderers[currentDisplay] else { return }
         let W = Float(target.width), H = Float(target.height)
         var batches: [FEBatch] = []
         for p in players where p.display == currentDisplay {
@@ -305,6 +324,15 @@ final class SplitScreen: RenderOverlay {
             return
         }
     }
+
+    /// Pruebas sin ventana (--split-test … --unplug-test): simula que el mando del jugador `i` se suelta y vuelve.
+    func testUnplug(_ i: Int) { guard i < players.count else { return }; players[i].disconnected = true; showUnplugged(players[i]) }
+    func testReconnect() {
+        guard let (_, p) = unplugged else { return }
+        p.disconnected = false
+        hideUnplugged()
+    }
+    var isWaitingForController: Bool { unplugged != nil }
 
     private func hideUnplugged() {
         guard let (s, _) = unplugged else { return }

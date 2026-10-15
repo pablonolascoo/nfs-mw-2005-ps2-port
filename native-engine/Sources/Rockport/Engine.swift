@@ -213,7 +213,10 @@ final class Engine {
     func renderDisplay(_ display: Int, cb: MTLCommandBuffer, target: MTLTexture, scale: Float) {
         guard let ss = splitScreen, ss.active else { return }
         ss.currentDisplay = display
-        defer { ss.currentDisplay = 0 }
+        // Los menús de la interfaz solo van en la pantalla principal (su búfer de vértices es de un destino por fotograma)
+        let saved = renderer.overlays
+        renderer.overlays = saved.filter { $0 !== ui }
+        defer { ss.currentDisplay = 0; renderer.overlays = saved }
         renderer.encode(cb, views: ss.views(target: target), target: target, scale: scale)
     }
 }

@@ -63,6 +63,12 @@ extension Engine {
             p.speed = simd_dot(car.velocity, car.forward)
             p.halfLength = car.halfLength; p.halfWidth = car.halfWidth
         }
+        // Pantalla partida: los demás humanos para el tráfico (Multiplayer/SplitScreen.swift)
+        ai.others = splitScreen?.active == true ? (splitScreen?.players.dropFirst().map { pl in
+            var o = AIPlayer(); o.exists = true; o.pos = pl.car.position; o.yaw = pl.car.yaw
+            o.speed = simd_dot(pl.car.velocity, pl.car.forward); o.halfLength = pl.car.halfLength; o.halfWidth = pl.car.halfWidth
+            return o
+        } ?? []) : []
         let v = frame.view
         let camFwd = -float3(v.columns.0.z, v.columns.1.z, v.columns.2.z)
         ai.update(dt: dt, player: p, cameraPos: frame.camPos, cameraFwd: camFwd, viewProj: frame.proj * frame.view)

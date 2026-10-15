@@ -6,7 +6,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { loadTile, loadPackedTile } from "./tile-loader";
 import { Driver, makeCollider, carHolder, tuningPacks, presetPacks, presetData, type CarAttribs, type CarConfig, type CarPreset } from "./drive";
 import { buildRoads, type RoadsFile } from "./roads";
-import { INTERIOR_FOR, analyzeInterior, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
+import { INTERIOR_FOR, analyzeInterior, stripBackdrop, RollerDoor, cutout, cutoutState, insideCutout, clipToBox, garageMod, mods, type GarageInfo } from "./garage";
 
 // Contrato de datos (lo genera tools/src/cli/convert.ts):
 //   map-data/<disco>/index.json  → recursos sueltos (coches, secciones)
@@ -487,7 +487,7 @@ let garage: Placed | null = null;
 const ZONE_NAME = { safehouse: "refugio", carlot: "concesionario", customshop: "taller" } as const;
 function interiorFor(name: string) {
   let p = interiorCache.get(name);
-  if (!p) { const it = index!.items.find(i => i.id === `int:${name}`)!; p = loadGlb(it.glb).then(obj => { const holder = new THREE.Group(); holder.add(obj); return { obj: holder, layout: analyzeInterior(holder) }; }); interiorCache.set(name, p); }
+  if (!p) { const it = index!.items.find(i => i.id === `int:${name}`)!; p = loadGlb(it.glb).then(obj => { stripBackdrop(obj); const holder = new THREE.Group(); holder.add(obj); return { obj: holder, layout: analyzeInterior(holder) }; }); interiorCache.set(name, p); }
   return p;
 }
 let placing: Zone | null = null; // candado: una sola colocación a la vez (la función es asíncrona)

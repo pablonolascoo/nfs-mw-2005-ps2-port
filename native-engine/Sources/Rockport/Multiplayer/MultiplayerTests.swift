@@ -103,6 +103,11 @@ func runSplitTest(_ o: Options, players n: Int) {
         let r = render(1.0 / 60)
         if i > 30 { gpu.append(r.gpu); cpu.append(r.cpu); draws.append(engine.renderer.lastDrawCalls) }
         if i == 60 * 4 { shot("start") }
+        if MPTestOptions.args.contains("--unplug-test"), let ss = engine.splitScreen, n > 1 {
+            if i == 60 * 6 { ss.testUnplug(1); print("  mando del jugador 2 desconectado (prueba)") }
+            if i == 60 * 7 { shot("desenchufado"); print("  esperando mando: \(ss.isWaitingForController) · carrera parada: \(engine.ui?.paused == true) · reloj \(String(format: "%.2f", session.clock))") }
+            if i == 60 * 8 { ss.testReconnect(); print("  mando reconectado · reloj \(String(format: "%.2f", session.clock))") }
+        }
         if i == Int(seconds * 60 * 0.6) { shot("mid") }
         let sec = Int(session.clock)
         if session.phase == .racing && sec != lastLog && sec % 10 == 0 {

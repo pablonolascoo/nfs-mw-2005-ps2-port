@@ -54,6 +54,8 @@ struct QRSettings: Codable {
     /// TrafficDensity 0…3: ninguno, mínimo, moderado, máximo.
     var traffic = 1
     var opponents = 3
+    /// Rivales de la IA en pantalla partida (extensión; el juego no pone ninguno: SetNumOpponents(1) = el otro jugador [D]).
+    var splitOpponents = 0
     /// AISkill 0…2: fácil, medio, difícil.
     var skill = 1
     var catchUp = true

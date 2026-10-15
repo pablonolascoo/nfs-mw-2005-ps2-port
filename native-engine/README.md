@@ -92,7 +92,11 @@ Los datos se generan antes con `cd tools && bun run build-all <tu ISO>` (ver `CO
 | `--car-preset <NOMBRE>` | Coche del juego de `presets.json`: `M3GTRCAREERSTART` (por defecto), `RAZORMUSTANG`, `BL2…BL15`, `ninguno` |
 | `--audit` | Carga todas las casillas y comprueba geometría y texturas |
 | `--race <ID>` · `--career` | Empezar directamente una carrera rápida (EventID «15.1.1») · entrar en la carrera profesional |
+| `--race <ID> --players N` · `--displays all\|1\|2` | Pantalla partida de N jugadores (2…4): primero «Pulsa START» para repartir los mandos · pantallas a usar (no se guarda; `settings.json` → `multiplayer.displays`) |
+| `--split-test N [--race ID] [--seconds S] [--displays D] [--unplug-test] [--screenshot base.png]` | Sin ventana: N jugadores con piloto automático; capturas `-start/-mid/-end` por pantalla, tiempos de GPU/CPU y JSON |
+| `--quickrace-test [--split N] [--screenshot base.png]` | Sin ventana: recorre las pantallas de la carrera rápida (y «Pulsa START») hasta la salida, con una captura de cada una |
 | `--race-test <ID> [--autodrive] [--seconds N] [--opponents N] [--screenshot base.png]` | Sin ventana: corre la prueba con piloto automático; posiciones, tiempos, capturas `-start/-mid/-results/-finish` y JSON |
+| `--garage-test <zona> [--garage-mode drive\|inside\|list] [--garage-screen S] [--screenshot base.png]` | Sin ventana: entra en un garaje (doc 07 §3.4) |
 | `--career-test [--save ruta]` · `--race-audit` | Sin ventana: Lista Negra simulada 15 → 1 · rutas de todas las pruebas frente a `RaceLength` |
 | `--physics-test [COCHE] [--physics-trace]` | Sin ventana: física del juego en un plano: 0–100, punta, frenada, curva, freno de mano, NOS |
 | `--lightbar paint\|police\|heat\|off\|custom:RRGGBB` | Modo de la barra de luz del mando en esta sesión (no se guarda). También `ROCKPORT_LIGHTBAR` |
@@ -124,7 +128,9 @@ native-engine/
 │  ├─ Car.swift             coche: ruedas, pintura, pose de la física interpolada
 │  ├─ Physics/              física del juego (doc 13): RigidBody, Tire, SuspensionRacer, EngineRacer, PVehicle, prueba
 │  ├─ Input/                teclado y mandos (doc 15): GameController, IOKit HID, luz, gatillos, vibración
-│  ├─ Camera/               cámara de persecución con las vistas camerainfo del juego
+│  ├─ Camera/               cámara de persecución con las vistas camerainfo del juego (y las de pantalla partida)
+│  ├─ Garage/               fondo de los menús y garajes sin carga: escenario, cámara del frontend, menús, tuneo (doc 07)
+│  ├─ Multiplayer/          pantalla partida: mando por jugador, vistas, HUD partido, varias pantallas (doc 19)
 │  └─ MathUtil.swift        matrices, cajas, frustum
 └─ .build/                  salida de compilación y capturas (ignorado por git)
 ```
@@ -290,6 +296,45 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
 - **Pruebas**: `--race-test <ID> --autodrive --screenshot base.png`, `--career-test`, `--race-audit`. Detalle y resultados:
   [doc 18](../docs/es/18-carreras-y-lista-negra.md).
 
+## Garajes sin carga y fondo de los menús (2026-10-15)
+
+- **Fondo de los menús como el juego**: «Pulsa START», el menú principal y el de la carrera muestran el garaje del frontend
+  (`PLATFORMCRIB`: azotea industrial con grúas y cúpula del cielo) con el coche del jugador (el de la partida con su tuneo; por
+  defecto el BMW M3 GTR de la historia), colocado como `GarageMainScreen` y con la cámara de `GLOBAL\FE_ATTRIB.BIN`
+  (`SelectCarCameraMover`: entrada → final → ángulo de cada pantalla, con su giro de cámara) [D][V].
+- **Garajes sin pantallas de carga** (`Garage/`): los 15 garajes del juego. Al llegar despacio a la puerta real, el edificio se
+  recorta en los shaders del mundo, la persiana sube y el interior del menú ya está dentro; se entra, se aparca y salen los menús
+  originales del sitio con la cámara del frontend alrededor del coche: **refugio** (Lista Negra, Mis coches, Guardar),
+  **concesionario** (comprar coches con precio y desbloqueo de `FE_ATTRIB.BIN`) y **taller** (pintura, vinilos, llantas,
+  alerones, kit y **barra de luz del mando**, montados en el coche al momento). Se sale marcha atrás y la persiana se cierra.
+  Los refugios 2, 4 y 5 ya tienen su edificio real (`XB_SafeHouse`, `XB_FishSafehouse`, `XB_TC_SafeHouse`). Mod de ejemplo:
+  `mods/garajes-unicos`.
+- **Arreglo del conversor**: las tiras con posiciones en float (V4-32) se quedaban en un punto; ahora salen la cúpula del cielo de
+  los garajes y **5 071 tiras del mundo** (rascacielos del centro, cielo, montañas del fondo).
+- **Carrusel de iconos**: el centro es `OPTION_MASTER` (ensamblador), que además se oculta: ya no se solapan iconos; iconos en
+  naranja dentro del juego; flechas que se apagan en los extremos. Lista Negra con su panel de requisitos y recompensa/dinero.
+- Pruebas: `--garage-test <zona> [--garage-mode drive|inside|list] [--garage-screen …]`. Detalle:
+  [doc 07](../docs/es/07-conduccion-y-garajes.md) y [doc 17](../docs/es/17-interfaz.md).
+
+## Carrera rápida y pantalla partida (2026-10-15)
+
+- **Carrera rápida con las pantallas del juego** (`UI/QuickRace*.swift`, doc 19): menú (Partida rápida / Carrera personalizada /
+  Pantalla dividida), tipo de prueba, **Track_Select con el mapa de cada prueba** (`TRACK_MAP_<id>` de `TrackMaps.bin`, zoom a la
+  ruta como `UITrackMapStreamer`), zona, longitud y mejor tiempo; **Track_Options** (dirección, vueltas, tráfico, oponentes,
+  dificultad, alcanzar y policía); **Car_Select** por jugador con coches de serie (desbloqueo `frontend.UnlockedAt`), el de la
+  historia y los de la Lista Negra según la partida; resultados y vuelta al menú.
+- **Pantalla partida original** (2 jugadores, horizontal, jugador 1 arriba): HUD `HUD_Player1/2` del disco
+  (`INGAMESPLITSCREEN.BUN`), cuentarrevoluciones de barra, radar compartido con el otro coche, cámaras de pantalla partida de
+  `camerainfo`. **Extensión**: 3 y 4 jugadores en cuartos (con 3, vista aérea en el cuarto libre), rivales de la IA, tráfico y
+  policía opcionales, **varias pantallas** (una ventana por pantalla, 4 en 2 = 2 + 2).
+- **Un mando, un jugador** (`Multiplayer/PlayerDevices.swift`): «Pulsa START» (`PressStart.fng`) reparte los mandos; el primero es
+  el jugador 1; cada coche lee solo su mando (o el teclado); luz y LED de jugador con su color; vibración por mando; mando
+  desenchufado = pausa con `ControllerUnplugged.fng` hasta pulsar START.
+- **Render**: varias vistas en la misma textura con una sola pasada de tono PS2; streaming con todas las cámaras. Medido a
+  2940×1912 en la ciudad: 2 jugadores GPU 3,5 ms, 4 jugadores 5,2 ms (mediana) [V].
+- Pruebas: `--split-test 2|3|4`, `--split-test 4 --displays 2`, `--split-test 2 --unplug-test`, `--quickrace-test [--split 2]`.
+  Detalle: [doc 19](../docs/es/19-carrera-rapida-y-multijugador.md).
+
 ## Física del juego, mandos y cámara (2026-10-12)
 
 - **Física**: `SuspensionRacer`, `EngineRacer`, `Chassis` y `RigidBody` del juego, en Swift (`Physics/`), a **60 Hz fijos** como el juego
@@ -383,10 +428,9 @@ Notas:
 ## Limitaciones conocidas
 
 - Lo que se ve desde el aire entre carreteras es el plano de mar: el mapa del juego solo tiene geometría junto a las calles [V].
-- Algunos objetos lejanos del fondo parecen flotar sobre el horizonte (decorados de fondo del nivel lejano) [I].
 - El nivel lejano usa color medio de textura: se nota el salto al entrar una casilla cercana.
 - La luz del coche es la del visor, no la del juego: el juego usa mapas de entorno [D].
-- Llantas, alerones y tomas de techo de tuneo (packs `WHEELS`, `SPOILER`, `ROOF`) aún no se montan: el coche va de serie.
+- Tomas de techo de tuneo (pack `ROOF`) aún no se ofrecen en el taller; llantas y alerones sí (doc 07 §3.3).
 - El conductor del BMW (`4e8cf857`) no tiene textura en el disco: sale gris oscuro, como en el visor [V].
 - Sonido: sin la capa AEMS de los motores ni los mapas de mezcla del juego (doc 16 §9). Tráfico y policía sin helicóptero ni choques físicos entre coches (doc 14).
 - Choques con muros: impulsos propios, no `RigidBody::DoBarrierCollision` del juego (doc 13).
@@ -399,7 +443,7 @@ Notas:
 3. ✅ **Mando** (GameController + IOKit HID) — falta volante y ajustes de vídeo (escala, FOV).
 4. ✅ **Física del juego** desde la decomp y atributos VLT de cada coche (doc 13) — faltan choques del juego, daño y reglajes.
 5. **Audio** (EA SCHl/MPC) y música.
-6. **Garajes sin carga** (ya hechos en el visor) y selección de coche.
+6. ~~Garajes sin carga y selección de coche~~ (hecho: doc 07). Falta el mapa de la carrera y la hoja de antecedentes.
 7. **Carreras y Lista Negra** con `gameplay.json` + `roads.json`.
 8. Rendimiento extra: texturas comprimidas (ASTC/BC7), oclusión por secciones del juego, búferes de argumentos.
 9. Sombra y luces del coche más fieles; reflejos del entorno.

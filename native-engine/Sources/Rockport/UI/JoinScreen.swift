@@ -77,9 +77,9 @@ final class QRJoinScreen: QRScreen {
     private func join(_ d: PlayerDevice) {
         flow.joined.append(d)
         recolor()
-        pkg.post(0x587C018B)            // FEObj_leavescreen en el juego; aquí solo anima el recuadro [I]
         print("Pantalla partida: jugador \(flow.joined.count) = \(d.label(spanish: true)) (\(d.name))")
         refresh()
+        if let t = flow.targetPlayers, flow.joined.count >= t { confirm() }
     }
 
     /// Pruebas sin ventana: unir un dispositivo sin pulsar nada.

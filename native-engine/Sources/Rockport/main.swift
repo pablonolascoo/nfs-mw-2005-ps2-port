@@ -107,7 +107,7 @@ struct Options {
             case "--career-test", "--career", "--race-audit": break
             case "--garage-test", "--garage-mode", "--garage-screen", "--garage-select": i += 1   // Garage/GarageTests.swift
             case "--split-test", "--displays", "--players", "--split": i += 1   // Multiplayer/ (pantalla partida, varias pantallas)
-            case "--quickrace-test", "--multi-display-test": break
+            case "--quickrace-test", "--multi-display-test", "--unplug-test": break
             case "--lightbar", "--radio-out": i += 1   // Input/LightBarConfig.swift, Audio/PoliceRadio.swift
             case "--debug-hud": break   // HUDPursuit.swift: HUD propio de depuración (el juego usa el original, UI/FEHud.swift)
             case "--radio-log", "--audio-devices", "--radio-test", "--pad-audio-test", "--lightbar-test": break   // Audio/AudioTests.swift

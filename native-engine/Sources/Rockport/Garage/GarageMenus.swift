@@ -63,6 +63,13 @@ extension FEUI {
         garageScreen("career_mainmenu_sub")
     }
 
+    /// CustomizationScreenHelper::DrawTitle: el título del taller va en minúsculas (salvo alemán y finés) [D].
+    private func setTitleLower(_ p: FEPackageRT, _ hash: UInt32) {
+        guard let tg = p.find("TITLE_GROUP") else { return }
+        let t = assets.string(hash) ?? ""
+        printDeepText(p, tg, assets.language == "german" ? t : t.lowercased())
+    }
+
     private func printDeepText(_ p: FEPackageRT, _ o: FEObj?, _ text: String) {
         guard let o else { return }
         if o.type == 2 { p.printf(o, text) }
@@ -117,9 +124,14 @@ extension FEUI {
         guard !entries.isEmpty else { showSafehouseMenu(); return }
         var idx = owned ? max(0, career.save.cars.firstIndex(of: career.save.currentCar) ?? 0) : 0
         // Fuera lo que no es de este modo (pantalla partida, online, impound) [D: constructor]
-        for h: UInt32 in [0xe3fe27fe, 0xe998fe99, 0x39dc21f9, 0xbc7b91f, 0x0e9ed0a2, 0x5ba2f765] { p.setVisible(p.find(h), false) }
+        for h: UInt32 in [0xe3fe27fe, 0xe998fe99, 0x39dc21f9, 0xbc7b91f, 0x5ba2f765] { p.setVisible(p.find(h), false) }
         if owned { for h: UInt32 in [0x19398802, 0x1930b057, 0x20d113dc, 0x20c83c31] { p.setVisible(p.find(h), false) } }
-        else { p.setLabel(p.find(0xdc18c4d4), 0xa9950b93); p.setLabel(p.find(0xb94139f4), 0x7010bbf2) }
+        else {
+            p.setLabel(p.find(0xdc18c4d4), 0xa9950b93); p.setLabel(p.find(0xb94139f4), 0x7010bbf2)
+            p.setScript(p.find(0x97315444), FEH.appear)                         // dinero y precio
+        }
+        // El nombre del coche es texto de depuración del editor: el juego lo oculta y enseña el logotipo del modelo [D]
+        for o in p.findAll(0xd6d32016) + p.findAll(0x79d6e45c) { p.setVisible(o, false) }
         func show() {
             let e = entries[idx]
             printDeepText(p, p.find(0x6f25a248), "\(idx + 1)")
@@ -129,10 +141,12 @@ extension FEUI {
                 let h = feHash("CARSELECT_MANUFACTURER_" + brand)
                 if assets.hasTexture(h) { logo.handle = h; p.setVisible(logo, true) } else { p.setVisible(logo, false) }
             }
-            p.setVisible(p.find(0xb05dd708), false)
-            for h: UInt32 in [0xd6d32016, 0x79d6e45c] {
-                p.setVisible(p.find(h), true)
-                p.printf(p.find(h), FEUI.carName(e.model, data: engine.data))
+            // Logotipo del modelo: SECONDARY_LOGO_<colección de FE_ATTRIB> (GetLogoHash [D]); si no está, GENERIC_LOGO_256
+            if let badge = p.find(0xb05dd708) {
+                let col = FEUI.feCollection(e.model)
+                let h = feHash("SECONDARY_LOGO_" + col.uppercased())
+                badge.handle = assets.hasTexture(h) ? h : feHash("GENERIC_LOGO_256")
+                p.setVisible(badge, true)
             }
             if !owned {
                 printDeepText(p, p.find(0x1930b057), "$" + FEHud.money(career.save.cash))
@@ -175,6 +189,14 @@ extension FEUI {
         garageScreen(owned ? "career_car_select" : "carlot_car_select")
     }
 
+    /// Modelo → colección de FE_ATTRIB.BIN (al revés que lotCars).
+    static func feCollection(_ model: String) -> String {
+        let m = model.uppercased()
+        let alias = ["A3": "a3_20t", "A4": "a4_32", "CORVETTE": "corvette_car", "IMPREZAWRX": "imprezzawrx", "CARRERAGT": "carrera_gt",
+                     "BMWM3GTRE46": "m3_gtre46"]
+        return alias[m] ?? m.lowercased()
+    }
+
     static func brand(_ model: String) -> String {
         let m = model.uppercased()
         let table: [(String, String)] = [("BMW", "BMW"), ("911", "Porsche"), ("997", "Porsche"), ("CAYMAN", "Porsche"), ("CARRERAGT", "Porsche"),
@@ -209,15 +231,20 @@ extension FEUI {
             (0x3987d054, 0xbaef8282, { [weak self] in self?.messageDialog(title: 0xbaef8282, text: self?.es == true ? "Próximamente." : "Coming soon.") }),
             (0x3e31ba56, 0xbfa7d7c4, { [weak self] in self?.leaveTopScreen { self?.showCustomizeCategory(parts: false) } }),
         ], select: select, back: back) else { return }
-        if let tg = s.pkg.find("TITLE_GROUP") { setLabelDeep(s.pkg, tg, 0x1d0f2bd7) }
+        // CustomizeMain::SetTitle: texto 0x1F242E03 (taller) o 0x92FCDBF0 (trastienda) en minúsculas [D]
+        setTitleLower(s.pkg, (engine.garages?.world?.current?.interior == "CUSTOMIZATION_SHOP_BACKROOM") ? 0x92fcdbf0 : 0x1f242e03)
         s.scroller?.setGrey(1)
         hideCustomizeExtras(s.pkg)
         garageScreen("customize_customizemain")
     }
 
     /// Lo que el juego solo enseña con su carrito de la compra y el medidor de calor de las piezas [I: sin carrito aquí].
-    private func hideCustomizeExtras(_ p: FEPackageRT) {
-        for h: UInt32 in [0xb6b79052, 0xe08434fc, 0x5d58bcc6] { p.setVisible(p.find(h), false) }
+    private func hideCustomizeExtras(_ p: FEPackageRT, leaf: Bool = false) {
+        // Descuento y botón «Ver carrito» (START): sin carrito de la compra
+        p.setVisible(p.find(0xb6b79052), false)
+        for g in p.findAll(0xe08434fc) where g.pos.x > 0 { p.setVisible(g, false) }
+        // En Main y Categoría el panel de dinero sale con el texto de relleno del editor: fuera
+        if !leaf { p.setVisible(p.find(0x8d1559a4), false) }
     }
 
     func showCustomizeCategory(parts: Bool) {
@@ -240,7 +267,7 @@ extension FEUI {
         }
         guard let s = garageMenu("CustomizeCategory", title: nil, options: opts.map { o in (o.0, o.1, { [weak self] in self?.leaveTopScreen(o.2) }) },
                                  back: { [weak self] in self?.showCustomizeMain(select: parts ? 0 : 2) }) else { return }
-        if let tg = s.pkg.find("TITLE_GROUP") { setLabelDeep(s.pkg, tg, parts ? 0x055dce1a : 0xbfa7d7c4) }
+        setTitleLower(s.pkg, parts ? 0x055dce1a : 0xbfa7d7c4)
         hideCustomizeExtras(s.pkg)
         // Barra de luz: extensión propia (no está en el juego); su nombre va en texto libre
         if !parts {
@@ -319,8 +346,8 @@ extension FEUI {
                                      self.showCustomizeCategory(parts: isParts)
                                  }) else { return }
         let p = s.pkg
-        if let tg = p.find("TITLE_GROUP") { setLabelDeep(p, tg, titleHash) }
-        hideCustomizeExtras(p)
+        if kind == .lightBar { printDeepText(p, p.find("TITLE_GROUP"), es ? "barra de luz" : "light bar") } else { setTitleLower(p, titleHash) }
+        hideCustomizeExtras(p, leaf: true)
         printDeepText(p, p.find(0x783eea2b), "")
         printDeepText(p, p.find(0xc60adcfd), "$" + FEHud.money(Career.shared.save.cash))
         printDeepText(p, p.find(0xdbb80edd), "$0")
@@ -332,7 +359,7 @@ extension FEUI {
             for t in s.titleObjects { s.pkg.printf(t, name) }
             printDeepText(s.pkg, s.pkg.find(0x6f25a248), "\(i + 1)")
             printDeepText(s.pkg, s.pkg.find(0xb2037bdc), "\(count)")
-            s.pkg.setVisible(s.pkg.find(0x8121a4f3), i == current)
+            s.pkg.setVisible(s.pkg.find(0xd0582feb), i == current)        // GENERIC_CHECK: lo que lleva puesto
             // Vista previa en el coche (el juego también monta la pieza al pasar por ella)
             if i != lastApplied, kind != .lightBar {
                 lastApplied = i

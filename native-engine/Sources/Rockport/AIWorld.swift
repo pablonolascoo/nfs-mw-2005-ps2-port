@@ -60,6 +60,9 @@ final class AIWorld {
     var time: Float = 0
     var stats = AIStats()
     var player = AIPlayer()
+    /// Pantalla partida (Multiplayer/): los demás coches humanos. El tráfico frena por ellos y se aparta al tocarlos
+    /// (sin multas ni persecución: la policía sigue al jugador 1) [I].
+    var others: [AIPlayer] = []
     var center = float3(0, 0, 0)         // "centro de tráfico": el jugador o la cámara [D: ITrafficCenter]
     var centerFwd = float3(1, 0, 0)
     var centerVel = float3(0, 0, 0)
@@ -164,6 +167,7 @@ final class AIWorld {
             check(o.pos, ov, o.model.halfLength, o.model.halfWidth)
         }
         if player.exists && !chasing { check(player.pos, player.vel, player.halfLength, player.halfWidth) }
+        for o in others where o.exists { check(o.pos, o.vel, o.halfLength, o.halfWidth) }
         return want
     }
 
@@ -228,6 +232,21 @@ final class AIWorld {
                 }
             }
         } }
+        // Otros humanos (pantalla partida): solo se separa al coche de la IA, que es cinemático
+        for o in others where o.exists {
+            for v in vehicles {
+                if simd_distance_squared(v.pos, o.pos) > 100 || abs(v.pos.z - o.pos.z) > 2.5 { continue }
+                guard let (n, pen) = AIWorld.obbOverlap(float2(o.pos.x, o.pos.y), o.yaw, float2(o.halfLength, o.halfWidth),
+                                                       float2(v.pos.x, v.pos.y), v.yaw, float2(v.model.halfLength, v.model.halfWidth)) else { continue }
+                let push = float3(n.x, n.y, 0) * (pen + 0.02)
+                if !collision.hitsWall(from: v.pos, to: v.pos + push) { v.pos += push }
+                if v.kind == .traffic, abs(o.speed) >= AITables.mph(5), !v.crashed {
+                    v.crashed = true; v.mode = .parked; v.speed = 0
+                    v.knock = float2(n.x, n.y) * max(2, abs(o.speed) * 0.4)
+                    v.knockSpin = (rng.float() - 0.5) * 3
+                }
+            }
+        }
         guard player.exists else { return }
         var now = Set<Int>()
         for v in vehicles {

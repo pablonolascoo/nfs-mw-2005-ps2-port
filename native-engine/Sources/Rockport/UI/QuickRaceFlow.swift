@@ -44,15 +44,34 @@ final class QuickRaceFlow {
 
     /// Desde el menú principal (UI/FEScreens.swift, opción «Carrera rápida»).
     func open(_ ui: FEUI) {
-        self.ui = ui
-        if !hooked, let e = ui.engine as Engine? {
-            hooked = true
-            e.frameHooks.append { [weak self] dt in self?.step(dt: dt) }
-            _ = e.enableRaces()
-        }
-        players = 1; joined = []; chosen = []
+        attach(ui)
+        players = 1; joined = []; chosen = []; targetPlayers = nil
         MenuOwners.allowed = nil
         showMainMenu()
+    }
+
+    private func attach(_ ui: FEUI) {
+        self.ui = ui
+        if !hooked {
+            hooked = true
+            ui.engine.frameHooks.append { [weak self] dt in self?.step(dt: dt) }
+            _ = ui.engine.enableRaces()
+        }
+    }
+
+    /// Jugadores pedidos al arrancar (--race ID --players N): al unirse ese número se sigue solo.
+    var targetPlayers: Int?
+
+    /// `--race ID --players N` (App.swift): directo a «Pulsa START» con la prueba elegida y luego a los coches.
+    func launchSplit(eventID: String, players n: Int, ui: FEUI) {
+        attach(ui)
+        guard let e = RaceSystem.shared?.db.event(eventID) else { open(ui); return }
+        settings.mode = e.kind.rawValue
+        settings.eventByMode[e.kind.rawValue] = e.id
+        players = max(2, min(4, n)); targetPlayers = players
+        joined = []; chosen = []
+        ui.engine.ui_enterFrontend()
+        showJoin()
     }
 
     /// UIQRMainMenu [D]: Partida rápida, Carrera personalizada, Pantalla dividida.
@@ -188,7 +207,9 @@ final class QuickRaceFlow {
         screen = nil
         let displays = split ? MultiplayerSettings.shared.displaysFor(players: entries.count) : 1
         print("Carrera rápida: \(event.eventId) (\(event.kind.rawValue)) · \(entries.count) jugador(es) · \(displays) pantalla(s) · coches \(chosen.prefix(entries.count).joined(separator: ", "))")
-        let session = MultiplayerRace.start(engine: e, event: event, entries: entries, settings: settings, displays: displays,
+        var st = settings
+        if split { st.opponents = settings.splitOpponents }
+        let session = MultiplayerRace.start(engine: e, event: event, entries: entries, settings: st, displays: displays,
                                             autopilot: testMode) { [weak self] _ in
             DispatchQueue.main.async { self?.afterRace() }
         }
@@ -200,6 +221,8 @@ final class QuickRaceFlow {
         MenuOwners.allowed = nil
         for d in joined { d.setPlayer(nil, color: nil) }
         if testMode { return }
+        // Si se salió desde la pausa al menú principal, se queda allí
+        guard let st = ui?.state, st == .game || st == .modal else { return }
         showMainMenu()
     }
 

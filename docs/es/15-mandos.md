@@ -211,3 +211,11 @@ Pruebas sin mando: `Rockport --audio-devices` (salidas de CoreAudio y mandos por
 ### Pendiente (radio y luz)
 - Probar con un DualSense y un DualShock 4 reales, por USB y por Bluetooth; ajustar volumen y ganancia del preamplificador.
 - Hápticos con la radio (graves al subpaquete 0x12) si suena bien en el mando.
+
+## 9. Varios jugadores: un mando por jugador
+
+En pantalla partida (doc 19) cada jugador tiene su propio mando (o el teclado) y su entrada no se mezcla con la de los demás:
+`Multiplayer/PlayerDevices.swift` lee cada mando por separado (`Controllers.readPad`, `HIDPads.readPad`), pinta su barra de luz
+con el color del jugador y enciende su LED de jugador (`GCController.playerIndex`). La vibración y los gatillos de cada mando
+siguen a su coche. Tabla de mandos, cómo se unen («Pulsa START») y qué pasa al desenchufar uno:
+[doc 19 §5](19-carrera-rapida-y-multijugador.md).

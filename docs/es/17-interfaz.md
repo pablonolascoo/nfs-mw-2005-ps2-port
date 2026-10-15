@@ -109,9 +109,10 @@ No se sube a git (`.gitignore`).
 ### Pantallas que funcionan
 | Pantalla | Paquete | Estado |
 |---|---|---|
-| Pulsa START | `MW_LS_Splash` | Logotipo, «Pulsa START» con su animación de sello y parpadeo. Fondo: la ciudad en 3D girando (el juego mostraba el garaje) |
-| Menú principal | `MainMenu` | Carrusel de iconos del juego: Modo carrera, Serie desafío, Carrera rápida, Mis coches, Opciones. Solo Modo carrera sigue; el resto abre el cuadro `Dialog.fng` con «Próximamente.» |
-| Modo carrera | `MainMenu_Sub` | Continuar / Empezar nuevo → zona libre |
+| Pulsa START | `MW_LS_Splash` | Logotipo, «Pulsa START» con su animación de sello y parpadeo. Fondo: el garaje del frontend (`PLATFORMCRIB`) con el coche del jugador (doc 07 §3.1) |
+| Menú principal | `MainMenu` | Carrusel de iconos del juego: Modo carrera, Serie desafío, Carrera rápida, Mis coches, Opciones. Solo Modo carrera sigue; el resto abre el cuadro `Dialog.fng` con «Próximamente.». Fondo: el garaje con la cámara `mainmenu` (`angle3`) |
+| Modo carrera | `MainMenu_Sub` | Continuar / Empezar nuevo → zona libre con el coche de la partida y su tuneo. Cámara `career_manager` |
+| Garajes del mundo | `MainMenu_Sub` (refugio), `Car_Select` (concesionario y Mis coches), `CustomizeMain`/`CustomizeCategory`/`CustomizeParts` (taller) | Doc 07 §3.3 |
 | Pausa | `Pause_Main` | Volver a la zona libre, Reiniciar (al refugio 1), Opciones (próximamente), Salir al menú |
 | HUD | `HUD_SingleRace` / `HUD_Drag` | Todo el HUD del juego con su lógica: ver §8 (radar, persecución, carreras, mensajes) |
 | Resultados, Lista Negra, coche ganado | `PostRace_Results`, `InGameReputationOverview`, `Showcase` | §8.7 |
@@ -127,8 +128,30 @@ El HUD propio (`HUDPursuit.swift`) solo sale con `--debug-hud` (§8.5). Start/Es
 ```
 Capturas en `native-engine/.build/shots/ui/` (1920×1080 y 2940×1912).
 
+### Carrusel de iconos (`IconScroller`) [D][V]
+- **Centro = `OPTION_MASTER`**, no `ICON_SCROLL_REGION`: el constructor (SLUS 0x280348) hace `FEngFindObject(paquete, a2)` con
+  a2 = `"OPTION_MASTER"` (cadena en 0x4DFDE8), toma su centro y lo **oculta** [V: ensamblador]. La decomp lo llama
+  `scroll_region` por error. En `MainMenu` el master está 17 unidades a la derecha de la región, justo dentro de los corchetes;
+  antes el icono elegido quedaba descentrado y el master (`MAIN_ICON_CAR_SELECT`, z 10) se dibujaba **encima** del icono:
+  eso era el «icono solapado». `ICON_SCROLL_REGION` (BasePoly blanco 340×70) es una guía del editor y no se ve [I].
+- Topes: 2 `END_OF_SCROLLER` a cada lado (el punto translúcido que se ve junto al primer y al último icono, como en el juego).
+- `PositionOption`: x = centro + valor animado + XPos; escala = rampa lineal en ±175 (ancho 350) con 1 dentro de ±1,5;
+  desplazamiento hacia dentro w·(1−escala)³; recorte fuera de ±175; alineación vertical al medio.
+- `UpdateFade`: color = mezcla `IdleColor` → `FadeColor` por canal con la escala (gris: alfa 150). Dentro del juego
+  (Lista Negra) `IdleColor` = 0xFFFFAE40 y `FadeColor` = 0x00FFAE40: los iconos van en naranja [D: uiRepSheetMain].
+- `RefreshHeader`: en el primer/último icono manda `0xD7118934`/`0xB9B17747` al paquete (se apagan las flechas de ese lado).
+- `IsGreyOut`: opción en gris que el carrusel salta (Rendimiento del taller).
+- Paquete al entrar: si el `INIT` de un objeto encadena a otro script (p. ej. INIT → HIDE del dinero de la Lista Negra), se
+  respeta la cadena en vez de forzar `APPEAR` [V: datos].
+- Lista Negra: panel de requisitos visible (la decomp manda `RIVAL_CHALLENGE_ACTIVATED`, que lo oculta, justo cuando el rival
+  no está disponible; el `if` de `UpdateInfo` no está resuelto [I]); recompensa y dinero se turnan en la cabecera (scripts
+  ON/OFF de 0xB514E2D8/0xF91A59F6, 300 ms [V]); los valores hechos y requeridos se alternan con su animación (0x576/0xCEF7).
+- Fin de persecución (`PostRace_MilestoneRewards`): tras `APPEAR`, el icono grande vuela a su hueco de la tira con `POS0`
+  (`FEMSG_SCREEN_TICK` [D]).
+- Prueba: `--ui-test MainMenu@2` deja elegida la 3.ª opción. Capturas antes/después en `native-engine/.build/shots/garage/`.
+
 ## 7. Pendiente
-- Películas (logos EA, presentación) y fondo del garaje con el coche en los menús; NIS del arresto (solo está su capa de cámara).
+- Películas (logos EA, presentación); NIS del arresto (solo está su capa de cámara).
 - Navegación genérica por botones (`FEButtonMap`) y el resto de pantallas (opciones, carrera rápida, tiendas, hoja de carreras, hitos).
 - Sonidos de la interfaz (los mensajes de sonido se ignoran).
 - Datos que el HUD ya sabe enseñar pero el juego aún no produce: refuerzos, escondites, policías destruidos/dañados, helicóptero,

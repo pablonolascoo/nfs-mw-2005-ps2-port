@@ -108,7 +108,9 @@ enum CarTuning {
         if let v = t.vinyl {
             vinyl = v.isEmpty ? nil : CarPresets.named(v, in: data)?.vinyl
         }
-        return CarPreset(name: base.name, car: base.car, base: base.base, blacklist: base.blacklist, kit: t.kit ?? base.kit, solids: solids,
+        // Nombre propio por combinación: CarSkin guarda la piel compuesta por nombre de preset
+        let tag = [paint?.name ?? "-", vinyl?.name ?? "-", rim?.name ?? "-", rimPaint?.name ?? "-"].joined(separator: "~")
+        return CarPreset(name: base.name + "~" + tag, car: base.car, base: base.base, blacklist: base.blacklist, kit: t.kit ?? base.kit, solids: solids,
                          paint: paint, vinyl: vinyl, rim: rim, rimPaint: rimPaint, windowTint: base.windowTint, licensePlate: base.licensePlate)
     }
 
