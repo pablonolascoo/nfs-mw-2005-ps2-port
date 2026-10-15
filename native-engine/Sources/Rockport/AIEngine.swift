@@ -40,6 +40,7 @@ extension Engine {
         do {
             let r = try AIRenderer(device: device, textures: textures, world: w, outputFormat: outputFormat)
             renderer.overlays.append(r)
+            r.sceneRenderer = renderer
             aiRenderer = r
         } catch { fputs("IA: no se pudo crear el render: \(error)\n", stderr); return }
         ai = w

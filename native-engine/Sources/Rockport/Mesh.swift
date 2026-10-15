@@ -17,6 +17,7 @@ struct DrawRange {
     var part: Int = 0          // pieza (coches: 0 = carrocería, 1…4 = ruedas)
     var visible = true
     var pbr: float2? = nil     // coches: metalicidad y rugosidad propias (acabado de la pintura del preset, CarSkin.swift)
+    var light: String? = nil   // coches: material de luz del juego (extras.luz; la pintura toma el del preset). Doc 20.
 }
 
 final class GPUMesh {
@@ -93,7 +94,7 @@ final class GPUMesh {
                 }
             }
             draws.append(DrawRange(kind: m.kind, indexStart: start, indexCount: io - start, texture: tex, color: m.color,
-                                   cutoff: m.cutoff, role: m.role, name: m.name, wrap: m.wrap, part: part))
+                                   cutoff: m.cutoff, role: m.role, name: m.name, wrap: m.wrap, part: part, light: m.light))
         }
         return GPUMesh(vertexBuffer: vb, indexBuffer: ib, draws: draws, bounds: bounds, triangles: icount / 3)
     }

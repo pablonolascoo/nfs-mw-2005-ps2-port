@@ -17,6 +17,15 @@ export class MaterialTable {
     const key = hash === undefined ? "none" : hex8(hash);
     const hit = this.byHash.get(key);
     if (hit !== undefined) return hit;
+    this.materials.push(this.make(hash, key));
+    this.byHash.set(key, this.materials.length - 1);
+    return this.materials.length - 1;
+  }
+
+  private made = new Map<string, GlbMaterial>();
+  private make(hash: number | undefined, key: string): GlbMaterial {
+    const done = this.made.get(key);
+    if (done) return done;
     const t = hash !== undefined ? this.textures.get(hash) : undefined;
     let m: GlbMaterial;
     if (t) {
@@ -37,7 +46,18 @@ export class MaterialTable {
       const h = hash ?? 0x9e3779b9, r = 0.35 + ((h & 0xff) / 255) * 0.4, g = 0.35 + (((h >> 8) & 0xff) / 255) * 0.4, b = 0.35 + (((h >> 16) & 0xff) / 255) * 0.4;
       m = { name: `sin_textura_${key}`, color: [r, g, b, 1], unlit: this.opts.unlit };
     }
-    this.materials.push(m);
+    this.made.set(key, m);
+    return m;
+  }
+
+  /** Coches: el mismo material de textura, separado por material de luz del juego (extras.luz = nombre, eLightMaterial). */
+  getLit(hash: number | undefined, light: string | undefined): number {
+    if (!light) return this.get(hash);
+    const tkey = hash === undefined ? "none" : hex8(hash), key = `${tkey}|${light}`;
+    const hit = this.byHash.get(key);
+    if (hit !== undefined) return hit;
+    const b = this.make(hash, tkey);
+    this.materials.push({ ...b, extras: { ...b.extras, luz: light } });
     this.byHash.set(key, this.materials.length - 1);
     return this.materials.length - 1;
   }

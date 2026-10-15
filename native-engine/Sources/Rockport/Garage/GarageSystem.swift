@@ -13,6 +13,8 @@ final class GarageSystem {
     let renderer: GarageRenderer
     let stage: FEStage
     private(set) var world: WorldGarages?
+    /// Escenas conducibles de los garajes (GarageScenes.swift): paredes y umbral propios, reflejo, cambio de coche.
+    let scenes: GarageScenes
 
     @discardableResult
     static func attach(_ engine: Engine) -> GarageSystem? {
@@ -30,6 +32,7 @@ final class GarageSystem {
         stage = FEStage(engine: engine, library: library)
         world = WorldGarages(engine: engine, library: library)
         world?.onParked = { [weak engine] g in engine?.ui?.openGarage(g) }
+        scenes = GarageScenes(engine: engine)   // después de WorldGarages: encadena su suelo
         engine.renderer.overlays.insert(renderer, at: 0)
         engine.frameHooks.append { [weak self] dt in self?.update(dt: dt) }
         engine.frameOverrides.append { [weak self] f in self?.apply(&f) }
@@ -43,6 +46,7 @@ final class GarageSystem {
         let camDt = dt > 0 ? dt : (GarageSystem.fixedStep ?? wall)
         stage.update(dt: camDt)
         world?.update(dt: dt, camDt: camDt)
+        scenes.update(camDt: camDt)
     }
     /// Pruebas sin ventana: paso fijo para la cámara aunque la simulación esté en pausa.
     static var fixedStep: Float?
@@ -52,11 +56,18 @@ final class GarageSystem {
         if stage.active {
             stage.apply(&f, aspect: engine.cameraAspect ?? engine.aspect)
             items = stage.drawItems
+            f.lighting = .frontEnd(stage.kind.interior)   // luz y reflejo del garaje del frontend (doc 20)
         } else if let w = world {
             w.apply(&f, aspect: engine.cameraAspect ?? engine.aspect)
             items = w.drawItems
+            if GarageCutout.active, let g = w.current {      // dentro de un garaje del mundo: su luz, con la niebla de la calle
+                var l = SceneLighting.frontEnd(g.interior)
+                l.fog = SceneLighting.world.fog; l.fogColor = nil; l.fogHeight = .zero; l.sky = true
+                f.lighting = l
+            }
         }
-        renderer.items = items
+        scenes.apply(&f)
+        renderer.items = items + scenes.drawItems(stage: stage, world: world)
     }
 }
 

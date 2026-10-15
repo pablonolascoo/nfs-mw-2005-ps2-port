@@ -18,6 +18,7 @@ import { flatten, type FlatInstance } from "../lib/flatten";
 import { clusterSimplify } from "../lib/simplify";
 import { carPlaceholders } from "../lib/car-textures";
 import { carPartInfo, MARKER_NAMES } from "../lib/car-parts";
+import { readLightMaterialNames } from "../lib/light-materials";
 import { mkdirSync, existsSync, readFileSync } from "node:fs";
 
 const [iso, disc, mode, ...names] = Bun.argv.slice(2);
@@ -57,6 +58,8 @@ if (mode === "car") {
   // Texturas comunes de los coches: CARS\TEXTURES.BIN y, sobre todo, GLOBAL\GLOBALB.BUN (TREAD, TIRE_BACK, ROTOR1-4,
   // CARBONFIBRE, WINDOW_MASK, DOORLINE, CARBOTTOM, GRILL_0n, RADIATOR, DRIVER_CUTOUT…) y GLOBAL\INGAMEA.BUN (DRIVER_COP) [V].
   const shared = await texturesFrom(["CARS\\TEXTURES.BIN", "GLOBAL\\GLOBALB.BUN", "GLOBAL\\INGAMEA.BUN"]);
+  // Material de luz de cada tira (difusa/especular/entorno del juego, doc 20) → extras.luz del material [V].
+  const lightNames = readLightMaterialNames(await d.readEntry(d.find("GLOBAL\\GLOBALB.BUN")!));
   for (const name of names) {
     const geo = d.find(`CARS\\${name}\\GEOMETRY.BIN`);
     if (!geo) { console.error(`No existe CARS\\${name}\\GEOMETRY.BIN`); continue; }
@@ -70,7 +73,7 @@ if (mode === "car") {
     if (trafficTire && !textures.has(bStringHash(`${name}_TIRE`))) textures.set(bStringHash(`${name}_TIRE`), trafficTire);
     const mats = new MaterialTable(textures, { placeholders: carPlaceholders(name), missingColor: [0.16, 0.16, 0.17, 1] });
     const meshes = solids.map(s => {
-      const m = solidToMesh(s, h => mats.get(h));
+      const m = solidToMesh(s, (h, l) => mats.getLit(h, l === undefined ? undefined : lightNames.get(l) ?? hex8(l)));
       const markers = s.markers.map(k => ({ nombre: MARKER_NAMES.get(k.nameHash) ?? hex8(k.nameHash), matriz: k.matrix.map(v => +v.toFixed(5)) }));
       m.extras = { ...m.extras, pieza: carPartInfo(name, s.name), ...(markers.length ? { marcadores: markers } : {}) };
       return m;
@@ -148,16 +151,30 @@ if (mode === "interior") {
     const path = `FRONTEND\\PLATFORMS\\${name}.BIN`, e = d.find(path);
     if (!e) { console.error(`No existe ${path}`); continue; }
     const buf = await d.readEntry(e);
-    // Solo la estructura visible: fuera emisores de partículas, ayudantes de luz, mapas de sombra, la copia para reflejos y la variante "next-gen".
+    // Lo mismo que dibuja el juego: FEGeometryModels::Init("BACKDROP") toma todos los sólidos que empiezan por BACKDROP y
+    // Render se salta los NEXTGEN en la generación actual [D: FEPkg_GarageMain.cpp]. Los BACKDROP_CAST_SHADOW_MAP* no son
+    // sombras: son los objetos del escenario que además proyectan sombra (depósitos de agua, carretilla y casetas del menú;
+    // pilas de neumáticos, sofá, banco y bidones del refugio; fundas y cajas del taller) y no repiten geometría de
+    // BACKDROP_CRIB [V: comparando vértices]. BACKDROP_REFLECTION es la copia invertida bajo el suelo (reflejo).
+    // Fuera emisores de partículas (FX_*, *EMITTER*), LIGHT HELPER y OBJECTn (no empiezan por BACKDROP: el juego no los dibuja).
     const all = readSolidList(buf);
-    const solids = all.filter(s => /^BACKDROP_(CRIB|CURRGEN)$|^OBJECT\d+$/.test(s.name));
+    const solids = all.filter(s => /^BACKDROP/.test(s.name) && !/NEXTGEN/.test(s.name));
     console.log(`  ${name}: se omiten ${all.filter(s => !solids.includes(s)).map(s => s.name).join(", ")}`);
     const pack = readTexturePack(buf);
-    const textures = await texturesFrom(["GLOBAL\\GLOBALA.BUN"]);
+    // GREY (0x00163C76) lo usan todos los escenarios pero solo viene en el paquete de CAR_LOT [V].
+    const textures = await texturesFrom(["GLOBAL\\GLOBALA.BUN", "FRONTEND\\PLATFORMS\\CAR_LOT.BIN"]);
     for (const t of pack.textures) textures.set(t.nameHash, t);
     const mats = new MaterialTable(textures, { unlit: false });
-    const meshes = solids.map(s => solidToMesh(s, h => mats.get(h)));
+    // El reflejo va en su propio GLB (<NOMBRE>.reflection.glb): el motor lo dibuja bajo el suelo semitransparente, pero no
+    // cuenta para colocar el interior ni para la colisión (está por debajo del suelo).
+    const isRefl = (s: Solid) => /REFLECTION/.test(s.name);
+    const meshes = solids.filter(s => !isRefl(s)).map(s => solidToMesh(s, h => mats.get(h)));
     await Bun.write(`${outDir}/interiors/${name}.glb`, writeGlb(meshes, mats.materials, mats.images, name));
+    const refl = solids.filter(isRefl);
+    if (refl.length) {
+      const rm = new MaterialTable(textures, { unlit: false });
+      await Bun.write(`${outDir}/interiors/${name}.reflection.glb`, writeGlb(refl.map(s => solidToMesh(s, h => rm.get(h))), rm.materials, rm.images, `${name}_REFLECTION`));
+    }
     const tris = meshes.reduce((a, m) => a + m.primitives.reduce((b, p) => b + p.indices.length / 3, 0), 0);
     const bb = solids.reduce((a, s) => ({ min: a.min.map((v, i) => Math.min(v, s.aabbMin[i])), max: a.max.map((v, i) => Math.max(v, s.aabbMax[i])) }), { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] });
     console.log(`${name}: ${solids.length} piezas (${solids.map(s => s.name).join(", ")}) · ${tris} tris · ${pack.textures.length} texturas propias · faltan ${mats.missing.size} · caja ${bb.min.map(v => v.toFixed(1))} → ${bb.max.map(v => v.toFixed(1))}`);

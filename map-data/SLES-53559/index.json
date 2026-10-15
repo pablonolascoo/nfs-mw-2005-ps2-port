@@ -1,6 +1,6 @@
 {
  "disc": "SLES-53559",
- "generated": "2026-10-15T14:01:45.766Z",
+ "generated": "2026-10-15T15:09:24.829Z",
  "upAxis": "Z",
  "items": [
   {
@@ -368,7 +368,7 @@
    "group": "Interiores",
    "label": "CAR_LOT",
    "glb": "interiors/CAR_LOT.glb",
-   "tris": 9049,
+   "tris": 10090,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\CAR_LOT.BIN"
   },
@@ -377,7 +377,7 @@
    "group": "Interiores",
    "label": "CAREER_SAFEHOUSE",
    "glb": "interiors/CAREER_SAFEHOUSE.glb",
-   "tris": 2097,
+   "tris": 4897,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\CAREER_SAFEHOUSE.BIN"
   },
@@ -386,7 +386,7 @@
    "group": "Interiores",
    "label": "CUSTOMIZATION_SHOP",
    "glb": "interiors/CUSTOMIZATION_SHOP.glb",
-   "tris": 6757,
+   "tris": 11153,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\CUSTOMIZATION_SHOP.BIN"
   },
@@ -395,7 +395,7 @@
    "group": "Interiores",
    "label": "CUSTOMIZATION_SHOP_BACKROOM",
    "glb": "interiors/CUSTOMIZATION_SHOP_BACKROOM.glb",
-   "tris": 1094,
+   "tris": 11153,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\CUSTOMIZATION_SHOP_BACKROOM.BIN"
   },
@@ -404,7 +404,7 @@
    "group": "Interiores",
    "label": "PLATFORMCRIB",
    "glb": "interiors/PLATFORMCRIB.glb",
-   "tris": 4843,
+   "tris": 14903,
    "verts": 0,
    "source": "FRONTEND\\PLATFORMS\\PLATFORMCRIB.BIN"
   },

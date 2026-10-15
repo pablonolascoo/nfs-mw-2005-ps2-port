@@ -1,0 +1,74 @@
+{
+  "_doc": [
+    "Escenas de garaje conducibles (tools/src/cli/garage-scenes.ts, docs/es/07 §5). Archivo propio: solo números y NOMBRES de",
+    "texturas del disco; ni píxeles ni geometría del juego. Las texturas se leen de FRONTEND\\PLATFORMS\\<platform>.BIN.",
+    "Marco local de la puerta: x hacia fuera (+) y hacia dentro (−), y a la izquierda mirando desde fuera, z arriba; origen en",
+    "el centro de la persiana a ras de suelo. «wall»: back (fondo), left, right, front (cara interior de la fachada).",
+    "«at»: posición a lo largo de la pared, 0…1 de izquierda a derecha mirándola desde dentro. «z»: altura del centro (m).",
+    "Sin «repeat» (m por repetición de la textura) ni «color», el conversor los mide en el interior del disco que usa esa",
+    "textura (mediana de m/UV y color horneado medio), así el tamaño y la luz casan con lo que hay al lado.",
+    "«shade»: [abajo, arriba] multiplica el color horneado de abajo a arriba de la pared (sombra de contacto)."
+  ],
+  "version": 1,
+  "kinds": {
+    "safehouse": {
+      "platform": "CAREER_SAFEHOUSE",
+      "floor": { "texture": "CRIB1_FLOOR", "opaque": true },
+      "walls": { "texture": "CRIB1_BRICK1", "shade": [0.55, 1.0] },
+      "wallsTop": { "texture": "CRIB1_BRICK3", "from": 3.4, "shade": [0.9, 0.75] },
+      "ceiling": { "texture": "CRIB1_ROOFTILES", "shade": [0.7, 0.7] },
+      "beams": { "texture": "CRIB1_GIRDERNOALPHA", "every": 4.2, "size": [0.35, 0.6] },
+      "frame": { "texture": "CRIB1_PIPE", "width": 0.28 },
+      "apron": { "texture": "CRIB1_FLOOR", "opaque": true },
+      "decals": [
+        { "texture": "CRIB1_POSTERBOARD", "wall": "left", "at": 0.35, "z": 1.7, "size": [1.6, 1.2] },
+        { "texture": "CRIB1_GRAF", "wall": "back", "at": 0.3, "z": 1.5, "size": [3.2, 2.0] },
+        { "texture": "GRAF05", "wall": "right", "at": 0.6, "z": 1.3, "size": [2.6, 1.6] },
+        { "texture": "GRAF11", "wall": "back", "at": 0.75, "z": 1.4, "size": [2.4, 1.6] },
+        { "texture": "GRAF02", "wall": "front", "at": 0.15, "z": 1.5, "size": [2.0, 1.5] }
+      ]
+    },
+    "customshop": {
+      "platform": "CUSTOMIZATION_SHOP",
+      "floor": { "texture": "CSHOP_FLOOR", "opaque": true },
+      "walls": { "texture": "CSHOP_CORUGATEDMETAL", "shade": [0.55, 1.0] },
+      "wallsTop": { "texture": "CSHOP_METAL01", "from": 4.2, "shade": [0.85, 0.7] },
+      "ceiling": { "texture": "CSHOP_METAL01", "shade": [0.6, 0.6] },
+      "beams": { "texture": "CSHOP_WOOD1", "every": 3.6, "size": [0.3, 0.45] },
+      "frame": { "texture": "CSHOP_METALYELLOW", "width": 0.3 },
+      "apron": { "texture": "CSHOP_FLOOR", "opaque": true },
+      "decals": [
+        { "texture": "GRAF01", "wall": "left", "at": 0.3, "z": 1.4, "size": [3.0, 1.8] },
+        { "texture": "GRAF10", "wall": "back", "at": 0.65, "z": 1.5, "size": [3.2, 2.0] },
+        { "texture": "GRAF06", "wall": "right", "at": 0.45, "z": 1.3, "size": [2.4, 1.6] },
+        { "texture": "CSHOP_WINDOW1", "wall": "left", "at": 0.7, "z": 3.0, "size": [2.2, 1.6] },
+        { "texture": "CSHOP_WINDOW1", "wall": "right", "at": 0.2, "z": 3.0, "size": [2.2, 1.6] },
+        { "texture": "CSHOP_DOOR1", "wall": "back", "at": 0.15, "z": 1.05, "size": [1.05, 2.1] }
+      ]
+    },
+    "carlot": {
+      "platform": "CAR_LOT",
+      "floor": { "texture": "CARLOT_CONCRETEFLOOR", "opaque": true },
+      "walls": { "texture": "CARLOT_WALLCONCONCRETE", "shade": [0.6, 1.0] },
+      "ceiling": { "texture": "CARLOT_RIPPLECONCRETE", "shade": [0.65, 0.65] },
+      "beams": { "texture": "CARLOT_WALLCONCONCRETE", "every": 6.0, "size": [0.6, 0.7] },
+      "pillars": { "texture": "CARLOT_YELLOWPILLAR", "every": 6.0, "size": [0.6, 0.6] },
+      "frame": { "texture": "CARLOT_YELLOWPILLAR", "width": 0.35 },
+      "apron": { "texture": "CARLOT_CONCRETEFLOOR", "opaque": true },
+      "decals": [
+        { "texture": "CARLOT_SIGN_P3", "wall": "back", "at": 0.25, "z": 2.1, "size": [1.6, 1.6] },
+        { "texture": "CARLOT_SIGN1", "wall": "left", "at": 0.5, "z": 1.8, "size": [0.7, 0.9] },
+        { "texture": "CARLOT_SIGN3", "wall": "right", "at": 0.4, "z": 1.6, "size": [0.6, 0.6] },
+        { "texture": "CARLOT_DOOR01", "wall": "back", "at": 0.8, "z": 1.05, "size": [1.05, 2.1] },
+        { "texture": "GRAF09", "wall": "left", "at": 0.25, "z": 1.3, "size": [2.6, 1.6] },
+        { "texture": "CARLOT_YELLOWBAND", "wall": "front", "at": 0.5, "z": 3.6, "size": [5.0, 0.6] }
+      ]
+    }
+  },
+  "zones": {
+    "_doc": "Retoques por zona (opcionales): apronLength (m del rampa/umbral hacia fuera), noApron, extraDecals.",
+    "zone_safehouse_4": { "apronLength": 4.0 },
+    "zone_customshop_1": { "apronLength": 4.0 },
+    "zone_customshop_4": { "apronLength": 4.0 }
+  }
+}

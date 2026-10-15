@@ -4,7 +4,7 @@
 //
 // Qué hay en el disco [V con SLES-53559 y SLUS-21351]:
 // - MOVIES/*.MPC: películas (MPEG-2 512×416 + audio EA-XA v2 / ADPCM EA R3 48 kHz estéreo en bloques SCHl).
-//   Las voces de la historia (actores reales) SOLO están en inglés en los dos discos; la PAL trae subtítulos (SUBTITLES/*).
+//   PAL: inglés + castellano e italiano (historia y tutoriales doblados, doc 22); NTSC-U: inglés. Subtítulos: doc 22.
 // - SOUND/SPEECH/COPSPEECH_<EN|SP|IT>.BIG: radio de la policía. Miles de clips SCHl seguidos (frases troceadas).
 //   SP = castellano, EN = inglés, IT = italiano (la NTSC-U solo trae EN).
 // - SOUND/STREAMS/NISAUDIO.BIG: audio de las escenas con el motor (NIS), ADPCM EA R2 32 kHz estéreo.
@@ -48,11 +48,11 @@ for (const name of files.filter(n => /^MOVIES\\.*\.MPC$/i.test(n)).sort()) {
   const dst0 = `${out}/peliculas/${base}.flac`;
   if (!(await Bun.file(dst0).exists())) await Bun.write(src, await disc.readEntry(disc.find(name)!));
   const dst = `${out}/peliculas/${base}.flac`;
-  if (await Bun.file(dst).exists()) { rmSync(src, { force: true }); (manifest.peliculas as object[]).push({ archivo: `peliculas/${base}.flac`, origen: name, escena: STORY[Object.keys(STORY).find(k => base.startsWith(k)) ?? ""] ?? null, idioma: "inglés (voces originales)" }); continue; }
+  if (await Bun.file(dst).exists()) { rmSync(src, { force: true }); (manifest.peliculas as object[]).push({ archivo: `peliculas/${base}.flac`, origen: name, escena: STORY[Object.keys(STORY).find(k => base.startsWith(k)) ?? ""] ?? null, idioma: ({ ENGLISH: "inglés (voces originales)", SPANISH: "castellano (doblaje)", ITALIAN: "italiano (doblaje)" } as Record<string, string>)[/_([A-Z]+)_(PAL|NTSC)$/.exec(base)?.[1] ?? ""] ?? "?" }); continue; }
   run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vn", "-c:a", "flac", dst]);
   rmSync(src);
   const key = Object.keys(STORY).find(k => base.startsWith(k));
-  (manifest.peliculas as object[]).push({ archivo: `peliculas/${base}.flac`, origen: name, escena: key ? STORY[key] : null, idioma: "inglés (voces originales)" });
+  (manifest.peliculas as object[]).push({ archivo: `peliculas/${base}.flac`, origen: name, escena: key ? STORY[key] : null, idioma: ({ ENGLISH: "inglés (voces originales)", SPANISH: "castellano (doblaje)", ITALIAN: "italiano (doblaje)" } as Record<string, string>)[/_([A-Z]+)_(PAL|NTSC)$/.exec(base)?.[1] ?? ""] ?? "?" });
   console.log(`película ${base}`);
 }
 

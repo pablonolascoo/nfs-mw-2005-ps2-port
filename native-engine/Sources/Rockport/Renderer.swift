@@ -1,39 +1,32 @@
-// Renderizador Metal. Dos pasadas por fotograma:
-//   1. Escena a una textura HDR (rgba16Float) a resolución dinámica: cielo → opacos → recorte alfa → coche →
-//      mar → sombras horneadas → agua → aditivos → cristales del coche.
-//   2. Pasada final a pantalla: escalado bilineal + tono PS2 (Config.ps2GradeStrength).
+// Renderizador Metal. Pasadas por fotograma:
+//   1. Escena a una textura rgba16Float a resolución dinámica, **codificada en espacio de pantalla como el GS del PS2** (las
+//      mezclas ocurren en gamma, doc 20 §1): cielo del juego → opacos → recorte alfa → coche (material de luz + reflejo) →
+//      sol → mar → sombras horneadas y sombra del coche (CARSHADOW) → mezcla → aditivos → agua → cristales del coche.
+//   2. Tratamiento visual: reducción a 1/4 con paso de brillo (ColourBloomCurve) y desenfoque separable.
+//   3. Pasada final a pantalla: escalado bilineal + bloom de color, «black bloom» y desaturación del visuallook + tono PS2.
 // Profundidad invertida (1 cerca, 0 lejos) con plano lejano infinito, en memoria "memoryless" (no sale de la GPU).
 import Foundation
 import Metal
 import MetalKit
 import simd
 
-struct FrameUniforms {
-    var viewProj: float4x4
-    var invViewProj: float4x4
-    var camPos: float4
-    var fog: float4
-    var fogColor: float4
-    var skyHorizon: float4
-    var skyHaze: float4
-    var skyZenith: float4
-    var sunDir: float4
-    // Luces del coche (lineal × intensidad), las mismas que viewer/src/main.ts: HemisphereLight + DirectionalLight.
-    var lightSky: float4
-    var lightGround: float4
-    var lightSun: float4
-}
+// FrameUniforms está en SceneShading.swift (compartido con los shaders de la IA y de los garajes).
 
 struct DrawUniforms {
     var model: float4x4
     var color: float4
     var params: float4
+    var lm = LightMaterialGPU.neutral
 }
 
 struct PostUniforms {
     var uvScale: float2
     var strength: Float
-    var pad: Float = 0
+    var look: Float = 1
+    var bloomTint = float4.zero
+    var bloomCurve = float4.zero
+    var blackCurve = float4.zero
+    var misc = float4.zero
 }
 
 /// Lo que hay que dibujar en un fotograma.
@@ -48,6 +41,8 @@ struct SceneFrame {
     var carShadow: float4x4?
     /// Otros coches con malla completa y física del juego (rivales de carrera, Race/): se dibujan como el del jugador.
     var extraCars: [(mesh: GPUMesh, parts: [float4x4], shadow: float4x4?)] = []
+    /// Luz de la vista (doc 20): calle por defecto; los garajes ponen la suya (SceneLighting.frontEnd).
+    var lighting: SceneLighting = .world
 }
 
 final class Renderer {
@@ -66,7 +61,24 @@ final class Renderer {
     private var quadBuffer: MTLBuffer!
     private var sceneColor: MTLTexture?
     private var sceneDepth: MTLTexture?
+    private var bloomA: MTLTexture?, bloomB: MTLTexture?
+    private var envSampler: MTLSamplerState!
     var gradeStrength: Float = Config.ps2GradeStrength
+    /// Fuerza del tratamiento visual del juego (bloom de color, black bloom, desaturación). 0 = apagado. `ROCKPORT_LOOK`.
+    var lookStrength: Float = Float(ProcessInfo.processInfo.environment["ROCKPORT_LOOK"] ?? "") ?? Config.visualLookStrength
+    /// Fuerza de los reflejos de los coches (Config.envStrength; depuración: `ROCKPORT_ENV`).
+    var envScale: Float = Float(ProcessInfo.processInfo.environment["ROCKPORT_ENV"] ?? "") ?? Config.envStrength
+    /// Datos de luz y efectos (fx/, doc 20). Lo pone el motor al cargar los datos.
+    var fx: FXData?
+    private var fxTextureCache: [String: MTLTexture?] = [:]
+    /// Textura de fx/ (mapas de entorno, cielo, sol, sombra del coche); nil si los datos son anteriores al formato 8.
+    func fxTexture(_ name: String) -> MTLTexture? {
+        if let t = fxTextureCache[name] { return t }
+        guard let fx, fx.loaded, FileManager.default.fileExists(atPath: fx.textureURL(name).path) else { fxTextureCache[name] = .some(nil); return nil }
+        let t = textures.texture(url: fx.textureURL(name), alpha: true)
+        if t != nil { fxTextureCache[name] = t }   // la subida es asíncrona: hasta que llegue se vuelve a pedir
+        return t
+    }
     /// Capas extra (tráfico y policía de AIRender.swift, HUD de persecución): se dibujan dentro de las pasadas.
     var overlays: [RenderOverlay] = []
 
@@ -121,6 +133,9 @@ final class Renderer {
         try make("shadow", vs: "vs_world", fs: "fs_shadow", blend: .alpha)
         try make("decal", vs: "vs_world", fs: "fs_decal", blend: .alpha)
         try make("blob", vs: "vs_world", fs: "fs_blob", blend: .alpha)
+        try make("sunlayer", vs: "vs_world", fs: "fs_sunlayer", blend: .add)
+        try make("bright", vs: "vs_fullscreen", fs: "fs_bright", blend: .none, depth: false, vertex: false)
+        try make("blur", vs: "vs_fullscreen", fs: "fs_blur", blend: .none, depth: false, vertex: false)
         try make("water", vs: "vs_world", fs: "fs_water", blend: .alpha)
         try make("additive", vs: "vs_world", fs: "fs_additive", blend: .add)
         try make("post", vs: "vs_fullscreen", fs: "fs_post", blend: .none, color: outputFormat, depth: false, vertex: false)
@@ -145,6 +160,10 @@ final class Renderer {
         ps.minFilter = .linear; ps.magFilter = .linear
         ps.sAddressMode = .clampToEdge; ps.tAddressMode = .clampToEdge
         postSampler = device.makeSamplerState(descriptor: ps)
+        let es = MTLSamplerDescriptor()
+        es.minFilter = .linear; es.magFilter = .linear; es.mipFilter = .linear
+        es.sAddressMode = .repeat; es.tAddressMode = .clampToEdge
+        envSampler = device.makeSamplerState(descriptor: es)
 
         // Mar: cuadrado de 40 km centrado en la ciudad, a z = -0,2 (como el visor)
         let c = float2(2200, 1800), h: Float = 20000
@@ -161,16 +180,15 @@ final class Renderer {
         quadBuffer = device.makeBuffer(bytes: &quad, length: MemoryLayout<Vertex>.stride * 4, options: .storageModeShared)
     }
 
-    /// Metalicidad y rugosidad de cada material del coche, como el visor: la pintura (paintCar) 0,45 / 0,32;
-    /// el resto, lo que escribe tools/src/lib/glb.ts (metallicFactor 0, roughnessFactor 0,85).
-    static func carPBR(_ d: DrawRange) -> float2 { d.pbr ?? (d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85)) }
-
     /// Texturas de escena por tamaño de destino (varias pantallas de distinto tamaño: Multiplayer/MultiDisplay.swift).
     private var targetCache: [SIMD2<Int>: (MTLTexture, MTLTexture)] = [:]
 
     /// Asegura texturas de escena del tamaño máximo (la resolución dinámica usa una parte con el viewport).
     private func ensureTargets(width: Int, height: Int) {
         if let s = sceneColor, s.width == width, s.height == height { return }
+        let bd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: max(16, width / 4), height: max(16, height / 4), mipmapped: false)
+        bd.usage = [.renderTarget, .shaderRead]; bd.storageMode = .private
+        bloomA = device.makeTexture(descriptor: bd); bloomB = device.makeTexture(descriptor: bd)
         if let c = targetCache[SIMD2(width, height)] { sceneColor = c.0; sceneDepth = c.1; return }
         let cd = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba16Float, width: width, height: height, mipmapped: false)
         cd.usage = [.renderTarget, .shaderRead]; cd.storageMode = .private
@@ -226,7 +244,39 @@ final class Renderer {
         enc.endEncoding()
         lastDrawCalls = draws; lastTriangles = tris
 
-        // Pasada final: escala a pantalla + tono PS2
+        let fx = self.fx
+        var P = PostUniforms(uvScale: float2(Float(rw) / Float(W), Float(rh) / Float(H)), strength: gradeStrength)
+        if let fx, let a = bloomA, let b = bloomB, lookStrength > 0 {
+            P.look = lookStrength
+            P.bloomTint = float4(fx.bloomTint * fx.bloomIntensity * Config.bloomGain, 1)
+            P.bloomCurve = fx.bloomCurve.y; P.blackCurve = fx.blackBloomCurve.y
+            P.misc = float4(fx.blackBloomIntensity, fx.desaturation * Config.desaturationScale, 0, 0)
+            // Tratamiento visual: brillo a 1/4 → desenfoque horizontal → vertical
+            func pass(_ dst: MTLTexture, _ name: String, _ body: (MTLRenderCommandEncoder) -> Void) {
+                let d = MTLRenderPassDescriptor()
+                d.colorAttachments[0].texture = dst; d.colorAttachments[0].loadAction = .dontCare; d.colorAttachments[0].storeAction = .store
+                guard let e = cb.makeRenderCommandEncoder(descriptor: d) else { return }
+                e.label = name
+                body(e)
+                e.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+                e.endEncoding()
+            }
+            pass(a, "bloom: brillo") { e in
+                e.setRenderPipelineState(self.pipelines["bright"]!)
+                e.setFragmentBytes(&P, length: MemoryLayout<PostUniforms>.stride, index: 0)
+                e.setFragmentTexture(sceneColor, index: 0); e.setFragmentSamplerState(self.postSampler, index: 0)
+            }
+            for (src, dst, dir) in [(a, b, float4(1.5 / Float(a.width), 0, 0, 0)), (b, a, float4(0, 1.5 / Float(a.height), 0, 0))] {
+                pass(dst, "bloom: desenfoque") { e in
+                    var d = dir
+                    e.setRenderPipelineState(self.pipelines["blur"]!)
+                    e.setFragmentBytes(&d, length: 16, index: 0)
+                    e.setFragmentTexture(src, index: 0); e.setFragmentSamplerState(self.postSampler, index: 0)
+                }
+            }
+        } else { P.look = 0 }
+
+        // Pasada final: escala a pantalla + tratamiento visual + tono PS2
         let pp = MTLRenderPassDescriptor()
         pp.colorAttachments[0].texture = target
         pp.colorAttachments[0].loadAction = .dontCare
@@ -234,9 +284,9 @@ final class Renderer {
         guard let post = cb.makeRenderCommandEncoder(descriptor: pp) else { return }
         post.label = "tono PS2"
         post.setRenderPipelineState(pipelines["post"]!)
-        var P = PostUniforms(uvScale: float2(Float(rw) / Float(W), Float(rh) / Float(H)), strength: gradeStrength)
         post.setFragmentBytes(&P, length: MemoryLayout<PostUniforms>.stride, index: 0)
         post.setFragmentTexture(sceneColor, index: 0)
+        post.setFragmentTexture(bloomA ?? sceneColor, index: 1)
         post.setFragmentSamplerState(postSampler, index: 0)
         post.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
         post.endEncoding()
@@ -246,18 +296,30 @@ final class Renderer {
     /// Todas las pasadas de escena de una vista (el viewport y el recorte ya están puestos).
     private func encodeScene(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) -> (draws: Int, tris: Int) {
         let viewProj = frame.proj * frame.view
-        let fogC = srgbToLinear(Config.skyHorizon)
+        let L = frame.lighting
+        let sunPos = fx?.sunPosition ?? float3(5300, -3550, 3000)
+        let sunDir = simd_normalize(sunPos - frame.camPos)
+        var lights = L.lights
+        if L.useSun { lights.insert((sunDir, srgbToLinear(L.sunColor) * Config.sunIntensityPS2), at: 0) }
+        while lights.count < 3 { lights.append((float3(0, 0, 1), .zero)) }
+        let envTex = fxTexture(L.envMap)
+        let fogC = L.fogColor.map { srgbToLinear($0) } ?? srgbToLinear(Config.skyHorizon)
         var F = FrameUniforms(viewProj: viewProj, invViewProj: viewProj.inverse,
                               camPos: float4(frame.camPos, frame.time),
-                              fog: float4(Config.fogStart, Config.fogEnd, 0, 0),
+                              fog: L.fog,
                               fogColor: float4(fogC, 1),
                               skyHorizon: float4(srgbToLinear(Config.skyHorizon), 1),
                               skyHaze: float4(srgbToLinear(Config.skyHaze), 1),
                               skyZenith: float4(srgbToLinear(Config.skyZenith), 1),
-                              sunDir: float4(simd_normalize(Config.sunPosition), 0),
-                              lightSky: float4(srgbToLinear(Config.hemiSky) * Config.hemiIntensity, 0),
-                              lightGround: float4(srgbToLinear(Config.hemiGround) * Config.hemiIntensity, 0),
-                              lightSun: float4(srgbToLinear(Config.sunColor) * Config.sunIntensity, 0))
+                              sunDir: float4(sunDir, L.useSun ? 1 : 0),
+                              lightSky: float4(L.ambientSky, 0),
+                              lightGround: float4(L.ambientGround, 0),
+                              lightSun: .zero)
+        F.view = frame.view
+        F.lightDir0 = float4(lights[0].dir, 0); F.lightDir1 = float4(lights[1].dir, 0); F.lightDir2 = float4(lights[2].dir, 0)
+        F.lightCol0 = float4(lights[0].color, 0); F.lightCol1 = float4(lights[1].color, 0); F.lightCol2 = float4(lights[2].color, 0)
+        F.env = float4(envTex == nil ? 0 : L.envMode, L.envStrength * envScale, L.shadowAlpha, L.frontEnd ? 1 : 0)
+        F.fogHeight = L.fogHeight
         let frustum = Frustum(viewProj)
         let visible = frame.meshes.filter { frustum.intersects($0.bounds) }
         enc.setVertexBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
@@ -268,18 +330,30 @@ final class Renderer {
         enc.setFragmentSamplerState(samplers[3], index: 0)
 
         var draws = 0, tris = 0
-        // Cielo
+        // Cielo del juego (texturas de DYNTEX.BIN) o el degradado si faltan
         enc.setRenderPipelineState(pipelines["sky"]!)
         enc.setDepthStencilState(depthOff)
+        let grad = fxTexture("SKY_MIDDAY_A_GRADIENT_A"), clouds = fxTexture("SKY_MIDDAY_A_CLOUDS_A"), cap = fxTexture("SKY_MIDDAY_A_CAP_A")
+        var S = float4(grad != nil && clouds != nil && cap != nil && L.sky ? 1 : 0, 0, 0, 0)
+        enc.setFragmentBytes(&S, length: 16, index: 2)
+        enc.setFragmentTexture(grad ?? textures.white, index: 0)
+        enc.setFragmentTexture(clouds ?? textures.white, index: 1)
+        enc.setFragmentTexture(cap ?? textures.white, index: 2)
+        enc.setFragmentSamplerState(samplers[1], index: 0)   // repetir en U (acimut), recortar en V
         enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        enc.setFragmentSamplerState(samplers[3], index: 0)
 
         func drawMeshes(_ meshes: [GPUMesh], kinds: Set<MaterialKind>, model: (Int) -> float4x4 = { _ in .identity },
-                        color: (DrawRange) -> float4 = { $0.color }, pbr: (DrawRange) -> float2 = { _ in .zero }) {
+                        color: (DrawRange) -> float4 = { $0.color }, car: Bool = false, paintFallback: String = "METPAINTSILVER") {
             for m in meshes {
                 var bound = false
                 for d in m.draws where d.visible && kinds.contains(d.kind) {
                     if !bound { enc.setVertexBuffer(m.vertexBuffer, offset: 0, index: 0); bound = true }
-                    var U = DrawUniforms(model: model(d.part), color: color(d), params: float4(d.kind == .mask ? d.cutoff : 0, pbr(d).x, pbr(d).y, 0))
+                    var U = DrawUniforms(model: model(d.part), color: color(d), params: float4(d.kind == .mask ? d.cutoff : 0, 0, 0, 0))
+                    if car {
+                        U.lm = fx?.carMaterial(d, paintFallback: paintFallback) ?? .neutral
+                        U.params.w = U.lm.p.w
+                    }
                     enc.setVertexBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
                     enc.setFragmentBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
                     enc.setFragmentTexture(d.texture ?? textures.white, index: 0)
@@ -290,6 +364,10 @@ final class Renderer {
                 }
             }
         }
+        func bindEnv() {
+            enc.setFragmentTexture(envTex ?? textures.white, index: 1)
+            enc.setFragmentSamplerState(envSampler, index: 1)
+        }
 
         // Opacos y recorte alfa (escriben profundidad)
         enc.setDepthStencilState(depthWrite)
@@ -298,23 +376,46 @@ final class Renderer {
         enc.setRenderPipelineState(pipelines["mask"]!)
         drawMeshes(visible, kinds: [.mask])
 
-        // Coche (opaco)
+        // Coche (opaco): material de luz del juego + reflejo
+        bindEnv()
         if let car = frame.car {
             enc.setRenderPipelineState(pipelines["car"]!)
-            drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, pbr: Renderer.carPBR)
+            drawMeshes([car.mesh], kinds: [.opaque, .mask], model: { car.parts[$0] }, car: true)
         }
         if !frame.extraCars.isEmpty {
             enc.setRenderPipelineState(pipelines["car"]!)
             for c in frame.extraCars where frustum.intersects(AABB(min: float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z) - 4,
                                                                    max: float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z) + 4)) {
-                drawMeshes([c.mesh], kinds: [.opaque, .mask], model: { c.parts[$0] }, pbr: Renderer.carPBR)
+                drawMeshes([c.mesh], kinds: [.opaque, .mask], model: { c.parts[$0] }, car: true)
             }
         }
-        for o in overlays { o.encodeOpaque(enc, frame: frame) }   // coches de la IA (instanciados)
-        enc.setDepthStencilState(depthWrite)
+        for o in overlays { o.encodeOpaque(enc, frame: frame) }   // coches de la IA (instanciados), interiores de garajes
+        enc.setVertexBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
+        enc.setFragmentBytes(&F, length: MemoryLayout<FrameUniforms>.stride, index: 1)
+        enc.setFragmentSamplerState(samplers[boundWrap & 3], index: 0)
 
         // Transparentes: no escriben profundidad
         enc.setDepthStencilState(depthRead)
+        // Sol (SunChunkInfo MIDDAY): capas con textura (centro y halo) en su posición, tapadas por la escena
+        if L.useSun, let fx, fx.loaded, sunDir.z > -0.05 {
+            let v = frame.view
+            let right = float3(v.columns.0.x, v.columns.1.x, v.columns.2.x), up = float3(v.columns.0.y, v.columns.1.y, v.columns.2.y)
+            let dist = simd_distance(sunPos, frame.camPos), D: Float = 4000
+            enc.setRenderPipelineState(pipelines["sunlayer"]!)
+            enc.setVertexBuffer(quadBuffer, offset: 0, index: 0)
+            for layer in fx.sunLayers {
+                guard let tex = fxTexture(layer.texture == 0 ? "SUNCENTER" : layer.texture == 1 ? "SUNHALO" : "") else { continue }
+                let r = layer.size * 0.5 * D / dist
+                let c = frame.camPos + sunDir * D
+                let m = float4x4(columns: (float4(right * r, 0), float4(up * r, 0), float4(simd_cross(right, up), 0), float4(c, 1)))
+                var U = DrawUniforms(model: m, color: float4(layer.color.x, layer.color.y, layer.color.z, layer.color.w) * float4(1, 1, 1, layer.intensity), params: .zero)
+                enc.setVertexBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
+                enc.setFragmentBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
+                enc.setFragmentTexture(tex, index: 0)
+                enc.drawIndexedPrimitives(type: .triangle, indexCount: 6, indexType: .uint32, indexBuffer: seaIndex, indexBufferOffset: 0)
+                draws += 1
+            }
+        }
         enc.setRenderPipelineState(pipelines["sea"]!)
         var seaU = DrawUniforms(model: .identity, color: float4(1, 1, 1, 1), params: .zero)
         enc.setVertexBuffer(seaBuffer, offset: 0, index: 0)
@@ -325,12 +426,26 @@ final class Renderer {
         enc.setRenderPipelineState(pipelines["shadow"]!)
         enc.setDepthBias(1, slopeScale: 2, clamp: 0.01)   // Z invertida: sesgo positivo = hacia la cámara
         drawMeshes(visible, kinds: [.shadow])
+        // Sombra de cada coche: CARSHADOW [V: GLOBALB.BUN] en la caja del coche, alargada hacia el lado contrario al sol
+        // (SunScale = (1 − sol.z)·0,5 m, DrawAmbientShadow [D]); en el frontend sin sol y a alfa 255.
+        let shadowTex = fxTexture("CARSHADOW")
+        enc.setFragmentSamplerState(samplers[0], index: 0); boundWrap = 0
         for m in [frame.carShadow] + frame.extraCars.map(\.shadow) {
             guard let m else { continue }
             enc.setRenderPipelineState(pipelines["blob"]!)
-            var U = DrawUniforms(model: m, color: float4(1, 1, 1, 1), params: .zero)
+            var q = m
+            if L.useSun {
+                let ax = float3(m.columns.0.x, m.columns.0.y, m.columns.0.z), ay = float3(m.columns.1.x, m.columns.1.y, m.columns.1.z)
+                let hx = max(simd_length(ax), 0.01), hy = max(simd_length(ay), 0.01)
+                let sunScale = (1 - sunDir.z) * 0.5
+                let adj = float2(-simd_dot(sunDir, ax / hx), -simd_dot(sunDir, ay / hy)) * sunScale / float2(hx, hy)   // en unidades del cuadrado
+                q = m * float4x4(translation: float3(adj.x, adj.y, 0)) * float4x4(scale: float3(1 + abs(adj.x) * 0.5, 1 + abs(adj.y) * 0.5, 1))
+            }
+            var U = DrawUniforms(model: q, color: float4(1, 1, 1, 1), params: float4(0, shadowTex == nil ? 0 : 1, 0, 0))
             enc.setVertexBuffer(quadBuffer, offset: 0, index: 0)
             enc.setVertexBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
+            enc.setFragmentBytes(&U, length: MemoryLayout<DrawUniforms>.stride, index: 2)
+            enc.setFragmentTexture(shadowTex ?? textures.white, index: 0)
             enc.drawIndexedPrimitives(type: .triangle, indexCount: 6, indexType: .uint32, indexBuffer: seaIndex, indexBufferOffset: 0)
             draws += 1
         }
@@ -342,14 +457,15 @@ final class Renderer {
         drawMeshes(visible, kinds: [.additive])
         enc.setRenderPipelineState(pipelines["water"]!)
         drawMeshes(visible, kinds: [.water])
+        bindEnv()
         if let car = frame.car {
             enc.setRenderPipelineState(pipelines["carBlend"]!)
-            drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, pbr: Renderer.carPBR)
+            drawMeshes([car.mesh], kinds: [.blend, .shadow, .additive, .water], model: { car.parts[$0] }, car: true)
         }
         if !frame.extraCars.isEmpty {
             enc.setRenderPipelineState(pipelines["carBlend"]!)
             for c in frame.extraCars where simd_distance(frame.camPos, float3(c.parts[0].columns.3.x, c.parts[0].columns.3.y, c.parts[0].columns.3.z)) < 400 {
-                drawMeshes([c.mesh], kinds: [.blend, .shadow, .additive, .water], model: { c.parts[$0] }, pbr: Renderer.carPBR)
+                drawMeshes([c.mesh], kinds: [.blend, .shadow, .additive, .water], model: { c.parts[$0] }, car: true)
             }
         }
         for o in overlays { o.encodeTransparent(enc, frame: frame); draws += o.drawCalls }

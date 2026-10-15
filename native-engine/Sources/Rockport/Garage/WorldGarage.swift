@@ -204,12 +204,31 @@ final class WorldGarages {
         // Volumen interior del edificio: de la puerta hacia dentro hasta su cara trasera; sin edificio, 16 × 10 × 5 m
         let b = info.building
         let behind: Float = b.map { simd_dot(float3($0.center[0] - doorP.x, $0.center[1] - doorP.y, 0), -out) + $0.along / 2 } ?? 16
-        let depth = max(8, min(behind, 40)), width = b.map { min($0.across, 30) } ?? 10, height = b.map { max(4, min($0.height, 9)) } ?? 5
+        var depth = max(8, min(behind, 40)), width = b.map { min($0.across, 30) } ?? 10, height = b.map { max(4, min($0.height, 9)) } ?? 5
         let rotOut = float4x4(rotationZ: yawOut)
-        let innerCenter = doorP - out * (depth / 2)
+        let leftDir = float3(-out.y, out.x, 0)
         func box(_ c: float3, _ half: float3) -> float4x4 { float4x4(translation: c) * rotOut * float4x4(scale: half) }
-        let inner = box(float3(innerCenter.x, innerCenter.y, ground + 0.15 + (height - 0.95) / 2), float3(depth / 2 - 0.6, width / 2 - 0.8, (height - 0.95) / 2))
-        let corridor = box(float3(doorP.x, doorP.y, ground + doorH / 2), float3(2.5, doorW / 2 + 0.15, doorH / 2 + 0.1))
+        // Volumen de la escena conducible (garage-scenes/, medido con la colisión del mundo): nave real detrás de la puerta,
+        // con sus paredes a izquierda y derecha (puede no estar centrada en la puerta). El recorte va 8 cm por dentro de las
+        // paredes de la escena para que no se coma fachadas a los lados (GarageScenes.swift).
+        let vol = GarageSystem.shared?.scenes.volume(info.key)
+        var innerCenter = doorP - out * (depth / 2)
+        var inner = box(float3(innerCenter.x, innerCenter.y, ground + 0.15 + (height - 0.95) / 2), float3(depth / 2 - 0.6, width / 2 - 0.8, (height - 0.95) / 2))
+        var clipBox = box(float3(innerCenter.x, innerCenter.y, ground - 0.6 + (height + 0.6) / 2), float3(depth / 2 - 0.4, width / 2 - 0.5, (height + 0.6) / 2))
+        if let v = vol {
+            depth = v.depth; width = v.left - v.right; height = v.height
+            let mid = (v.left + v.right) / 2
+            let x0: Float = -depth + 0.08, x1: Float = -0.6
+            innerCenter = doorP + out * ((x0 + x1) / 2) + leftDir * mid
+            inner = box(float3(innerCenter.x, innerCenter.y, ground + 0.15 + (height - 0.95) / 2), float3((x1 - x0) / 2, width / 2 - 0.08, (height - 0.95) / 2))
+            let c0: Float = -depth + 0.05, c1: Float = -0.3
+            let cc = doorP + out * ((c0 + c1) / 2) + leftDir * mid
+            clipBox = box(float3(cc.x, cc.y, ground - 0.6 + (height + 0.6) / 2), float3((c1 - c0) / 2, width / 2 - 0.06, (height + 0.6) / 2))
+        }
+        // Hueco de la puerta: empieza 12 cm sobre la calle. Antes bajaba 10 cm por debajo y se comía el suelo de la calle
+        // ±2,5 m alrededor de la persiana, donde el interior (recortado a su caja) no llega: por el agujero se veía el mar
+        // (banda gris en la parte de abajo de la pantalla al entrar). Doc 20 §5.
+        let corridor = box(float3(doorP.x, doorP.y, ground + 0.12 + doorH / 2), float3(2.5, doorW / 2 + 0.15, doorH / 2))
         // Interior: lado abierto hacia la puerta, plaza (su origen) dentro, suelo a la altura de la calle
         let tris = library.triangles(interiorName)
         let lay = WorldGarages.analyze(tris)
@@ -217,7 +236,6 @@ final class WorldGarages {
         let spotDist = min(max(depth * 0.5, 7), lay.depth, depth - 3)
         let origin = float3(doorP.x, doorP.y, ground - lay.floorZ) - out * spotDist
         let model = float4x4(translation: origin) * float4x4(rotationZ: rot)
-        let clipBox = box(float3(innerCenter.x, innerCenter.y, ground - 0.6 + (height + 0.6) / 2), float3(depth / 2 - 0.4, width / 2 - 0.5, (height + 0.6) / 2))
         let clip = clipBox.inverse
         // Plaza alcanzable: hasta la pared del fondo del interior (dentro del edificio), con margen
         var reach = spotDist + 3
@@ -284,7 +302,8 @@ final class WorldGarages {
         for i in 0..<16 {
             let a = Float(i) / 16 * 2 * .pi
             let d = float3(cos(a), sin(a), 0)
-            let t = cast(float3(0, 0, floorZ + 1.2), d) ?? 200
+            // A dos alturas: los pretiles y barandillas bajas (concesionario) no dejan pasar el coche aunque a 1,2 m esté libre
+            let t = min(cast(float3(0, 0, floorZ + 1.2), d) ?? 200, cast(float3(0, 0, floorZ + 0.45), d) ?? 200)
             if t > bestD { bestD = t; dir = SIMD2(d.x, d.y) }
         }
         var bb = AABB.empty; for v in tris { bb.add(v) }

@@ -6,8 +6,8 @@ Etiquetas: [V] verificado con SLES-53559 / SLUS-21351 · [D] decomp · [I] infer
 
 | Qué | Archivo del disco | Formato | Idiomas |
 |---|---|---|---|
-| Películas de la historia y de la Lista Negra (actores reales) | `MOVIES\*.MPC` (32) | MPEG-2 512×416 25 fps (PAL) + audio EA-XA v2 / ADPCM EA R3, 48 kHz estéreo, en bloques `SCHl` [V] | **Solo inglés** en los dos discos [V] |
-| Subtítulos de las películas | `SUBTITLES\STORYFMV_*` | bChunk `0x00870000`: pares (tiempo en décimas de segundo, hash de frase) [V] | El texto no está en `LANGUAGES\SPANISH.BIN` (esas entradas están a cero) [V]. Pendiente |
+| Películas de la historia y de la Lista Negra (actores reales) | `MOVIES\*_<IDIOMA>_PAL.MPC` (32 × 3) | MPEG-2 512×416 25 fps (PAL) + audio ADPCM EA R3, 48 kHz estéreo, en bloques `SCDl` [V] (doc 22) | PAL: **inglés, castellano e italiano** (historia y tutoriales doblados; los archivos de castellano e italiano no tenían nombre en ZDIR) · NTSC-U: inglés [V] |
+| Subtítulos de las películas | `SUBTITLES\*` | `SubtitleInfo` {u16 décimas, u16 relleno, u32 hash} [V][D] | Texto en `LANGUAGES\<IDIOMA>.BIN`: inglés, holandés, sueco, danés, finés y polaco; vacío en castellano/italiano/francés/alemán porque ahí la película va doblada [V]. Hecho: doc 22 |
 | Radio de la policía | `SOUND\SPEECH\COPSPEECH_<EN\|SP\|IT>.BIG` (+ `.IDX`, `.CSI`, `.EVT`) | Miles de clips `SCHl` seguidos [V] | PAL: castellano, inglés e italiano · NTSC-U: inglés |
 | Audio de escenas con el motor | `SOUND\STREAMS\NISAUDIO.BIG` | ADPCM EA R2, 32 kHz estéreo, 27 min seguidos [V] | — |
 | Sonidos de motor, turbo, derrapes… | `SOUND\ENGINE`, `TURBO`, `SKIDS`… (`.ABK`, `.GIN`) | Bancos AEMS `ABKC` + motores granulares `Gnsu` (§7) [V] | — |
@@ -47,7 +47,7 @@ FLAC sin pérdida: son las mismas muestras del disco.
 - El audio del disco del jugador sí se puede reproducir dentro del port, igual que las texturas.
 
 ## 4. Pendiente
-- Texto de los subtítulos (buscar dónde están las cadenas de las películas).
+- ~~Texto de los subtítulos~~ → hecho (doc 22, `movies.json`).
 - Radio: qué banco de cada frase es cada voz [H] y cuándo exactamente dispara cada evento el juego (`SoundAI`, `PursuitFlow`).
 - ~~Bancos de efectos `.ABK` (motores, sirenas) para el motor nativo~~ → hecho (§7–10). Queda: capa AEMS de los motores (módulos MIPS), `SOUND\MIXMAPS` (mapas de mezcla), qué muestra exacta es cada papel en algunos bancos ([H] en §8), música (`PFDATA`).
 

@@ -26,6 +26,12 @@ Nada de esto se sube a GitHub salvo los JSON pequeños de metadatos. Cifras de S
 | ¿Cómo suena cada coche, el turbo, los derrapes, la sirena, los golpes? | `sound/sound.json` + `sound/<CARPETA>/*.ABK, *.GIN` (301 bancos, 2350 sonidos, 160 motores, 103 coches, 608 golpes) | `sound.ts` | 16 |
 | ¿Cómo son los interiores de garaje? | `interiors/*.glb` (5) | `convert.ts interior` | 07 |
 | ¿Vista cenital del mapa? | `rockport-plano.png` + `.json` (escala) | `topdown.ts` | 03 |
+| ¿Qué películas hay, en qué idioma, con qué subtítulos y dónde están en la ISO? | `movies.json` (32 películas × 3 idiomas, 169 frases en 12 idiomas) | `movies.ts` | 22 |
+| ¿Cajas y esferas de colisión de cada coche y de los objetos rompibles? | `bounds.json` (83 coches, 405 objetos) | `bounds.ts` | 22 |
+| ¿Dónde salen partículas, destellos, rompibles, disparadores; altura del helicóptero; clima? | `effects.json` + `effects/` | `effects.ts` | 24 |
+| ¿Cómo son las escenas NIS (cámaras, coches, personajes, eventos, audio)? | `nis/index.json`, `nis/<ESCENA>.json` + `.glb` (87) | `nis.ts` | 23 |
+| ¿Qué música suena y cómo cambia en las persecuciones? ¿Mezcla y reverbs? | `music/music.json`, `mixmaps.json`, `reverbs.json` + `.MPF/.MUS` | `music.ts` | 25 |
+| ¿Qué parte del disco está descifrada? | `coverage.json` + doc 21 | `coverage.ts` | 21 |
 | ¿Qué se puede abrir en el visor? | `index.json` → `items[814]` | todos | 04 |
 
 ## 2. Rockport en números
@@ -67,4 +73,10 @@ bun src/cli/ai-attribs.ts ../original/SLES-53559.iso SLES-53559   # ai.json (tr�
 bun src/cli/radio.ts ../original/SLES-53559.iso SLES-53559      # radio/ (radio de la policía)
 bun src/cli/sound.ts ../original/SLES-53559.iso SLES-53559      # sound/ (motores, efectos, sirenas) · --check contra vgmstream
 bun src/cli/garages.ts    ../original/SLES-53559.iso SLES-53559   # garages.json
+bun src/cli/movies.ts   ../original/SLES-53559.iso SLES-53559   # movies.json (--srt, --wav)
+bun src/cli/bounds.ts   ../original/SLES-53559.iso SLES-53559   # bounds.json
+bun src/cli/effects.ts  ../original/SLES-53559.iso SLES-53559   # effects.json + effects/
+bun src/cli/nis.ts      ../original/SLES-53559.iso SLES-53559   # nis/
+bun src/cli/music.ts    ../original/SLES-53559.iso SLES-53559   # music/ (--audio, --check)
+bun src/cli/coverage.ts ../original/SLES-53559.iso SLES-53559 --docs   # coverage.json + doc 21
 ```

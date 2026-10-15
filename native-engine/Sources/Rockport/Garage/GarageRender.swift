@@ -97,13 +97,11 @@ struct GarageDrawItem {
     var tint: float3 = float3(1, 1, 1)
 }
 
-private let garageShaderSource = """
-#include <metal_stdlib>
-using namespace metal;
-struct FrameUniforms {
-    float4x4 viewProj; float4x4 invViewProj; float4 camPos; float4 fog; float4 fogColor;
-    float4 skyHorizon; float4 skyHaze; float4 skyZenith; float4 sunDir; float4 lightSky; float4 lightGround; float4 lightSun;
-};
+// Mismo espacio de color que la escena (SceneShading.swift): se escribe codificado y se mezcla en gamma, como el GS del PS2.
+// Así los rayos de luz aditivos (CRIB1_LIGHTRAYS01/02, SFX_LIGHTRAY, CSHOP_/QRACE_/CARLOT_LIGHTRAY*) quedan como bruma suave:
+// Cs (textura × vértice, saturado a 255) × As (alfa de textura × alfa de vértice) sumado en pantalla [D: GS].
+private let garageShaderSource = scenePreludeMSL + """
+
 struct GDraw { float4x4 model; float4x4 clip; float4 color; float4 params; };   // params: x corte alfa, y recorte activo
 struct VertexIn { float3 pos [[attribute(0)]]; float2 uv [[attribute(1)]]; half4 color [[attribute(2)]]; float4 normal [[attribute(3)]]; };
 struct VOut { float4 pos [[position]]; float3 world; float2 uv; float4 color; };
@@ -116,16 +114,12 @@ vertex VOut vs_garage(VertexIn in [[stage_in]], constant FrameUniforms& F [[buff
 static void clipIt(constant GDraw& D, float3 w) {
     if (D.params.y > 0.5) { float3 l = (D.clip * float4(w, 1)).xyz; if (any(abs(l) > 1.0)) discard_fragment(); }
 }
-static float3 fogIt(constant FrameUniforms& F, float3 c, float3 w) {
-    float k = saturate((distance(w, F.camPos.xyz) - F.fog.x) / (F.fog.y - F.fog.x));
-    return mix(c, F.fogColor.rgb, k);
-}
 fragment float4 fs_gopaque(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant GDraw& D [[buffer(2)]],
                            texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
     clipIt(D, in.world);
     float4 t = tex.sample(s, in.uv);
     if (D.params.x > 0 && t.a <= D.params.x) discard_fragment();
-    return float4(fogIt(F, t.rgb * in.color.rgb, in.world), 1);
+    return float4(sceneRGB(F, t.rgb * in.color.rgb, in.world), 1);
 }
 fragment float4 fs_gblend(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant GDraw& D [[buffer(2)]],
                           texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
@@ -133,13 +127,14 @@ fragment float4 fs_gblend(VOut in [[stage_in]], constant FrameUniforms& F [[buff
     float4 t = tex.sample(s, in.uv);
     float a = t.a * in.color.a;
     if (a < 0.01) discard_fragment();
-    return float4(t.rgb * in.color.rgb, a);
+    return float4(sceneRGB(F, t.rgb * in.color.rgb, in.world), a);
 }
 fragment float4 fs_gadd(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant GDraw& D [[buffer(2)]],
                         texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
     clipIt(D, in.world);
     float4 t = tex.sample(s, in.uv);
-    return float4(t.rgb * in.color.rgb * t.a, 1);
+    float a = t.a * saturate(in.color.a) * (1.0 - fogFactor(F, in.world));
+    return float4(ps2Encode(t.rgb * in.color.rgb) * a, 1);
 }
 """
 
@@ -157,6 +152,8 @@ final class GarageRenderer: RenderOverlay {
     /// Solo se dibuja si la vista lo pide (las vistas de pantalla partida no ven el escenario del frontend).
     var enabled = true
     private(set) var drawCalls = 0
+    /// Depuración: ROCKPORT_GARAGE_HIDE="NOMBRE1,NOMBRE2" oculta los materiales del interior cuyo nombre contiene esos textos.
+    static let debugHide: [String]? = ProcessInfo.processInfo.environment["ROCKPORT_GARAGE_HIDE"].map { $0.split(separator: ",").map(String.init) }
 
     init(device: MTLDevice, textures: TextureCache) throws {
         self.device = device; self.textures = textures
@@ -216,6 +213,7 @@ final class GarageRenderer: RenderOverlay {
             if !fr.intersects(wb) { continue }
             var bound = false
             for d in it.mesh.draws where d.visible && kinds.contains(d.kind) {
+                if let h = GarageRenderer.debugHide, h.contains(where: { d.name.contains($0) }) { continue }
                 if !bound { enc.setVertexBuffer(it.mesh.vertexBuffer, offset: 0, index: 0); bound = true }
                 var U = GDraw(model: it.model, clip: it.clip ?? .identity, color: d.color * float4(it.tint, 1),
                               params: float4(d.kind == .mask ? d.cutoff : 0, it.clip == nil ? 0 : 1, 0, 0))

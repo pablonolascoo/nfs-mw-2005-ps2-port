@@ -6,8 +6,8 @@ Tags: [V] verified on SLES-53559 / SLUS-21351 · [D] decomp · [I] inferred · [
 
 | What | Disc file | Format | Languages |
 |---|---|---|---|
-| Story and Blacklist movies (live actors) | `MOVIES\*.MPC` (32) | MPEG-2 512×416 25 fps (PAL) + EA-XA v2 / EA R3 ADPCM audio, 48 kHz stereo, in `SCHl` blocks [V] | **English only** on both discs [V] |
-| Movie subtitles | `SUBTITLES\STORYFMV_*` | bChunk `0x00870000`: (time in tenths of a second, phrase hash) pairs [V] | The text is not in `LANGUAGES\SPANISH.BIN` (those entries are zeroed) [V]. To do |
+| Story and Blacklist movies (live actors) | `MOVIES\*_<LANG>_PAL.MPC` (32 × 3) | MPEG-2 512×416 25 fps (PAL) + EA R3 ADPCM audio, 48 kHz stereo, in `SCDl` blocks [V] (doc 22) | PAL: **English, Spanish and Italian** (story and tutorials dubbed; the Spanish/Italian files had no name in ZDIR) · NTSC-U: English [V] |
+| Movie subtitles | `SUBTITLES\*` | `SubtitleInfo` {u16 tenths, u16 pad, u32 hash} [V][D] | Text in `LANGUAGES\<LANG>.BIN`: English, Dutch, Swedish, Danish, Finnish and Polish; empty in Spanish/Italian/French/German because the movie is dubbed there [V]. Done: doc 22 |
 | Police radio | `SOUND\SPEECH\COPSPEECH_<EN\|SP\|IT>.BIG` (+ `.IDX`, `.CSI`, `.EVT`) | Thousands of `SCHl` clips back to back [V] | PAL: Spanish (Spain), English, Italian · NTSC-U: English |
 | In-engine cut-scene audio | `SOUND\STREAMS\NISAUDIO.BIG` | EA R2 ADPCM, 32 kHz stereo, 27 min in one block [V] | — |
 | Engine, turbo, skid sounds… | `SOUND\ENGINE`, `TURBO`, `SKIDS`… (`.ABK`, `.GIN`) | AEMS `ABKC` banks + `Gnsu` granular engines (§7) [V] | — |
@@ -47,7 +47,7 @@ Lossless FLAC: the same samples as on the disc.
 - Playing the player's own disc audio inside the port is fine, just like the textures.
 
 ## 4. To do
-- Subtitle text (find where the movie strings live).
+- ~~Subtitle text~~ → done (doc 22, `movies.json`).
 - Radio: which bank of each phrase is which voice [H], and exactly when the game fires each event (`SoundAI`, `PursuitFlow`).
 - ~~`.ABK` effect banks (engines, sirens) for the native engine~~ → done (§7–10). Left: the engines' AEMS layer (MIPS modules), `SOUND\MIXMAPS` (mix maps), which exact sample plays some roles ([H] in §8), music (`PFDATA`).
 

@@ -285,6 +285,8 @@ final class Car {
             if let skin { m.draws[i].texture = skin; m.draws[i].color = float4(1, 1, 1, 1) }
             else if let p = preset.paint { m.draws[i].color = float4(srgbToLinear(p.srgb), 1) }
             m.draws[i].pbr = finish
+            // Material de luz de la pintura (LIGHT_MATERIAL_NAME: METPAINTSILVER, REGPAINTBLACK, PEARL8…) [V: presets.json] → doc 20
+            m.draws[i].light = preset.paint?.material
         }
         // Llanta: <LLANTA>_WHEEL teñida con PAINT_RIM según su máscara interior [D: CompositeRim]
         if preset.rimPaint != nil, let wheelTex = preset.rim?.texture {
@@ -293,8 +295,13 @@ final class Car {
                 for i in m.draws.indices where m.draws[i].name == wheelTex { m.draws[i].texture = rim }
             }
         }
-        // Cristales tintados [I]: el juego cambia su material de luz (WINDSHIELD_TINT_*); aquí se oscurecen y tiñen.
-        if let t = preset.windowTint, !t.name.uppercased().hasPrefix("STOCK") {
+        // Cristales tintados: el juego cambia su material de luz (WINDSHIELD_TINT_*, LightMaterial_WindowTint) [D]; su difusa
+        // ya es el color del tinte (p. ej. L2_RED: (1, 0, 0) × 0,5, alfa 0,75) [V: fx.json]. Sin fx/ (datos < 8), el tinte aproximado.
+        if let t = preset.windowTint, let mat = t.material, FXData.shared(data).material(mat) != nil {
+            for i in m.draws.indices where m.draws[i].name.hasPrefix("WINDOW_") && m.draws[i].name != "WINDOW_MASK" || m.draws[i].name == "REAR_DEFROSTER" {
+                m.draws[i].light = mat
+            }
+        } else if let t = preset.windowTint, !t.name.uppercased().hasPrefix("STOCK") {
             let v = UInt32(t.rgb, radix: 16) ?? 0
             let c = srgbToLinear(float3(Float((v >> 16) & 255), Float((v >> 8) & 255), Float(v & 255)) / 255)
             let hue = c / max(c.max(), 0.001)

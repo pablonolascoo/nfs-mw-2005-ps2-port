@@ -70,6 +70,7 @@ final class Engine {
         self.data = data
         textures = TextureCache(device: device)
         renderer = try Renderer(device: device, queue: q, textures: textures, outputFormat: outputFormat)
+        renderer.fx = FXData.shared(data)   // luz y efectos del juego (fx/, doc 20)
         streamer = TileStreamer(data: data, device: device, textures: textures)
         collision = CollisionWorld(root: data.root)
         streamer.loadFarTiles()

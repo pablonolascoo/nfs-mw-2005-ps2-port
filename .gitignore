@@ -32,3 +32,15 @@ map-data/**/radio/
 map-data/**/sound/
 map-data/**/races.json
 map-data/**/fe-cameras.json
+map-data/**/effects.json
+map-data/**/effects/
+map-data/**/music/
+map-data/**/nis/
+map-data/**/movies.json
+map-data/**/movies/
+map-data/**/bounds.json
+map-data/**/coverage.json
+map-data/**/garage-scenes/
+# Todo lo generado desde la ISO es local (los JSON pequeños ya versionados siguen versionados)
+map-data/**
+!map-data/.metadata_never_index

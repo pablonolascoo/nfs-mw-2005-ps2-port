@@ -23,6 +23,7 @@ const steps: [string, string[]][] = [
   ["Interiores", ["src/cli/convert.ts", iso, id, "interior", "CAREER_SAFEHOUSE", "PLATFORMCRIB", "CAR_LOT", "CUSTOMIZATION_SHOP", "CUSTOMIZATION_SHOP_BACKROOM"]],
   ["Garajes y puertas", ["src/cli/garages.ts", iso, id]],
   ["Cámaras de los garajes y menús (FE_ATTRIB.BIN)", ["src/cli/fe-cameras.ts", iso, id]],
+  ["Luz y efectos (materiales de luz, tratamiento visual, sol, entorno, sombra, cielo)", ["src/cli/fx.ts", iso, id]],
   ["Atributos de coches (ruedas)", ["src/cli/car-attribs.ts", iso, id]],
   ["Coches predefinidos (Lista Negra, vinilos)", ["src/cli/presets.ts", iso, id]],
   ["Física de los coches", ["src/cli/physics-attribs.ts", iso, id]],
@@ -32,8 +33,15 @@ const steps: [string, string[]][] = [
   ["Interfaz del juego (FEng: menús, HUD, fuentes, textos)", ["src/cli/frontend.ts", iso, id]],
   ["Red de carreteras", ["src/cli/roads.ts", iso, id]],
   ["Colisión por casillas", ["src/cli/collision.ts", iso, id]],
+  ["Escenas de garaje conducibles (umbral, volumen, colisión)", ["src/cli/garage-scenes.ts", iso, id]],
   ["Carreras y Lista Negra (rutas, vallas, rivales)", ["src/cli/races.ts", iso, id]],
+  ["Películas y subtítulos (MPC, SUBTITLES, LANGUAGES)", ["src/cli/movies.ts", iso, id]],
+  ["Colisión del juego (Bounds de coches y objetos)", ["src/cli/bounds.ts", iso, id]],
+  ["Partículas, destellos, disparadores y datos del mundo", ["src/cli/effects.ts", iso, id]],
+  ["Escenas NIS (cámaras, animaciones, eventos, revoluciones)", ["src/cli/nis.ts", iso, id]],
+  ["Música interactiva (PathFinder), mezclas, reverbs", ["src/cli/music.ts", iso, id]],
   ["Plano cenital", ["src/cli/topdown.ts", iso, id, "4096"]],
+  ["Cobertura del disco (doc 21)", ["src/cli/coverage.ts", iso, id]],
 ];
 const t0 = performance.now();
 for (const [name, args] of steps) {

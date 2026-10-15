@@ -158,12 +158,12 @@ extension FEUI {
                     printDeepText(p, p.find(0x2d25b2c4), fmt.replacingOccurrences(of: "%s", with: rival).replacingOccurrences(of: "%d", with: "\(lock + 1)"))
                 } else { p.setScript(p.find(0xd0f7c7cc), FEH.hide) }
             }
-            engine.garages?.world?.preview(key: e.key)
+            engine.garages?.scenes.preview(key: e.key)
         }
         show()
         s.onLeftRight = { d in idx = (idx + d + entries.count) % entries.count; show() }
         s.onBack = { [weak self, weak s] in
-            self?.engine.garages?.world?.preview(key: nil)
+            self?.engine.garages?.scenes.preview(key: nil)
             s?.leave { owned ? self?.showSafehouseMenu(select: 2) : self?.leaveGarage() }
         }
         s.actions = [{ [weak self] in
@@ -171,7 +171,7 @@ extension FEUI {
             let e = entries[idx]
             if owned {
                 career.modifySave { $0.currentCar = e.key }
-                self.engine.garages?.world?.preview(key: nil)
+                self.engine.garages?.scenes.preview(key: nil)
                 CarTuning.replacePlayerCar(self.engine, key: e.key)
                 s.leave { self.showSafehouseMenu(select: 2) }
                 return
@@ -180,7 +180,7 @@ extension FEUI {
             if career.save.cars.contains(e.key) { self.messageDialog(title: 0x7010bbf2, text: self.es ? "Ya tienes este coche." : "You already own this car."); return }
             if e.cost > career.save.cash { self.messageDialog(title: 0x7010bbf2, text: self.assets.string(0x40fa955d) ?? "") ; return }
             career.modifySave { $0.cash -= e.cost; $0.cars.append(e.key); $0.currentCar = e.key }
-            self.engine.garages?.world?.preview(key: nil)
+            self.engine.garages?.scenes.preview(key: nil)
             CarTuning.replacePlayerCar(self.engine, key: e.key)
             self.messageDialog(title: 0x7010bbf2, text: (self.es ? "Comprado: " : "Bought: ") + FEUI.carName(e.model, data: self.engine.data)) { [weak self] in
                 self?.leaveGarage()

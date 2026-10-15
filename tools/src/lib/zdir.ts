@@ -49,8 +49,12 @@ export class GameDisc {
     for (const raw of candidates) {
       const p = raw.trim().replace(/\//g, "\\").toUpperCase();
       if (!p) continue;
-      const e = this.byHash.get(bStringHash(p));
-      if (e && !e.name) { e.name = p; n++; }
+      const h = bStringHash(p), e = this.byHash.get(h);
+      if (e && !e.name) {
+        // Algunos archivos están varias veces en ZDIR (mismo hash, otra posición del disco: copias para acortar búsquedas) [V]
+        for (const x of this.entries) if (x.hash === h) x.name = p;
+        n++;
+      }
     }
     return n;
   }

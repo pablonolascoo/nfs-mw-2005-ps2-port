@@ -27,6 +27,8 @@ struct GLBMaterial {
     var image: Int?
     /// TilableUV del juego: bit 0 = repetir U, bit 1 = repetir V (si no, recorte al borde). 3 = repetir en ambos.
     var wrap: Int = 3
+    /// Coches: material de luz del juego de la tira (eLightMaterial, `extras.luz`, doc 20): difusa, especular y reflejo.
+    var light: String? = nil
 }
 
 struct GLBImage {
@@ -141,7 +143,7 @@ enum GLB {
                 materials.append(GLBMaterial(name: m["name"] as? String ?? "", kind: kind,
                                              cutoff: Float(m["alphaCutoff"] as? Double ?? 0.5),
                                              color: float4(Float(cf[0]), Float(cf[1]), Float(cf[2]), Float(cf.count > 3 ? cf[3] : 1)),
-                                             role: extras?["role"] as? String, image: tex, wrap: wrap))
+                                             role: extras?["role"] as? String, image: tex, wrap: wrap, light: extras?["luz"] as? String))
             }
 
             // Imágenes: URI relativa al GLB (casillas) o PNG embebido (coches)

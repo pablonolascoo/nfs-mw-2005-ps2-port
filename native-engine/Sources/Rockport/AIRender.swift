@@ -18,15 +18,9 @@ protocol RenderOverlay: AnyObject {
     var drawCalls: Int { get }
 }
 
-private let aiShaderSource = """
-#include <metal_stdlib>
-using namespace metal;
+private let aiShaderSource = scenePreludeMSL + """
 
-struct FrameUniforms {
-    float4x4 viewProj; float4x4 invViewProj; float4 camPos; float4 fog; float4 fogColor;
-    float4 skyHorizon; float4 skyHaze; float4 skyZenith; float4 sunDir; float4 lightSky; float4 lightGround; float4 lightSun;
-};
-struct InstDraw { float4 color; float4 params; float4 extra; };   // params: corte, metal, rugosidad, pieza · extra.x: 1 piloto, 2 faro
+struct InstDraw { float4 color; float4 params; float4 extra; LightMat lm; };   // params: corte, -, -, pieza · extra.x: 1 piloto, 2 faro; y: alfa = brillo
 struct VertexIn { float3 pos [[attribute(0)]]; float2 uv [[attribute(1)]]; half4 color [[attribute(2)]]; float4 normal [[attribute(3)]]; };
 struct VOut { float4 pos [[position]]; float3 world; float3 normal; float2 uv; float4 color; float4 inst [[flat]]; };
 
@@ -41,39 +35,29 @@ vertex VOut vs_inst(VertexIn in [[stage_in]], uint iid [[instance_id]], constant
     return o;
 }
 
-static float3 fogIt(constant FrameUniforms& F, float3 c, float3 w) {
-    float k = saturate((distance(w, F.camPos.xyz) - F.fog.x) / (F.fog.y - F.fog.x));
-    return mix(c, F.fogColor.rgb, k);
-}
-
-// Misma luz que fs_car (Shaders.swift) + emisión de pilotos y faros.
+// Misma luz que fs_car (material de luz del juego + reflejo, SceneShading.swift) + emisión de pilotos y faros.
 fragment float4 fs_inst(VOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], constant InstDraw& D [[buffer(2)]],
-                        texture2d<float> tex [[texture(0)]], sampler s [[sampler(1)]]) {
+                        texture2d<float> tex [[texture(0)]], sampler s [[sampler(1)]],
+                        texture2d<float> env [[texture(1)]], sampler es [[sampler(2)]]) {
     float4 t = tex.sample(s, in.uv);
     float4 base = t * in.color;
     if (D.params.x > 0 && base.a <= D.params.x) discard_fragment();
-    float metal = D.params.y, rough = max(D.params.z, 0.0525);
-    float3 n = normalize(in.normal);
-    float3 v = normalize(F.camPos.xyz - in.world);
-    if (dot(n, v) < 0) n = -n;
-    float3 L = normalize(F.sunDir.xyz);
-    float3 albedo = base.rgb * (1.0 - metal);
-    float3 f0 = mix(float3(0.04), base.rgb, metal);
-    float3 hemi = mix(F.lightGround.rgb, F.lightSky.rgb, 0.5 * n.z + 0.5);
-    float NL = saturate(dot(n, L)), NV = saturate(dot(n, v));
-    float3 h = normalize(L + v);
-    float NH = saturate(dot(n, h)), VH = saturate(dot(v, h));
-    float a2 = rough * rough; a2 *= a2;
-    float fr = exp2((-5.55473 * VH - 6.98316) * VH);
-    float3 Fs = f0 * (1.0 - fr) + fr;
-    float gv = NL * sqrt(a2 + (1.0 - a2) * NV * NV), gl = NV * sqrt(a2 + (1.0 - a2) * NL * NL);
-    float vis = 0.5 / max(gv + gl, 1e-6);
-    float dd = NH * NH * (a2 - 1.0) + 1.0;
-    float Dg = a2 / (M_PI_F * dd * dd);
-    float3 c = albedo * (hemi + F.lightSun.rgb * NL) / M_PI_F + F.lightSun.rgb * NL * Fs * (vis * Dg);
-    if (D.extra.x == 1) c += base.rgb * in.inst.x * 4.0;        // pilotos al frenar
-    if (D.extra.x == 2) c += base.rgb * in.inst.y * 1.5;        // faros
-    return float4(fogIt(F, c, in.world), base.a);
+    float gloss = 1;
+    if (D.extra.y > 0.5) { gloss = t.a; base.a = in.color.a; }
+    float4 c = carShade(F, D.lm, base, gloss, normalize(in.normal), in.world, env, es);
+    if (D.extra.x == 1) c.rgb += base.rgb * in.inst.x * 4.0;        // pilotos al frenar
+    if (D.extra.x == 2) c.rgb += base.rgb * in.inst.y * 1.5;        // faros
+    return float4(sceneRGB(F, c.rgb, in.world), saturate(c.a));
+}
+
+// Sombra de los coches de la IA: CARSHADOW en un cuadrado bajo cada coche (matriz en la pieza 0 del anillo de sombras).
+struct SOut { float4 pos [[position]]; float2 uv; };
+vertex SOut vs_ishadow(uint vid [[vertex_id]], uint iid [[instance_id]], constant FrameUniforms& F [[buffer(1)]], const device float4x4* m [[buffer(3)]]) {
+    float2 c = float2((vid == 1 || vid == 2 || vid == 4) ? 1.0 : -1.0, (vid == 2 || vid == 4 || vid == 5) ? 1.0 : -1.0);
+    SOut o; o.pos = F.viewProj * (m[iid] * float4(c, 0, 1)); o.uv = c * 0.5 + 0.5; return o;
+}
+fragment float4 fs_ishadow(SOut in [[stage_in]], constant FrameUniforms& F [[buffer(1)]], texture2d<float> tex [[texture(0)]], sampler s [[sampler(0)]]) {
+    return float4(0, 0, 0, tex.sample(s, in.uv).a * F.env.z);
 }
 
 // Destellos: cuadrado orientado a la cámara, suma (aditivo), se apagan con la niebla.
@@ -94,15 +78,23 @@ vertex FlareOut vs_flare(uint vid [[vertex_id]], uint iid [[instance_id]], const
 fragment float4 fs_flare(FlareOut in [[stage_in]]) {
     float r2 = dot(in.q, in.q);
     float a = exp(-r2 * 5.0) + 0.6 * exp(-r2 * 30.0);
-    return float4(in.color.rgb * a, 1);
+    return float4(ps2Encode(in.color.rgb) * a, 1);
 }
 """
+
+/// Uniformes por tramo de los coches de la IA (`InstDraw` de MSL).
+private struct InstDrawU { var color: float4; var params: float4; var extra: float4; var lm: LightMaterialGPU }
 
 final class AIRenderer: RenderOverlay {
     let device: MTLDevice
     let textures: TextureCache
     unowned let world: AIWorld
-    private var pInst: MTLRenderPipelineState!, pInstBlend: MTLRenderPipelineState!, pFlare: MTLRenderPipelineState!
+    private var pInst: MTLRenderPipelineState!, pInstBlend: MTLRenderPipelineState!, pFlare: MTLRenderPipelineState!, pShadow: MTLRenderPipelineState!
+    /// Renderer de la escena: texturas de fx/ (mapa de entorno de la vista, CARSHADOW) y materiales de luz (doc 20).
+    weak var sceneRenderer: Renderer?
+    private var envSampler: MTLSamplerState!
+    private var shadowRing: [MTLBuffer] = []
+    private var shadowCount = 0
     private var depthWrite: MTLDepthStencilState!, depthRead: MTLDepthStencilState!
     private var sampler: [MTLSamplerState] = []
     private var ring: [(mats: MTLBuffer, inst: MTLBuffer, flares: MTLBuffer)] = []
@@ -147,6 +139,11 @@ final class AIRenderer: RenderOverlay {
         pInst = try make("vs_inst", "fs_inst", blend: 0, vertex: true)
         pInstBlend = try make("vs_inst", "fs_inst", blend: 1, vertex: true)
         pFlare = try make("vs_flare", "fs_flare", blend: 2, vertex: false)
+        pShadow = try make("vs_ishadow", "fs_ishadow", blend: 1, vertex: false)
+        let es = MTLSamplerDescriptor()
+        es.minFilter = .linear; es.magFilter = .linear; es.mipFilter = .linear; es.sAddressMode = .repeat; es.tAddressMode = .clampToEdge
+        envSampler = device.makeSamplerState(descriptor: es)
+        for _ in 0..<16 { shadowRing.append(device.makeBuffer(length: AIRenderer.maxInst * 64, options: .storageModeShared)!) }
         let ds = MTLDepthStencilDescriptor()
         ds.depthCompareFunction = .greaterEqual; ds.isDepthWriteEnabled = true
         depthWrite = device.makeDepthStencilState(descriptor: ds)
@@ -210,6 +207,8 @@ final class AIRenderer: RenderOverlay {
         let fl = r.flares.contents().bindMemory(to: float4.self, capacity: AIRenderer.maxFlares * 2)
         batches.removeAll(keepingCapacity: true)
         flareCount = 0
+        shadowCount = 0
+        let shadows = shadowRing[ringIndex].contents().bindMemory(to: float4x4.self, capacity: AIRenderer.maxInst)
         let frustum = Frustum(frame.proj * frame.view)
         var n = 0
         let t = frame.time
@@ -231,6 +230,12 @@ final class AIRenderer: RenderOverlay {
                 for k in 0..<9 { mats[n * 9 + k] = pm[k] }
                 inst[n] = float4(v.braking ? 1 : 0.15, v.kind == .cop && v.lights ? 0 : 0.35, 0, 0)
                 n += 1
+                // Sombra (DrawAmbientShadow [D]): caja del coche × 1,05 con CARSHADOW, a ras de suelo
+                if simd_distance(v.pos, frame.camPos) < 250 {
+                    let body = pm[0] * m.local.inverse
+                    shadows[shadowCount] = body * float4x4(translation: float3(0, 0, 0.1)) * float4x4(scale: float3(m.halfLength * 1.2, m.halfWidth * 1.18, 1))
+                    shadowCount += 1
+                }
                 // Destellos de la barra de luces [D: CarRender.cpp 2364-2423]
                 if v.lights, simd_distance(v.pos, frame.camPos) < 700 {
                     let body = pm[0] * m.local.inverse
@@ -280,11 +285,12 @@ final class AIRenderer: RenderOverlay {
             enc.setVertexBuffer(r.mats, offset: b.start * 9 * 64, index: 3)
             enc.setVertexBuffer(r.inst, offset: b.start * 16, index: 4)
             for d in b.mesh.draws where d.visible && kinds.contains(d.kind) {
-                let pbr = d.role == "pintura" ? float2(0.45, 0.32) : float2(0, 0.85)
                 let role: Float = d.role == "piloto" ? 1 : d.role == "faro" ? 2 : 0
-                var U = (d.color, float4(d.kind == .mask ? d.cutoff : 0, pbr.x, pbr.y, Float(d.part)), float4(role, 0, 0, 0))
-                enc.setVertexBytes(&U, length: 48, index: 2)
-                enc.setFragmentBytes(&U, length: 48, index: 2)
+                // Tráfico y policía: pintura con el material TRAFFIC del juego si su tira no trae uno conocido
+                let lm = sceneRenderer?.fx?.carMaterial(d, paintFallback: "TRAFFIC") ?? .neutral
+                var U = InstDrawU(color: d.color, params: float4(d.kind == .mask ? d.cutoff : 0, 0, 0, Float(d.part)), extra: float4(role, lm.p.w, 0, 0), lm: lm)
+                enc.setVertexBytes(&U, length: MemoryLayout<InstDrawU>.stride, index: 2)
+                enc.setFragmentBytes(&U, length: MemoryLayout<InstDrawU>.stride, index: 2)
                 enc.setFragmentTexture(d.texture ?? textures.white, index: 0)
                 enc.setFragmentSamplerState(sampler[d.wrap & 3], index: 1)
                 enc.drawIndexedPrimitives(type: .triangle, indexCount: d.indexCount, indexType: .uint32, indexBuffer: b.mesh.indexBuffer,
@@ -294,17 +300,36 @@ final class AIRenderer: RenderOverlay {
         }
     }
 
+    private func bindEnv(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {
+        enc.setFragmentTexture(sceneRenderer?.fxTexture(frame.lighting.envMap) ?? textures.white, index: 1)
+        enc.setFragmentSamplerState(envSampler, index: 2)
+    }
+
     func encodeOpaque(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {
         drawCalls = 0
         prepare(frame: frame)
         guard !batches.isEmpty else { return }
+        bindEnv(enc, frame: frame)
         enc.setRenderPipelineState(pInst)
         enc.setDepthStencilState(depthWrite)
         draw(enc, kinds: [.opaque, .mask])
     }
 
     func encodeTransparent(_ enc: MTLRenderCommandEncoder, frame: SceneFrame) {
+        if ProcessInfo.processInfo.environment["ROCKPORT_DBG_SHADOW"] != nil { fputs("ai sombras \(shadowCount) tex \(sceneRenderer?.fxTexture("CARSHADOW") != nil) rend \(sceneRenderer != nil)\n", stderr) }
+        if shadowCount > 0, let tex = sceneRenderer?.fxTexture("CARSHADOW") {
+            enc.setRenderPipelineState(pShadow)
+            enc.setDepthStencilState(depthRead)
+            enc.setDepthBias(1, slopeScale: 2, clamp: 0.01)
+            enc.setVertexBuffer(shadowRing[ringIndex], offset: 0, index: 3)
+            enc.setFragmentTexture(tex, index: 0)
+            enc.setFragmentSamplerState(sampler[0], index: 0)
+            enc.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6, instanceCount: shadowCount)
+            enc.setDepthBias(0, slopeScale: 0, clamp: 0)
+            drawCalls += 1
+        }
         if !batches.isEmpty {
+            bindEnv(enc, frame: frame)
             enc.setRenderPipelineState(pInstBlend)
             enc.setDepthStencilState(depthRead)
             draw(enc, kinds: [.blend, .shadow, .additive, .water])

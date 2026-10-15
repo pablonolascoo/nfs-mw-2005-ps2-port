@@ -12,7 +12,7 @@ import { appendFileSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "
 import { compiled } from "../lib/paths";
 
 /** Versión del formato de datos. Súbela cuando un paso nuevo o cambiado obligue a reconvertir (la app la compara con Config.dataFormat). */
-export const DATA_FORMAT = 7; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz · 5 = sound/ (motores Ginsu, bancos ABK, sound.json) + fe-cameras.json (cámaras de los garajes y menús, FE_ATTRIB.BIN) · 6 = frontend/ con los HUD de pantalla partida y los 297 mapas de pruebas (carrera rápida) · 7 = posiciones V4-32 en metros (cúpulas, rascacielos y montañas del mundo e interiores), refugios 2/4/5 con su edificio en garages.json, coches del concesionario en fe-cameras.json
+export const DATA_FORMAT = 10; // 1 = v0.1 · 2 = v0.2 (physics.json + ai.json) · 3 = presets.json + vinyls/ + frontend/ (interfaz original) + radio/ (radio de la policía) · 4 = races.json (carreras, Lista Negra, vallas de TrackPath) + frontend/minimaps/ (radar del HUD), RIVALS.BIN y TilableUV de las texturas de la interfaz · 5 = sound/ (motores Ginsu, bancos ABK, sound.json) + fe-cameras.json (cámaras de los garajes y menús, FE_ATTRIB.BIN) · 6 = frontend/ con los HUD de pantalla partida y los 297 mapas de pruebas (carrera rápida) · 7 = posiciones V4-32 en metros (cúpulas, rascacielos y montañas del mundo e interiores), refugios 2/4/5 con su edificio en garages.json, coches del concesionario en fe-cameras.json · 8 = fx/ (luz y efectos: materiales de luz, tratamiento visual, sol, mapas de entorno, sombra del coche, cielo) y coches con extras.luz por tira (doc 20) · 9 = movies.json (películas y subtítulos), bounds.json (colisión del juego), effects.json + effects/ (partículas, destellos, disparadores, datos del mundo), nis/ (escenas NIS), music/ (música PathFinder, mezclas, reverbs) (docs 21–25) · 10 = interiores con todos los BACKDROP del juego (objetos *_CAST_SHADOW_MAP*, reflejo aparte) + garage-scenes/ (escenas de garaje conducibles: volumen, umbral, colisión; doc 07 §5)
 
 const [mode, ...rest] = Bun.argv.slice(2);
 
@@ -37,6 +37,13 @@ if (mode === "step") {
     case "sound": await (await import("./sound")).main(Bun.argv.slice(2)); break;
     case "races": await import("./races"); break;
     case "fe-cameras": await import("./fe-cameras"); break;
+    case "garage-scenes": await import("./garage-scenes"); break;
+    case "fx": await import("./fx"); break;
+    case "movies": await import("./movies"); break;
+    case "bounds": await import("./bounds"); break;
+    case "effects": await import("./effects"); break;
+    case "nis": await import("./nis"); break;
+    case "music": await (await import("./music")).main(Bun.argv.slice(2)); break;
     default: console.error(`Paso desconocido: ${name}`); process.exit(2);
   }
 } else if (mode === "install") {
@@ -56,6 +63,7 @@ if (mode === "step") {
     ["Coches", "convert", [iso, id, "car"]],      // la lista de coches se añade tras el inventario
     ["Puertas de garajes", "garages", [iso, id]],
     ["Cámaras de los garajes", "fe-cameras", [iso, id]],
+    ["Luz y efectos (reflejos, sombras, cielo)", "fx", [iso, id]],
     ["Ruedas de los coches", "car-attribs", [iso, id]],
     ["Coches de la Lista Negra (presets y vinilos)", "presets", [iso, id]],
     ["Física de los coches", "physics-attribs", [iso, id]],
@@ -65,7 +73,13 @@ if (mode === "step") {
     ["Interfaz del juego (menús, HUD, textos)", "frontend", [iso, id]],
     ["Red de carreteras", "roads", [iso, id]],
     ["Colisión", "collision", [iso, id]],
+    ["Escenas de garaje conducibles", "garage-scenes", [iso, id]],
     ["Carreras y Lista Negra", "races", [iso, id]],
+    ["Películas y subtítulos", "movies", [iso, id]],
+    ["Colisión del juego (coches y objetos)", "bounds", [iso, id]],
+    ["Partículas, destellos y datos del mundo", "effects", [iso, id]],
+    ["Escenas con el motor (NIS: cámaras, animaciones)", "nis", [iso, id]],
+    ["Música (EA Trax y persecuciones) y mezcla", "music", [iso, id]],
     ["Plano de la ciudad", "topdown", [iso, id, "2048"]],
   ];
   const t0 = performance.now();

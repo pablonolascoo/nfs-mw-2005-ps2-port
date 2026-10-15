@@ -8,7 +8,7 @@ enum Config {
     /// Se puede cambiar al arrancar con `--grade <n>` o la variable `ROCKPORT_GRADE`.
     static let ps2GradeStrength: Float = 1.0
     /// Formato de datos que espera esta versión (tools/src/cli/install.ts DATA_FORMAT). Si la instalación es anterior, se reconvierte.
-    static let dataFormat = 7
+    static let dataFormat = 10
 
     // MARK: Streaming de casillas (igual que viewer/src/main.ts)
     /// Distancia (m, de la cámara a la caja de la casilla) por debajo de la cual se carga el nivel con textura.
@@ -40,6 +40,18 @@ enum Config {
     static let skyZenith = SIMD3<Float>(0x3d, 0x5a, 0x73) / 255
     static let fogStart: Float = 1200
     static let fogEnd: Float = 9000
+
+    // MARK: Luz y efectos del juego (doc 20, SceneShading.swift)
+    /// Fuerza del tratamiento visual del juego (visuallook: bloom de color, black bloom, desaturación). 0 = apagado.
+    static let visualLookStrength: Float = 1.0
+    /// Ganancia del bloom de color sobre ColourBloomTint × ColourBloomIntensity [I: ajustada a capturas del juego].
+    static let bloomGain: Float = 1.6
+    /// Parte de la Desaturation del visuallook que se aplica (el tono PS2 ya baja algo la saturación).
+    static let desaturationScale: Float = 0.6
+    /// Fuerza global de los reflejos de los coches (mapa de entorno × material de luz).
+    static let envStrength: Float = 0.6
+    /// Intensidad del sol sobre los coches en la calle (lineal).
+    static let sunIntensityPS2: Float = 0.95
 
     // MARK: Luz del coche (los coches no traen luz horneada). Igual que viewer/src/main.ts.
     /// HemisphereLight(0xdfe8ff, 0x2a2416, 1.4) y DirectionalLight(0xffe2b0, 2.2) en (30, -20, 50).

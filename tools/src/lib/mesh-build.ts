@@ -12,12 +12,14 @@ import { hex8 } from "./hash";
  */
 export const ps2ColorToLinear = (c: number[]) => [Math.pow(c[0], 2.2), Math.pow(c[1], 2.2), Math.pow(c[2], 2.2), c[3]];
 
-export function solidToMesh(s: Solid, materialFor: (textureHash: number | undefined) => number, transform?: number[]): GlbMesh {
+/** `materialFor` recibe también el hash del material de luz de la tira (eStripEntry +15 → `lightMaterialHashes`), si lo tiene. */
+export function solidToMesh(s: Solid, materialFor: (textureHash: number | undefined, lightMaterialHash?: number) => number, transform?: number[]): GlbMesh {
   const groups = new Map<number, { pos: number[]; nor: number[]; uv: number[]; col: number[]; idx: number[] }>();
   const hasColors = s.strips.some(st => st.colors);
   for (const st of s.strips) {
     const texHash = st.texture >= 0 ? s.textureHashes[st.texture] : undefined;
-    const mat = materialFor(texHash);
+    const lightHash = st.lightMaterial >= 0 ? s.lightMaterialHashes[st.lightMaterial] : undefined;
+    const mat = materialFor(texHash, lightHash);
     const g = groups.get(mat) ?? groups.set(mat, { pos: [], nor: [], uv: [], col: [], idx: [] }).get(mat)!;
     const base = g.pos.length / 3;
     for (let k = 0; k < st.nv; k++) {
