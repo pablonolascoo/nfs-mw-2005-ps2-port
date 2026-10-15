@@ -905,7 +905,8 @@ final class FEHud {
             ci += 1
         }
         for k in ci..<8 { pkg.setVisible(mmCops[k], false) }
-        if !heli { pkg.setVisible(mmHeli, false); pkg.setVisible(mmHeliLOS, false) }
+        if !heli { pkg.setVisible(mmHeli, false) }
+        pkg.setVisible(mmHeliLOS, false)   // cono de visión del helicóptero: sin colocar aún (se veía como un arco suelto) [I]
         // Rivales (UpdateAiRacerElements) y punto de control
         var ri = 0
         for b in race?.blips ?? [] where ri < 8 {

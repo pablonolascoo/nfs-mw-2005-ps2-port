@@ -86,6 +86,7 @@ SmokeableSpawner (0x40): Quaternion @0x00 · Vector4 pos @0x10 · UCrc32 model @
 - Model: 5,242 resolved through the full solid or instance name; 710 stay as hashes (the original name is mixed-case and only appears truncated to 23 chars on disc). `sceneryModel` always gives the instance name.
 - Collision (`mCollisionName`) points to the `CollisionBody` entries of `0x0003B901` (reader `lib/bounds.ts`).
 - `0x00034026 SmokeableInfo` is not on the PAL disc: reaction data lives in the `smackable` VLT class.
+- **In the engine (format 11)**: the `tiles` step removes each breakable's scenery instance from the near tile (it stays in the far one) and writes it to `smackables/<SOLID>.glb` (233 models) + `smackables.json` (id, section, instance, matrix). The engine draws them instanced (Crash/SmackableRender.swift) and knocks them with physics (Crash/Smackables.swift): attached to the world until the impulse exceeds `DETACH_FORCE` (0 = loose, −1 = only by a breaker) [D: AttachedToWorld/Detach; threshold I], gravity from the `smackable` rigidbodyspecs (−13 m/s²), `DRAG` as `RigidBody::DoDrag` [D], ground with `GROUND_FRICTION`, rest with `SLEEP_VELOCITY`; they vanish after `KILL_OFF_SCREEN` s off screen and come back after `RESPAWN_TIME` s [I]. `SMK_<X>vsCAR_*` sounds by material [I].
 
 ## 4. World flares (lamp posts, traffic lights, cat's eyes)
 - On PS2 there are **no flare packs** (`0x00034019…`, `0x80135100…`) in any file [V: census of GLOBAL, TRACKS and FRONTEND].
@@ -108,8 +109,12 @@ SmokeableSpawner (0x40): Quaternion @0x00 · Vector4 pos @0x10 · UCrc32 model @
 `HeliSection` (0x18: bTNode, SectionNumber, NumPolys, swapped, ptr) + `HeliPoly` × n (18 B: s16 X[3], Y[3], Z[3]; X, Y × 0.25 m; Z × 0.0625 m).
 Flight height = plane of the triangle containing (x, y), searched in the drivable section. Box: x −1,563…4,966, y −1,201…5,092, z −11…510 m.
 
+### 5.2b Helicopter in the engine
+The HeliSheet bounds the police helicopter's height (Crash/Heli.swift, doc 14 §8.3).
+
 ### 5.3 TrackPositionMarker `0x00034146` [D][V]
 0x30 B: bTNode · NameHash · Param · bVector3 · bAngle · TrackNumber (2000). 318/328 named (`bStringHash` of ELF strings): `BustedMomentMarker` 194, `IconMarker` 37, `TollboothMarker` 36, `GarageMarker` 14, plus the pursuit-breaker collapse "Moments" (gas station, water tower, scaffolding…).
+- The 37 "Moments" with structural breakables around them are the engine's pursuit breakers (Crash/PursuitBreakers.swift, doc 14 §8.2).
 
 ### 5.4 TrackOBB `0x00034191` [D: `World/Track.hpp`][V]
 One 0x60-byte box (type hash `0xA4E74294`, unnamed, at 2090, 1405, 153; 11.55 × 4.4 × 0.05 m).

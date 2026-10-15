@@ -287,7 +287,9 @@ final class HeliManager {
         let sees = p.exists && h.mode != .exit && h.canSee(p.pos, losDistance: lv.num("heliLOSdistance", 250), collision: ai.collision, sheet: sheet, hidden: hidden)
         h.seesPlayer = sees
         police.heliSpotting = sees && police.inPursuit
-        h.update(dt: dt, player: p, inSight: sees, lastKnown: police.lastKnownPosition, searchRadius: lv.num("SearchModeRoadblockRadius", 400), sheet: sheet, camera: camera)
+        // AIActionHeliPursuit usa IPursuit::IsPerpInSight (lo ve cualquiera de la persecución), no solo el helicóptero [D]
+        let pursuitSees = sees || (police.state == .chase && police.timeSinceSeen < 1)
+        h.update(dt: dt, player: p, inSight: pursuitSees, lastKnown: police.lastKnownPosition, searchRadius: lv.num("SearchModeRoadblockRadius", 400), sheet: sheet, camera: camera)
         // Se va: sin persecución o sin combustible y lejos
         if !police.inPursuit && h.mode != .exit { h.mode = .exit }
         if h.mode == .exit && (simd_distance(h.pos, ai.center) > 500 || h.pos.z > ai.center.z + 250) {

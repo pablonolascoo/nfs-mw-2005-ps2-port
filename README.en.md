@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: the Most Wanted BMW M3 GTR in the native macOS engine" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.6)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.7)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
 **An open decompilation and reverse-engineering project** for the **PlayStation 2** *Need for Speed: Most Wanted* (2005). We read your own ISO, understand every format and game system (helped by the [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) decomp) and rebuild it as a **native game**, faithful to the original: same city, same cars, same interface, same warm PS2 tone.
 
@@ -17,7 +17,7 @@ Then **we expand it**: an expansion that continues the story as if the same stud
 | | What | Status |
 |---|---|---|
 | 🔬 **Decompilation** | Disc formats, database, physics, AI, interface, audio, movies, music, scenes… all documented in [`docs/`](docs/en), every fact tagged ([V] verified, [D] decomp, [I] inferred, [H] hypothesis) | ✅ **99.94 % of the disc understood** ([doc 21](docs/en/21-coverage.md)) |
-| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.6) |
+| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.7) |
 | 🗺️ **"Rust Belt" expansion** | 4 new districts, Blacklist 2, classic cars, the story continues | 🧭 designed, [see below](#the-rust-belt-expansion) |
 
 ### Platforms
@@ -50,7 +50,7 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 
 ## What works today
 
-### The game (native macOS engine, v0.6)
+### The game (native macOS engine, v0.7)
 | | Status |
 |---|---|
 | All of Rockport full screen at your screen's resolution and 60 fps, with the warm PS2 tone always on | ✅ |
@@ -64,7 +64,11 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | **Quick Race and split screen** (2 players as the original; 3–4 and multi-display as extensions) — [doc 19](docs/en/19-quick-race-and-multiplayer.md) | ✅ |
 | **Controllers**: Xbox, PS3/PS4/PS5 and PS2 via USB, with light bar, touchpad and DualSense triggers — [doc 15](docs/en/15-controllers.md) | ✅ (untested on real hardware) |
 | **The game's lighting**: car reflections from the disc's environment maps, shadow, sky, sun and glow; garages faithful to the original — [doc 20](docs/en/20-lighting-and-effects.md) | ✅ |
-| Movies (dubbed in Spanish on the PAL disc), EA Trax music, particles and flares: **decoded**, not yet wired into the game · car-to-car collisions · helicopter | 🔜 |
+| **Movies** from your ISO, with the disc's Spanish dub on PAL: logos, intro, Blacklist presentations and story — [doc 22](docs/en/22-movies-subtitles-and-collision.md) | ✅ |
+| **EA Trax music** and pursuit music with the game's logic — [doc 25](docs/en/25-music-and-mixing.md) | ✅ |
+| **Particles, flares and per-zone fog**: tyre smoke, nitrous, sparks, traffic lights, headlights, police lights — [doc 24](docs/en/24-effects-lights-and-world.md) | ✅ |
+| **Crashes and damage**: cars collide with the game's collision, destroyed cops, 5,952 breakables, pursuit breakers and the **helicopter** — [doc 14](docs/en/14-traffic-and-police.md) | ✅ |
+| Career map, spike strips blowing tyres, full options menu | 🔜 |
 
 ### The reverse engineering
 | | Status |

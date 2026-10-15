@@ -4,7 +4,7 @@
 
 <a href="https://rockport-native.vercel.app"><img src="site/img/banner.jpg" alt="Rockport Native: el BMW M3 GTR de Most Wanted en el motor nativo de macOS" width="100%"></a>
 
-<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.6)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
+<p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.7)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
 **Proyecto abierto de decompilación e ingeniería inversa** del *Need for Speed: Most Wanted* (2005) de **PlayStation 2**. Leemos tu propia ISO, entendemos cada formato y cada sistema del juego (con ayuda de la decomp [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw)) y lo volvemos a montar como **juego nativo**, fiel al original: misma ciudad, mismos coches, misma interfaz, mismo tono cálido de PS2.
 
@@ -17,7 +17,7 @@ Y después, **lo ampliamos**: una expansión que continúa la historia como si l
 | | Qué | Estado |
 |---|---|---|
 | 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio, películas, música, escenas… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ **99,94 % del disco entendido** ([doc 21](docs/es/21-cobertura.md)) |
-| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.6) |
+| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.7) |
 | 🗺️ **Expansión «Rust Belt»** | 4 distritos nuevos, Lista Negra 2, coches clásicos, la historia continúa | 🧭 diseñada, [ver abajo](#la-ampliación-rust-belt) |
 
 ### Plataformas
@@ -50,7 +50,7 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 
 ## Qué funciona hoy
 
-### El juego (motor nativo de macOS, v0.6)
+### El juego (motor nativo de macOS, v0.7)
 | | Estado |
 |---|---|
 | Rockport entero a pantalla completa, a la resolución de tu pantalla y a 60 fps, con el tono cálido de PS2 siempre puesto | ✅ |
@@ -64,7 +64,11 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | **Carrera rápida y pantalla partida** (2 jugadores como el original; 3-4 y varias pantallas como ampliación) — [doc 19](docs/es/19-carrera-rapida-y-multijugador.md) | ✅ |
 | **Mandos** Xbox, PS3/PS4/PS5 y PS2 por USB, con barra de luz, táctil y gatillos del DualSense — [doc 15](docs/es/15-mandos.md) | ✅ (sin probar con hardware real) |
 | **Iluminación del juego**: reflejos del coche con los mapas de entorno del disco, sombra, cielo, sol y resplandor; garajes fieles al original — [doc 20](docs/es/20-iluminacion-y-efectos.md) | ✅ |
-| Películas (dobladas al castellano en el disco PAL), música EA Trax, partículas y destellos: **descifrados**, falta conectarlos al juego · choques entre coches · helicóptero | 🔜 |
+| **Películas** desde tu ISO, con el doblaje al castellano del disco PAL: logos, intro, presentaciones de la Lista Negra e historia — [doc 22](docs/es/22-peliculas-subtitulos-y-colision.md) | ✅ |
+| **Música EA Trax** y música de persecución con la lógica del juego — [doc 25](docs/es/25-musica-y-mezcla.md) | ✅ |
+| **Partículas, destellos y niebla por zona**: humo de neumáticos, nitro, chispas, semáforos, faros, luces de policía — [doc 24](docs/es/24-efectos-luces-y-mundo.md) | ✅ |
+| **Choques y daños**: coches que chocan con la colisión del juego, policía destrozada, 5952 objetos rompibles, trampas para la policía y **helicóptero** — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ |
+| Mapa de la carrera profesional, pinchos que revientan neumáticos, menú de opciones completo | 🔜 |
 
 ### La ingeniería inversa
 | | Estado |

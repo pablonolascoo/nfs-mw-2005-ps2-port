@@ -441,6 +441,15 @@ Va siempre activo en el juego. Solo para desarrollo se cambia con `--grade <n>` 
   si está por USB, por informes HID (Opus / SBC) si está por Bluetooth —sin probar con mando real— y si no por el Mac con filtro de escáner.
   Detalle: [doc 15 §8](../docs/es/15-mandos.md) y [doc 16 §5–6](../docs/es/16-audio-y-voces.md). Necesita datos convertidos con formato 3 (paso «Radio de la policía»).
 
+## Choques, daños, rompibles y helicóptero (2026-10-16, docs 13 §12 y 14 §8)
+
+- **Choques del juego** entre jugador, rivales, tráfico y policía con los volúmenes de `bounds.json` y la respuesta de `RigidBody::ResolveObjectCollision` (fricción, elasticidad y escalas de `rigidbodyspecs`) [D]; ya no se solapan. Embestidas, PIT y trompos; el tráfico golpeado se desliza y se queda accidentado.
+- **Daños** como `DamageVehicle` [D]: zonas, vida (`damagespecs`), capa de golpes `DAMAGE0_*` y cristal `WINDOW_DAMAGE0` en los coches de carreras; paneles `DAMAGE1_*` y barra de luces rota en la policía. Policía **destruida**: mensaje y contador «fuera de combate» de la HUD original, +5000 al coste, dañados +250.
+- **Rompibles**: 5 952 objetos (señales, farolas, vallas, conos, bidones…) que se sueltan con el golpe y caen con física; **37 derrumbes de persecución** que inmovilizan a la policía.
+- **Helicóptero** en calor 4–5 con su modelo, su vuelo (`SimpleChopper` + `AIVehicleHelicopter` [D]), la hoja de altura del disco, golpes de pala e icono en el radar.
+- Pruebas: `--crash-test all --screenshot .build/shots/crash/crash.png` y `--heli-test 75 --screenshot .build/shots/crash/h.png`. Coste: 0,04–0,1 ms por fotograma con 20 coches. `--no-crash`, `--no-heli`.
+- Necesita datos de formato 11 (`smackables/`, `crash/`, paneles DAMAGE1, `physics.json` con daños): la app reconvierte sola.
+
 ## Tráfico y policía (2026-10-12)
 
 - **Tráfico** como `AITrafficManager` del juego: patrón de coches por barrio (zonas `TRAFFIC_PATTERN` de `L2RA.BUN`), ritmo, máximos y porcentajes de

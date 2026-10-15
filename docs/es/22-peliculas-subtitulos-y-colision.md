@@ -93,7 +93,7 @@ Bloques seguidos `{char tag[4], u32 tamaño LE (incluye los 8 B)}` hasta el fina
   Su nombre es `attribHash` del modelo de escenario (179 de 405 resueltos, p. ej. `XS_Speed35_1b_00`, `XO_LightPostB_1b_00`) y
   es el UCrc32 al que apuntan los rompibles de `effects.json` (`smokeables[].collision`, doc 24) [V].
 - Superficies resueltas por hash: `carbody`, `metal`, `glass`, `wood`, `stone` [V].
-- Sirve para los choques coche-coche y coche-objeto del original (hoy el port usa una caja aproximada). Lector `lib/bounds.ts`,
+- Los usa el motor nativo para los choques coche-coche y coche-objeto (Crash/, doc 13 §12): volúmenes `PrimVsObjects` de cada coche y de cada rompible. El paso `bounds` deja también `crash/WINDOW_DAMAGE0.png`, `DAMAGE0.png` y `COPS_DAMAGED_ICON.png` de GLOBALB (formato 11). Lector `lib/bounds.ts`,
   exportador `cli/bounds.ts` → `bounds.json`.
 
 ## 6. Contornos de la zona jugable («troughs») [V][D]

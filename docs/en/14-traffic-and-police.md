@@ -153,7 +153,7 @@ Same as `WRoadNav` (`World/Common/WRoadNetwork.cpp`):
 | `AIRoads.swift` | Road network: Bézier, length table, lanes, rules, next segment, Dijkstra, spatial grid |
 | `AIData.swift` | Reads `ai.json` (patterns, heat levels, zones) |
 | `AIModels.swift` | Assembles traffic and police models (one part per slot, wheels from `cars.json`) on background threads; light markers |
-| `AIVehicle.swift` | Own kinematic follower: lane or direct mode, height from real collision, knock after a hit |
+| `AIVehicle.swift` | Own kinematic follower: lane or direct mode, height from real collision; after a hard hit, physical slide (Crash/CrashAI.swift) |
 | `AIWorld.swift` | Orchestration; curves, following, collisions (SAT rectangles) and stats |
 | `TrafficManager.swift` | Spawning, per-district pattern, despawning |
 | `PoliceManager.swift` | Patrol, pursuit, heat, busted, evade, formations, roadblocks |
@@ -186,10 +186,32 @@ Results (MacBook Air M4, 2026-10-12) [V]:
 | 90 s, heat 5, 2940×1912 (Retina) | 19 traffic + 12 cops: GPU median 4.3 ms (p95 5.7), CPU 1.0 ms, 124 AI draw calls |
 
 ## 7. Open items
-- Helicopter (`copheli`, `HeliFuelTime`, `AirSupportOptions`), heavy support (ramming SUVs) and leader (`copcross`).
+- Heavy support (ramming SUVs) and leader (`copcross`); per-heat `AirSupportOptions` (the helicopter spawns from COPHELI in the `cops` table, §8).
 - Real sawhorse and spike strip models (`XO_Sawhorse_1b_00`, `XO_SpikeBelt_1b_DW_00`) and actual tyre damage.
-- Physical car-to-car collisions (the player physics has none yet: speed is scaled instead).
 - Horn and sounds (`Siren*` timing, `HornType`), radio voices (`nSpeechId` of `RNrd`).
 - Voluntary lane changes (the game's traffic does not do them either [D]).
 - At some junctions the lateral offset cuts a corner through a wall (≈ 0.1 % of steps).
 - Bounty (`RepPointsPerMinute`, cost to state) on the HUD.
+
+## 8. Collisions, damage, pursuit breakers and helicopter (data format 11)
+
+### 8.1 Collisions and police [D: AIVehicle.cpp AIPerpVehicle::OnCausedCollision, AIPursuit.cpp]
+- Car-to-car with the game's response (doc 13 §12). Hit traffic slides and stays crashed; police slide, rejoin the network or get **destroyed** (`damagespecs.HIT_POINTS`, `HP_THRESHOLD`) [V].
+- Damaged cop: once per car (`SetDamagedByPerp`) above ≈ 10 mph → `NotifyCopDamaged`: HUD "damaged" counter and +250 cost to state [D].
+- Destroyed → `IncNumCopsDestroyed`: +5000 cost, ×1…×3 multiplier within `DestroyCopBonusTime`, `RepPointsForDestroying[heat]` reputation (new in `ai.json`) and the `LANGUAGE_HUD_COPDESTROYED_<TYPE>` message with `COPS_TAKENOUT_ICON` (FePursuitBoard::SetNumCopsDestroyed) [D][V]. No lights or flashers; off the radar.
+- `cops_damaged` / `cops_destroyed` milestones now count (Race/RaceMilestones.swift).
+
+### 8.2 Breakables and pursuit breakers (doc 24 §3, §5.3)
+- 5,952 breakables with their collision and `smackable` type; released when the impulse exceeds `DETACH_FORCE`, adding `COST_TO_STATE` when the player knocks them during a pursuit [D].
+- 37 pursuit breakers (`*Moment` markers): when the player knocks a support of the group, all its pieces fall and cops within 30 m during 3 s are immobilized (counted as destroyed) [I: EventSequencer not ported; `MBreakerStopCops(position, duration, radius)` is the game's [D]]. Message `LANGUAGE_HUD_PURSUIT_BREAKER_BONUS` [D].
+
+### 8.3 Helicopter [D: AIVehicleHelicopter.cpp, AIActionHeliPursuit.cpp, SimpleChopper.cpp]
+- Spawns in a pursuit when the heat's `cops` table lists COPHELI (heat 4 and 5) [V], after the support delay (max 20 s) [I]; +2000 cost [D].
+- Fuel `HeliFuelTime`; when empty, or with no pursuit, it leaves (AIActionHeliExit) and stays away for `TimeBetweenHeliActive` [D][V].
+- Flight: straight-line pursuit 30–45 m ahead and 6–12 m above; circular search around the last known point when the pursuit loses the player; braking with `Min/Max_Chopper_Accel` 30/80, `Chopper_Ratio` 2; never below the HeliSheet (`effects/heli-sheet.json`, 51,504 triangles) [D][V].
+- Vision (`CanSeeTarget`): always within 75 m, up to `heliLOSdistance` when the player is in front, no walls; not under covered roads [I]. When it sees the player the pursuit counts it as seen.
+- Model `cars/COPHELI.glb`, `HELICOPTER_ICON_GROUP` radar icon, blade chops from `IG_GLOBAL/FX_HELICOPTER_MB.ABK` (SoundHeli not ported: own 8.5 chops/s rate [I]).
+- `--heli-test 75` (heat 5, test car at 130 km/h) [V measured]: spawns at 4 s, closes to 18–50 m from the player at 12–25 m height, sees the player 33 % of the time (100 % when close), leaves after the bust. GPU 2–4 ms, CPU 1–2 ms.
+
+### 8.4 Tests
+`--crash-test [frontal|lateral|pit|rompibles|derrumbe|rendimiento|all] --screenshot base.png` and `--heli-test N`: screenshots and JSON (doc 13 §12).

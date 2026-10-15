@@ -86,6 +86,7 @@ SmokeableSpawner (0x40): Quaternion @0x00 · Vector4 pos @0x10 · UCrc32 modelo 
 - Modelo: 5 242 resueltos por el nombre completo del sólido o de la instancia; 710 quedan con hash (el nombre original lleva minúsculas y en el disco solo está cortado a 23 letras). `sceneryModel` da siempre el nombre de la instancia.
 - La colisión (`mCollisionName`) apunta a los `CollisionBody` de `0x0003B901` (doc del lector `lib/bounds.ts`).
 - `0x00034026 SmokeableInfo` no existe en el disco PAL: los datos de reacción están en el VLT `smackable`.
+- **En el motor (formato 11)**: el paso `tiles` saca la instancia de escenario de cada rompible de la casilla cercana (se queda en la lejana) y la escribe en `smackables/<SÓLIDO>.glb` (233 modelos) + `smackables.json` (id, sección, instancia, matriz). El motor los dibuja instanciados (Crash/SmackableRender.swift) y los tira con física (Crash/Smackables.swift): pegados al mundo hasta que el impulso supera `DETACH_FORCE` (0 = suelto, −1 = solo derrumbe) [D: AttachedToWorld/Detach; umbral I], gravedad del rigidbodyspecs `smackable` (−13 m/s²), arrastre `DRAG` como `RigidBody::DoDrag` [D], suelo con `GROUND_FRICTION`, reposo con `SLEEP_VELOCITY`; desaparecen tras `KILL_OFF_SCREEN` s fuera de pantalla y vuelven tras `RESPAWN_TIME` s [I]. Sonidos `SMK_<X>vsCAR_*` por material [I].
 
 ## 4. Destellos del mundo (farolas, semáforos, catadióptricos)
 - En PS2 **no hay packs de destellos** (`0x00034019…`, `0x80135100…`) en ningún archivo [V: censo de GLOBAL, TRACKS y FRONTEND].
@@ -108,8 +109,12 @@ SmokeableSpawner (0x40): Quaternion @0x00 · Vector4 pos @0x10 · UCrc32 modelo 
 `HeliSection` (0x18: bTNode, SectionNumber, NumPolys, swapped, ptr) + `HeliPoly` × n (18 B: s16 X[3], Y[3], Z[3]; X, Y × 0,25 m; Z × 0,0625 m).
 Altura de vuelo = plano del triángulo que contiene (x, y), buscando en la sección conducible. Caja: x −1 563…4 966, y −1 201…5 092, z −11…510 m.
 
+### 5.2b Helicóptero en el motor
+La HeliSheet limita la altura del helicóptero de la policía (Crash/Heli.swift, doc 14 §8.3).
+
 ### 5.3 TrackPositionMarker `0x00034146` [D][V]
 0x30 B: bTNode · NameHash · Param · bVector3 · bAngle · TrackNumber (2000). 318/328 con nombre (`bStringHash` de cadenas del ELF): `BustedMomentMarker` 194, `IconMarker` 37, `TollboothMarker` 36, `GarageMarker` 14, y los derrumbes de persecución («Moments»: gasolinera, torre de agua, andamios…).
+- Los 37 «Moments» con rompibles de estructura alrededor son los derrumbes de persecución del motor (Crash/PursuitBreakers.swift, doc 14 §8.2).
 
 ### 5.4 TrackOBB `0x00034191` [D: `World/Track.hpp`][V]
 Una caja de 0x60 B (hash de tipo `0xA4E74294` sin nombre, en 2090, 1405, 153; 11,55 × 4,4 × 0,05 m).

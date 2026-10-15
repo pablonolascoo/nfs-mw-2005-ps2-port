@@ -162,6 +162,7 @@ func runCrashTest(_ o: Options, scenario: String) {
 
     func reset(_ p: float3, yaw: Float) {
         rig.clearAI()
+        if e.ui?.paused == true { e.ui?.startHUDOnly() }   // pantalla de arresto/evasión de un escenario anterior
         e.mode = .drive
         car.place(p, yaw: yaw, collision: e.collision)
         car.repairDamage()
@@ -315,16 +316,30 @@ func runCrashTest(_ o: Options, scenario: String) {
         case "derrumbe":
             let good = ["WaterTowerMoment", "ScaffoldingCollapseMoment", "GasStationMoment", "TorusRoofMoment", "PorchCollapseMoment"]
             let isTrig = { (x: Smackable) -> Bool in x.type.detachForce >= 0 && x.type.detachForce <= 5000 && ["support", "scaffold", "gaspump"].contains(where: { x.type.name.contains($0) }) }
-            guard let br = crash.breakers.list.filter({ b in good.contains(b.name) && b.members.count >= 2 && b.members.contains(where: isTrig) })
-                    .sorted(by: { simd_distance($0.pos, start) < simd_distance($1.pos, start) }).first,
-                  let trig = br.members.filter(isTrig).min(by: { simd_distance($0.pos, br.pos) < simd_distance($1.pos, br.pos) }),
-                  let rh = ai.net.nearest(trig.pos, maxDist: 80) else { r["error"] = "sin derrumbe"; break }
-            // Llegada por la carretera más cercana: 60 m antes del punto de la vía junto al soporte
-            let q = ai.net.point(rh.seg, rh.t)
-            var tan = ai.net.tangent(rh.seg, rh.t); tan.z = 0; tan = simd_normalize(tan + 1e-6)
-            let from = q - tan * 60
+            // Derrumbe con soporte rompible y una llegada por carretera con suelo de colisión en todo el tramo
+            var pick: (br: PursuitBreakers.Breaker, trig: Smackable, q: float3, tan: float3, from: float3)?
+            outer: for br in crash.breakers.list.filter({ b in good.contains(b.name) && b.members.contains(where: isTrig) })
+                        .sorted(by: { simd_distance($0.pos, start) < simd_distance($1.pos, start) }) {
+                guard let trig = br.members.filter(isTrig).min(by: { simd_distance($0.pos, br.pos) < simd_distance($1.pos, br.pos) }) else { continue }
+                // Llegada en línea recta: 16 rumbos a 35 m, sin muros y con suelo continuo hasta el soporte
+                for k in 0..<16 {
+                    let a = Float(k) / 16 * 2 * .pi
+                    let tt = -float3(cos(a), sin(a), 0)
+                    var from = trig.pos - tt * 35
+                    guard let g0 = ai.collision.ground(x: from.x, y: from.y, z: trig.pos.z + 4, step: 8), abs(g0.z - trig.pos.z) < 4 else { continue }
+                    from.z = g0.z
+                    let ok = (1...7).allSatisfy { j in
+                        let p = from + (trig.pos - from) * (Float(j) / 8)
+                        return ai.collision.ground(x: p.x, y: p.y, z: p.z + 3, step: 6).map { abs($0.z - p.z) < 2.5 } ?? false
+                    } && !ai.collision.hitsWall(from: from + float3(0, 0, 0.3), to: trig.pos + float3(0, 0, 0.3))
+                    if ok { pick = (br, trig, trig.pos, tt, from); break outer }
+                }
+            }
+            guard let pk = pick else { r["error"] = "sin derrumbe con llegada"; break }
+            let br = pk.br, trig = pk.trig, q = pk.q, tan = pk.tan, from = pk.from
             reset(from + float3(0, 0, 1), yaw: atan2(tan.y, tan.x))
-            rig.driver = { _ in autopilot(car, kmh: 70, toward: simd_distance(car.position, q) > 18 && simd_dot(car.position - q, tan) < -12 ? q : trig.pos) }
+            rig.driver = { _ in autopilot(car, kmh: 65, toward: trig.pos + tan * 20) }
+            _ = q
             AIConfig.police = true
             ai.police.heat = 3
             rig.load(30)
@@ -341,11 +356,13 @@ func runCrashTest(_ o: Options, scenario: String) {
             var closest: Float = 1e9
             let res = run(8) { i in
                 closest = min(closest, simd_distance(car.position, trig.pos))
+                if i % 30 == 0 && ProcessInfo.processInfo.environment["ROCKPORT_DEBUG_CRASH"] != nil { print(String(format: "  [%d] coche (%.1f, %.1f, %.1f) %.0f km/h · choques %d", i, car.position.x, car.position.y, car.position.z, car.kmh, crash.events.count)) }
                 if trigAt == nil, br.triggered { trigAt = i; rig.shot("derrumbe-1") }
                 if let t = trigAt, i == t + 50 { rig.shot("derrumbe-2") }
                 if let t = trigAt, i == t + 120 { rig.shot("derrumbe-3") }
             }
             rig.shot("derrumbe-final")
+            r["uiState"] = e.ui.map { "\($0.state)" } ?? "-"; r["carPos"] = [car.position.x, car.position.y, car.position.z]; r["from"] = [from.x, from.y, from.z]
             r["closestToTriggerM"] = closest; r["triggerState"] = "\(trig.state)"; r["triggerDetachForce"] = trig.type.detachForce
             r["breaker"] = br.name; r["members"] = br.members.count; r["trigger"] = trig.type.name; r["triggered"] = br.triggered
             r["fallen"] = br.members.filter { $0.state != .attached && $0.state != .loose }.count
@@ -374,6 +391,8 @@ func runCrashTest(_ o: Options, scenario: String) {
         let summary = r.filter { $0.key != "log" }.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: " · ")
         print("— \(sc): \(summary)")
     }
+    results["sounds"] = CrashSounds.requested
+    print("Golpes (stitches pedidos): " + CrashSounds.requested.sorted { $0.key < $1.key }.map { "\($0.key)×\($0.value)" }.joined(separator: " "))
     print(String(format: "Coste de los choques: mediana %.3f ms, p95 %.3f ms por fotograma", median(rig.crashMs), pct(rig.crashMs, 0.95)))
     if let b = rig.base, let d = try? JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys]) {
         try? d.write(to: URL(fileURLWithPath: b + "-crash.json"))
@@ -425,8 +444,8 @@ func runHeliTest(_ o: Options, seconds: Double) {
             let d = simd_distance(h.pos, pv.pos)
             minD = min(minD, d); maxD = max(maxD, d); sumD += d
             if i % 120 == 0 {
-                log.append(String(format: "%.0f s: modo %@ · %.0f m del jugador · altura %.0f m sobre él · ve %@ · combustible %.0f s · calor %.2f",
-                                  Double(i) / 60, "\(h.mode)", d, h.pos.z - pv.pos.z, h.seesPlayer ? "sí" : "no", h.fuel, ai.police.heat))
+                log.append(String(format: "%.0f s: modo %@ · %.0f m del jugador · altura %.0f m sobre él · ve %@ · combustible %.0f s · calor %.2f · %@",
+                                  Double(i) / 60, "\(h.mode)", d, h.pos.z - pv.pos.z, h.seesPlayer ? "sí" : "no", h.fuel, ai.police.heat, "\(ai.police.state)"))
             }
             let near = heliFrames == 240 || heliFrames == 900
             if near && !shots.contains(heliFrames) { shots.insert(heliFrames); rig.shot("heli-\(heliFrames / 60)s") }

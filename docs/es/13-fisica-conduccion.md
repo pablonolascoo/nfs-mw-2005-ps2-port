@@ -151,7 +151,40 @@ el cambio automático sin las pausas reales de la animación, o el dato de refer
 
 ## 11. Pendiente
 
-- Portar `RigidBody::DoBarrierCollision`/`ResolveGroundCollision` y `DoInstanceCollision` (coches entre sí).
+- Portar `RigidBody::DoBarrierCollision`/`ResolveGroundCollision` (muros y suelo del cuerpo). Coches entre sí: §12.
 - Material del suelo en la colisión exportada (para `LATERAL_GRIP`, `DRIVE_GRIP`).
-- Reglajes, «speedbreaker», daño (`DamageRacer`), ruedas pinchadas (`SpikeStrip`).
+- Reglajes, «speedbreaker», ruedas pinchadas (`SpikeStrip`). Daños: §12.
 - Medir en el juego (emulador) 0–60 y frenada con el mismo coche para cerrar la referencia.
+
+## 12. Choques entre coches y con objetos (formato de datos 11)
+
+Código: `native-engine/Sources/Rockport/Crash/` (`CrashWorld`, `CrashGeometry`, `Damage`, `CrashAI`, `Smackables`,
+`PursuitBreakers`, `Heli`, `CrashTests`). Se ejecuta una vez por fotograma tras mover a todos (`AIWorld.update`).
+
+| Pieza del juego | Fuente | Port |
+|---|---|---|
+| Volúmenes de colisión (`CollisionGeometry::Bounds`) | `bounds.json` [V], `Physics/Bounds.h` [D] | Solo los `PrimVsObjects` que no son `Internal`/`Disabled` (cajas y esferas); los «Internal» son piezas sueltas (puertas, parachoques) [I] |
+| `RigidBody::OnObjectOverlap` | `RigidBody.cpp` [D] | Pares por esfera envolvente; el contacto más profundo entre volúmenes [I: el juego resuelve cada par] |
+| `Geometry::FindIntersection` | `Geometry.cpp` vacío [D] | SAT de 15 ejes (caja-caja), esfera-caja, esfera-esfera; punto = media de esquinas dentro [I] |
+| `ResolveObjectCollision` | `RigidBody.cpp` 1032-1166 [D] | Fricción `Ks = √(μs·μs)`, `Kd = √(μk·μk)`, plano `(min(Ks, Kd), Ks)`; elasticidad = `|n en ejes del cuerpo ⊙ OBJ_ELASTICITY|`; `ModifyCollision` (`OBJ_MOMENT_SCALE` xyz → inercia, w → masa); `Separate` por masas o el móvil entero |
+| `Moment::React` | no decompilado | Impulso con restitución (media de las dos) y Coulomb estática/dinámica [I] |
+| `DamageVehicle::OnImpact` | `DamageVehicle.cpp` [D] | Literal: zona por brazo y normal (umbrales 0,5/0,8), `ratio = fuerza / (FORCE·1000)`, niveles visuales y puntos de vida con `damagespecs` [V]. «Fuerza» = impulso en N·s [I] (con esa unidad un policía cae en 2 embestidas fuertes, como en el juego) |
+| Capa de golpes y cristales | `CarRender.cpp SetPlayerDamage` [D] | `DAMAGE0_FRONT/REAR/…` (ya en los GLB) visibles con daño > 0; `WINDOW_DAMAGE0` (crash/, GLOBALB [V]) con daño > 1 [D]; todas las lunas comparten textura [I] |
+| Paneles rotos de la policía | `VehiclePartDamage.cpp mSlotZoneMapList` [D] | `DAMAGE1_<PIEZA>` (nuevo en los GLB, formato 11) por zona; sin barra de luces rota no hay destellos |
+
+- Jugador y rivales: la física del juego (PVehicle). El impulso se aplica en su espacio «Bond» (la velocidad angular cambia de signo al pasar al mundo: pseudovector).
+- Tráfico y policía: cinemáticos con un cuerpo en planta (masa e inercia `Box × TENSOR_SCALE` [D]). Golpe pequeño → solo cambia la velocidad; golpe fuerte (lateral > 1,5 m/s, giro > 0,35 rad/s o Δv > 4 m/s) → deslizamiento con fricción de neumáticos y rebote en muros hasta pararse [I]. Tráfico: accidente (ACCIDENT_OVER [D]); policía: vuelve a la red (GetUnstuck [D]) o, destruida, frena a 0,25 (AIActionTooDamaged [D]).
+- Normales de coche contra coche casi horizontales y separación ≤ 0,5 m por paso [I]: una normal vertical metía un coche bajo el suelo.
+
+Pruebas `--crash-test all` (1600×900, M4) [V medido]:
+
+| Escenario | Resultado |
+|---|---|
+| frontal (90 km/h contra tráfico a 50) | impulso 21 kN·s, jugador 90 → 51 km/h, tráfico en trompo (1,27 rad/s), zona FRONT del jugador nivel 1, penetración residual 0,6 mm |
+| lateral (100 km/h contra el costado de un COPMIDSIZE) | 1.ª: zona LEFT nivel 2, 13 paneles DAMAGE1, vida 0,59; 2.ª: **destruido** (1,24), mensaje «Patrulla ciudadana · Bolsa 250» y contador de la HUD |
+| PIT (COPGTO contra la aleta trasera a 110 km/h) | rumbo del jugador +23°, giro máx. 2,1 rad/s, zona LEFT del jugador |
+| rompibles (BMW a 80 km/h por una fila real) | 6/6 derribados (vallas, bolsas, contenedor) |
+| derrumbe (andamio) | 3 piezas caen, 2 policías inmovilizados, coste para el estado 18 700 |
+| rendimiento (20 coches con choques) | `CrashWorld.step` mediana 0,04–0,10 ms, p95 0,12–0,36 ms; GPU 5,6 ms a 2940×1912 |
+
+Sin choques: `--no-crash` (vuelve el empujón cinemático anterior). Depuración: `ROCKPORT_DEBUG_CRASH=1`.

@@ -191,7 +191,8 @@ final class SFXCarSound {
             let dv = s.velocity - pv
             let dh = simd_length(SIMD2(dv.x, dv.y)) - 9.81 * dt * 0.0
             let dz = dv.z
-            if dh > 2.2 * (dt * 60) || dz > 6 {
+            // Los golpes contra coches y rompibles ya los toca el sistema de choques (Crash/CrashWorld.swift CrashSounds)
+            if (dh > 2.2 * (dt * 60) || dz > 6) && !CrashSounds.playedRecently(near: s.position) {
                 let fwdHit = abs(simd_dot(simd_normalize(SIMD2(dv.x, dv.y) + 1e-6), simd_normalize(SIMD2(s.forward.x, s.forward.y) + 1e-6))) > 0.7
                 let mag = max(dh / (dt * 60), dz * 0.6)
                 let level = mag < 4 ? "VLIT" : mag < 7 ? "LIT" : mag < 11 ? "MED" : "HRD"

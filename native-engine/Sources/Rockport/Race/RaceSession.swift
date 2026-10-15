@@ -31,6 +31,9 @@ final class RaceRacer {
     var wrongWayTime: Float = 0
     var offRouteTime: Float = 0
     var resets = 0
+    /// Recolocaciones seguidas en el mismo tramo (coche encajado contra muros o restos): se avanza cada vez más [I]
+    var resetStreak = 0
+    var lastResetProgress: Float = -1000
     var lastPos = float3(0, 0, 0)
     var topSpeed: Float = 0
     var trafficHits = 0
@@ -640,13 +643,21 @@ final class RaceSession {
     /// Recoloca un corredor en la ruta (tecla R, fuera de ruta, atascado) [D: idea de ResetPlayer/AIActionGetUnstuck].
     func resetRacer(_ r: RaceRacer) {
         guard hasRoute else { r.car.reset(); return }
-        let s = route.sample(max(0, r.progress - 5))
-        let off = max(-s.left + 1.5, min(s.right - 1.5, r.driver?.laneOffset ?? 0))
+        // Si vuelve a atascarse en el mismo sitio (a menos de 40 m del último reinicio), salta hacia delante y al centro
+        // de la calzada: 25 m más por cada intento seguido. Evita que un rival se quede encajado para siempre.
+        if abs(r.progress - r.lastResetProgress) < 40 { r.resetStreak += 1 } else { r.resetStreak = 0 }
+        let ahead = Float(r.resetStreak) * 25
+        let target = min(route.length - 1, max(0, r.progress - 5 + ahead))
+        r.lastResetProgress = target
+        let s = route.sample(target)
+        let lane = r.resetStreak > 0 ? 0 : (r.driver?.laneOffset ?? 0)
+        let off = max(-s.left + 1.5, min(s.right - 1.5, lane))
         let p = s.p + float3(s.tangent.y, -s.tangent.x, 0) * off
         r.car.place(p + float3(0, 0, 1.5), yaw: atan2(s.tangent.y, s.tangent.x), collision: system.engine.collision, probe: 4)
         r.driver?.resetState()
         r.resets += 1
         r.lastPos = r.car.position
+        if ahead > 0 { r.progress = target }
         r.wrongWayTime = 0; r.offRouteTime = 0
         if r.isPlayer { log("  reinicio del jugador en la ruta (\(Int(r.progress)) m)") }
     }

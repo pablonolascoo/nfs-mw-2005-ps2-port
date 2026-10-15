@@ -93,7 +93,7 @@ Consecutive blocks `{char tag[4], u32 LE size (including the 8 B)}` until the en
   Their name is `attribHash` of the scenery model name (179 of 405 resolved, e.g. `XS_Speed35_1b_00`, `XO_LightPostB_1b_00`)
   and is the UCrc32 the breakables in `effects.json` point to (`smokeables[].collision`, doc 24) [V].
 - Surfaces resolved by hash: `carbody`, `metal`, `glass`, `wood`, `stone` [V].
-- Useful for the original car-vs-car and car-vs-object crashes (today the port uses an approximate box). Reader `lib/bounds.ts`,
+- Used by the native engine for car-vs-car and car-vs-object crashes (Crash/, doc 13 §12): `PrimVsObjects` volumes of every car and breakable. The `bounds` step also writes `crash/WINDOW_DAMAGE0.png`, `DAMAGE0.png` and `COPS_DAMAGED_ICON.png` from GLOBALB (format 11). Reader `lib/bounds.ts`,
   exporter `cli/bounds.ts` → `bounds.json`.
 
 ## 6. Drivable-area outlines ("troughs") [V][D]

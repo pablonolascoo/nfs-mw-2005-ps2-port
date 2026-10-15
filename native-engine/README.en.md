@@ -474,6 +474,15 @@ Notes:
   over USB, through HID reports (Opus / SBC) over Bluetooth —untested with a real pad— and otherwise on the Mac with a scanner filter.
   Details: [doc 15 §8](../docs/en/15-controllers.md) and [doc 16 §5–6](../docs/en/16-audio-and-voices.md). Needs data converted with format 3 (step "Police radio").
 
+## Collisions, damage, breakables and helicopter (2026-10-16, docs 13 §12 and 14 §8)
+
+- **Game collisions** between the player, racers, traffic and police with the `bounds.json` volumes and the `RigidBody::ResolveObjectCollision` response (friction, elasticity and `rigidbodyspecs` scales) [D]; no more overlapping. Rams, PIT manoeuvres and spin-outs; hit traffic slides and stays crashed.
+- **Damage** as `DamageVehicle` [D]: zones, hit points (`damagespecs`), `DAMAGE0_*` dent layer and `WINDOW_DAMAGE0` glass on race cars; `DAMAGE1_*` panels and broken light bar on cops. **Destroyed** cops: game message and "taken out" counter on the original HUD, +5000 cost, damaged +250.
+- **Breakables**: 5,952 objects (signs, lamp posts, fences, cones, barrels…) knocked loose with physics; **37 pursuit breakers** that immobilize the police.
+- **Helicopter** at heat 4–5 with its model, its flight (`SimpleChopper` + `AIVehicleHelicopter` [D]), the disc's height sheet, blade chops and radar icon.
+- Tests: `--crash-test all --screenshot .build/shots/crash/crash.png` and `--heli-test 75 --screenshot .build/shots/crash/h.png`. Cost: 0.04–0.1 ms per frame with 20 cars. `--no-crash`, `--no-heli`.
+- Needs format-11 data (`smackables/`, `crash/`, DAMAGE1 panels, `physics.json` with damage): the app reconverts by itself.
+
 ## Traffic and police (2026-10-12)
 
 - **Traffic** like the game's `AITrafficManager`: per-district vehicle pattern (`TRAFFIC_PATTERN` zones from `L2RA.BUN`), rates, caps and percentages from

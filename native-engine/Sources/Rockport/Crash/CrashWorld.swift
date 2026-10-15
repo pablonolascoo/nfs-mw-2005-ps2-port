@@ -251,6 +251,9 @@ final class CrashWorld {
                 near.removeAll(keepingCapacity: true)
                 smackables.near(a.origin, radius: a.radius + 1, into: &near)
                 for s in near {
+                    // Restos ya derribados: chocan solo el primer segundo y medio (si no, una valla caída frena a un rival
+                    // contra ella sin fin); los pesados (> 2000 kg: depósitos, techos) siempre [I]
+                    if s.state != .attached && s.state != .loose && time - s.lastHitTime > 1.5 && s.mass < 2000 { continue }
                     let b = body(smack: s)
                     b.refresh()
                     collide(a, b, kind: .carSmackable)
@@ -330,7 +333,17 @@ final class CrashWorld {
         return simd_length(l * x.rb.objElasticity)
     }
 
-    private func resolve(_ a: CrashBody, _ b: CrashBody, _ c: CrashGeometry.Contact, kind: CrashEvent.Kind) {
+    private func resolve(_ a: CrashBody, _ b: CrashBody, _ c0: CrashGeometry.Contact, kind: CrashEvent.Kind) {
+        // Coche contra coche: la normal casi horizontal y la separación limitada por paso. Un empuje vertical de cajas
+        // que apenas se pisan metía un coche bajo el suelo [I: el juego también separa por la normal; aquí la planta
+        // manda porque la IA no tiene suspensión ni contacto con el suelo del cuerpo].
+        var c = c0
+        // Contra rompibles también: una bolsa de basura bajo el morro levantaba el coche [I]
+        if kind == .carCar || (a.isSmack ?? b.isSmack).map({ $0.mass < 5000 }) == true {
+            var h = c.n; h.z *= 0.25
+            if simd_length(h) > 1e-4 { c.n = simd_normalize(h) }
+        }
+        c.depth = min(c.depth, 0.5)
         let n = c.n
         var p = c.p
         // Fricción y elasticidad [D]
@@ -457,6 +470,13 @@ final class CrashWorld {
             case .smack: break
             }
         }
+        if debug, firstContact, a.role == .racer || b.role == .racer {
+            func nm(_ x: CrashBody) -> String { x.isCar?.specs?.model ?? x.isAI?.typeName ?? x.isSmack.map { "\($0.type.name)/\($0.state)" } ?? "?" }
+            log(String(format: "corredor: %@ × %@ J=%.0f v=%.1f en (%.0f, %.0f, %.1f)", nm(a), nm(b), ev.impulse, ev.closing, ev.point.x, ev.point.y, ev.point.z))
+        }
+        if debug, ev.kind == .carSmackable, firstContact, let s = a.isSmack ?? b.isSmack {
+            log(String(format: "rompible %@ (%@, fuerza de rotura %.0f) %@ J=%.0f en (%.0f, %.0f)", s.type.name, s.def.model, s.type.detachForce, "\(s.state)", ev.impulse, s.pos.x, s.pos.y))
+        }
         // Policía y tráfico: lo que hace el jugador (AIPerpVehicle::OnCausedCollision [D])
         for (x, other) in [(a, b), (b, a)] where x.role == .player || x.role == .human {
             if let v = other.isAI {
@@ -521,6 +541,8 @@ final class CrashWorld {
 /// (SFXCarSound) no repita el mismo golpe.
 enum CrashSounds {
     private(set) static var recent: [(pos: float3, time: Double)] = []
+    /// Para las pruebas: golpes pedidos por prefijo y voces que llegaron al mezclador.
+    private(set) static var requested: [String: Int] = [:]
 
     static func play(_ prefixes: [String], at p: float3, velocity: float3) {
         let now = CACurrentMediaTimeShim.now()
@@ -529,7 +551,7 @@ enum CrashSounds {
         let sfx = SFXWorld.shared
         let sp = sfx.space(at: p, velocity: velocity, ref: 12)
         var rng = SplitMix(seed: UInt64(bitPattern: Int64(p.x * 31 + p.y * 17 + Float(now))))
-        for pre in prefixes { sfx.playStitch(prefix: pre, space: sp, rng: &rng) }
+        for pre in prefixes { requested[pre, default: 0] += 1; sfx.playStitch(prefix: pre, space: sp, rng: &rng) }
     }
 
     /// ¿Ya sonó un golpe del sistema de choques cerca de p hace menos de 0,35 s?

@@ -148,7 +148,40 @@ an automatic gearbox without the real shift animation pauses, or the reference i
 
 ## 11. To do
 
-- Port `RigidBody::DoBarrierCollision`/`ResolveGroundCollision` and `DoInstanceCollision` (car vs. car).
+- Port `RigidBody::DoBarrierCollision`/`ResolveGroundCollision` (walls and body vs. ground). Car vs. car: §12.
 - Ground material in the exported collision (for `LATERAL_GRIP`, `DRIVE_GRIP`).
-- Tunings, speedbreaker, damage (`DamageRacer`), blown tyres (`SpikeStrip`).
+- Tunings, speedbreaker, blown tyres (`SpikeStrip`). Damage: §12.
 - Measure 0–60 and braking in the real game (emulator) with the same car to close the reference.
+
+## 12. Car-to-car and car-to-object collisions (data format 11)
+
+Code: `native-engine/Sources/Rockport/Crash/` (`CrashWorld`, `CrashGeometry`, `Damage`, `CrashAI`, `Smackables`,
+`PursuitBreakers`, `Heli`, `CrashTests`). Runs once per frame after everything has moved (`AIWorld.update`).
+
+| Game piece | Source | Port |
+|---|---|---|
+| Collision volumes (`CollisionGeometry::Bounds`) | `bounds.json` [V], `Physics/Bounds.h` [D] | Only non-`Internal`/`Disabled` `PrimVsObjects` boxes and spheres; "Internal" ones belong to detachable parts [I] |
+| `RigidBody::OnObjectOverlap` | `RigidBody.cpp` [D] | Bounding-sphere pairs; deepest contact between volumes [I: the game resolves every pair] |
+| `Geometry::FindIntersection` | `Geometry.cpp` empty [D] | 15-axis SAT (box-box), sphere-box, sphere-sphere; point = mean of inside corners [I] |
+| `ResolveObjectCollision` | `RigidBody.cpp` 1032-1166 [D] | Friction `Ks = √(μs·μs)`, `Kd = √(μk·μk)`, plane `(min(Ks, Kd), Ks)`; elasticity = `|normal in body axes ⊙ OBJ_ELASTICITY|`; `ModifyCollision` (`OBJ_MOMENT_SCALE` xyz → inertia, w → mass); `Separate` by mass or the mobile one entirely |
+| `Moment::React` | not decompiled | Impulse with restitution (average of both) and static/dynamic Coulomb friction [I] |
+| `DamageVehicle::OnImpact` | `DamageVehicle.cpp` [D] | Literal: zone from arm and normal (0.5/0.8 thresholds), `ratio = force / (FORCE·1000)`, visual levels and hit points from `damagespecs` [V]. "Force" = impulse in N·s [I] (a cop dies after 2 hard rams, as in the game) |
+| Damage layer and glass | `CarRender.cpp SetPlayerDamage` [D] | `DAMAGE0_FRONT/REAR/…` (already in the GLBs) shown with damage > 0; `WINDOW_DAMAGE0` (crash/, GLOBALB [V]) with damage > 1 [D]; all windows share one texture [I] |
+| Cop broken panels | `VehiclePartDamage.cpp mSlotZoneMapList` [D] | `DAMAGE1_<PART>` (new in the GLBs, format 11) per zone; a broken light bar stops the flashers |
+
+- Player and racers: the game physics (PVehicle). Impulses are applied in "Bond" space (angular velocity flips sign when mapped to the world: pseudovector).
+- Traffic and police: kinematic with a planar body (mass and inertia `Box × TENSOR_SCALE` [D]). Small hit → only the speed changes; hard hit (lateral > 1.5 m/s, spin > 0.35 rad/s or Δv > 4 m/s) → tyre-friction slide with wall bounces until it stops [I]. Traffic: accident (ACCIDENT_OVER [D]); police: back to the network (GetUnstuck [D]) or, destroyed, brakes at 0.25 (AIActionTooDamaged [D]).
+- Car-car normals kept nearly horizontal and separation ≤ 0.5 m per step [I]: a vertical normal pushed a car under the ground.
+
+`--crash-test all` (1600×900, M4) [V measured]:
+
+| Scenario | Result |
+|---|---|
+| head-on (90 km/h into traffic at 50) | 21 kN·s impulse, player 90 → 51 km/h, traffic spins (1.27 rad/s), player FRONT zone level 1, residual penetration 0.6 mm |
+| T-bone (100 km/h into a COPMIDSIZE's side) | 1st: LEFT zone level 2, 13 DAMAGE1 panels, life 0.59; 2nd: **destroyed** (1.24), game message and HUD counter |
+| PIT (COPGTO into the rear quarter at 110 km/h) | player heading +23°, peak yaw 2.1 rad/s |
+| breakables (BMW at 80 km/h through a real row) | 6/6 knocked down (fences, bags, dumpster) |
+| pursuit breaker (scaffolding) | 3 pieces fall, 2 cops immobilized, cost to state 18,700 |
+| performance (20 cars with collisions) | `CrashWorld.step` median 0.04–0.10 ms, p95 0.12–0.36 ms; GPU 5.6 ms at 2940×1912 |
+
+Disable with `--no-crash` (previous kinematic push). Debug: `ROCKPORT_DEBUG_CRASH=1`.

@@ -152,7 +152,7 @@ Igual que `WRoadNav` (`World/Common/WRoadNetwork.cpp`):
 | `AIRoads.swift` | Red de carreteras: Bézier, tabla de longitudes, carriles, reglas, siguiente tramo, Dijkstra, rejilla espacial |
 | `AIData.swift` | Lee `ai.json` (patrones, niveles de calor, zonas) |
 | `AIModels.swift` | Monta los modelos de tráfico y policía (una pieza por ranura, ruedas de `cars.json`) en hilos de fondo; marcadores de luces |
-| `AIVehicle.swift` | Seguidor cinemático propio: carril o directo, altura de la colisión real, empujón tras un golpe |
+| `AIVehicle.swift` | Seguidor cinemático propio: carril o directo, altura de la colisión real; tras un golpe fuerte, deslizamiento físico (Crash/CrashAI.swift) |
 | `AIWorld.swift` | Orquesta todo; curvas, frenada, choques (rectángulos SAT) y estadísticas |
 | `TrafficManager.swift` | Aparición, patrón por barrio, borrado |
 | `PoliceManager.swift` | Patrulla, persecución, calor, arresto, evasión, formaciones, controles |
@@ -161,7 +161,7 @@ Igual que `WRoadNav` (`World/Common/WRoadNetwork.cpp`):
 | `AIEngine.swift` | Enganche al motor y prueba `--traffic-test` |
 
 Enganches pequeños: `Engine.swift` (`ai`, `aiRenderer`, `setupAI`, `updateAI` antes de dibujar), `Renderer.swift` (`overlays`: tres puntos de dibujo),
-`main.swift` (opciones). Los golpes contra la IA frenan al coche del jugador multiplicando su velocidad (la física del juego aún no tiene choques entre coches).
+`main.swift` (opciones). Los choques entre coches son los del juego (Crash/, doc 13 §12): impulsos con los volúmenes de `bounds.json`.
 
 ## 6. Prueba sin ventana
 
@@ -185,10 +185,32 @@ Resultados (MacBook Air M4, 2026-10-12) [V]:
 | 90 s, calor 5, 2940×1912 (Retina) | 19 de tráfico + 12 policías: GPU mediana 4,3 ms (p95 5,7), CPU 1,0 ms, 124 llamadas de la IA |
 
 ## 7. Pendiente
-- Helicóptero (`copheli`, `HeliFuelTime`, `AirSupportOptions`), apoyos pesados (SUV que embisten) y líder (`copcross`).
+- Apoyos pesados (SUV que embisten) y líder (`copcross`); `AirSupportOptions` por calor (el helicóptero sale con COPHELI en la tabla `cops`, §8).
 - Caballetes y pinchos con su modelo real (`XO_Sawhorse_1b_00`, `XO_SpikeBelt_1b_DW_00`) y ruedas pinchadas de verdad.
-- Choques físicos entre coches (la física del jugador aún no los tiene: ahora se pierde velocidad).
 - Bocina y sonidos (sirenas `Siren*`, `HornType`), voces de radio (`nSpeechId` de `RNrd`).
 - Cambios de carril voluntarios (el juego tampoco los hace en el tráfico [D]).
 - En algunos cruces el desplazamiento lateral corta una esquina con muro (≈ 0,1 % de los pasos).
 - Cuenta de recompensas (`RepPointsPerMinute`, coste para el estado) en la HUD.
+
+## 8. Choques, daños, derrumbes y helicóptero (formato de datos 11)
+
+### 8.1 Choques y policía [D: AIVehicle.cpp AIPerpVehicle::OnCausedCollision, AIPursuit.cpp]
+- Coche contra coche con la respuesta del juego (doc 13 §12). El tráfico golpeado se desliza y se queda accidentado; la policía se desliza, vuelve a la red o queda **destruida** (`damagespecs.HIT_POINTS`, `HP_THRESHOLD`) [V].
+- Policía dañada: una vez por coche (`SetDamagedByPerp`) a más de ≈ 10 mph → `NotifyCopDamaged`: contador «dañados» de la HUD y +250 al coste [D].
+- Destruido → `IncNumCopsDestroyed`: +5000 al coste, multiplicador ×1…×3 dentro de `DestroyCopBonusTime`, reputación `RepPointsForDestroying[calor]` (nuevo en `ai.json`) y mensaje `LANGUAGE_HUD_COPDESTROYED_<TIPO>` con `COPS_TAKENOUT_ICON` (FePursuitBoard::SetNumCopsDestroyed) [D][V]. Sin luces ni destellos; fuera del radar.
+- Hitos `cops_damaged` / `cops_destroyed` ya cuentan (Race/RaceMilestones.swift).
+
+### 8.2 Rompibles y derrumbes (doc 24 §3, §5.3)
+- 5 952 rompibles con su colisión y su tipo `smackable`; los suelta el impulso por encima de `DETACH_FORCE` y suman `COST_TO_STATE` si los tira el jugador en persecución [D].
+- 37 derrumbes de persecución (marcadores `*Moment`): al soltar el jugador un soporte del grupo caen todas sus piezas y los policías a < 30 m durante 3 s quedan inmovilizados (cuentan como destruidos) [I: EventSequencer no portado; `MBreakerStopCops(posición, duración, radio)` es del juego [D]]. Mensaje `LANGUAGE_HUD_PURSUIT_BREAKER_BONUS` [D].
+
+### 8.3 Helicóptero [D: AIVehicleHelicopter.cpp, AIActionHeliPursuit.cpp, SimpleChopper.cpp]
+- Aparece en persecución si la tabla `cops` del calor lleva COPHELI (calor 4 y 5) [V], tras el retraso de apoyos (máx. 20 s) [I]; +2000 al coste [D].
+- Combustible `HeliFuelTime`; al acabarse, o sin persecución, se va (AIActionHeliExit) y no vuelve hasta `TimeBetweenHeliActive` [D][V].
+- Vuelo: persecución en línea recta 30–45 m por delante y 6–12 m por encima; búsqueda en círculo en el último punto visto cuando la persecución pierde al jugador; frenada `Min/Max_Chopper_Accel` 30/80, `Chopper_Ratio` 2; nunca por debajo de la HeliSheet (`effects/heli-sheet.json`, 51 504 triángulos) [D][V].
+- Visión (`CanSeeTarget`): < 75 m siempre, hasta `heliLOSdistance` si el jugador está delante, sin muros; bajo un paso cubierto no [I]. Si ve al jugador la persecución lo cuenta como visto.
+- Modelo `cars/COPHELI.glb`, icono `HELICOPTER_ICON_GROUP` en el radar, golpes de pala con `IG_GLOBAL/FX_HELICOPTER_MB.ABK` (SoundHeli no portado: ritmo propio de 8,5 golpes/s [I]).
+- `--heli-test 75` (calor 5, coche de prueba a 130 km/h) [V medido]: sale a los 4 s, se acerca a 18–50 m del jugador a 12–25 m de altura, lo ve el 33 % del tiempo (más cerca, 100 %), se retira tras el arresto. GPU 2–4 ms, CPU 1–2 ms.
+
+### 8.4 Pruebas
+`--crash-test [frontal|lateral|pit|rompibles|derrumbe|rendimiento|all] --screenshot base.png` y `--heli-test N`: capturas y JSON (doc 13 §12).
