@@ -28,24 +28,24 @@ Everything that enters the project must look like **it belongs to the original g
 
 ## Phase 2 · "Most Wanted: Rust Belt" expansion (proposal)
 
-**Full design with map and sketches: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md).** 4 districts unlocked after the original Blacklist: Millbrook, River Steelworks, Freight Harbor and High Ridge.
+**Full design with map and sketches: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md).** 4 districts unlocked after the original Blacklist: Millbrook, Ironwood, Calder Bay and Black Hollow.
 
 ![Expansion map](docs/expansion/mapa-expansion.svg)
-District names are **always in English**, in every language, just like "Rockport". Meant as a period-correct DLC, built as a **data mod** on top of the original game (`mods/`).
+Districts carry **proper town names** (like Rockport or Camden Beach) that are never translated. Meant as a period-correct DLC, built as a **data mod** on top of the original game (`mods/`).
 
 ### Story (proposal, open for discussion)
 - Starts **right after the ending**: the player has the BMW M3 GTR back and has crossed the bridge.
-- Across the river starts a neighbouring Rust Belt county with 4 districts: **Millbrook**, **River Steelworks**, **Freight Harbor** and **High Ridge**.
+- Across the river starts a neighbouring Rust Belt county with 4 districts: **Millbrook**, **Ironwood**, **Calder Bay** and **Black Hollow**.
 - A **second Blacklist of 15** racers rules that county, each with a **unique**, race-prepared car.
-- County police play by other rules: new units, bridge checkpoints, pursuits through Freight Harbor and High Ridge.
+- County police play by other rules: new units, bridge checkpoints, pursuits through Calder Bay and Black Hollow.
 - Sergeant Cross returns as a federal agent; Mia comes back as a contact. The finale is a **mountain pass** showdown.
 
 ### Map (proposal)
 All connected to Rockport by the bridge and the highway, same scale and palette:
-- **River Steelworks**: blast furnaces, conveyors, rail yards, rusty sheds.
-- **Freight Harbor**: cranes, containers, long piers for pursuits.
+- **Ironwood**: blast furnaces, conveyors, rail yards, rusty sheds.
+- **Calder Bay**: cranes, containers, long piers for pursuits.
 - **Millbrook**: working-class town, brick houses, churches, bars, narrow streets.
-- **High Ridge**: winding mountain road, pines, snow at the top, a dam and tunnels. Appalachian influence.
+- **Black Hollow**: winding mountain road, pines, snow at the top, a dam and tunnels. Appalachian influence.
 - **Interstate highway** with toll booths and rest stops.
 
 ### New cars (proposal)

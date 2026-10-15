@@ -34,7 +34,7 @@ Los datos convertidos (glTF, PNG, JSON) son abiertos y no dependen de la platafo
 
 <img src="docs/expansion/valle.jpg" alt="Vista del valle industrial de la expansión Rust Belt" width="100%">
 
-Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockport: **Millbrook**, **River Steelworks**, **Freight Harbor** y **High Ridge**. Una nueva Lista Negra de 15, coches clásicos (Countach, Testarossa, 959…), persecuciones nuevas y la historia que sigue. [Plano, bocetos e historia →](#la-ampliación-rust-belt)
+Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockport: **Millbrook**, **Ironwood**, **Calder Bay** y **Black Hollow**. Una nueva Lista Negra de 15, coches clásicos (Countach, Testarossa, 959…), persecuciones nuevas y la historia que sigue. [Plano, bocetos e historia →](#la-ampliación-rust-belt)
 
 ## En imágenes
 
@@ -106,11 +106,11 @@ Una expansión hecha por fans **como si fuera de 2006**. Se desbloquea al vencer
 
 | Plano: Rockport real + 4 distritos nuevos | Distritos |
 |---|---|
-| <img src="docs/expansion/mapa-expansion.svg" alt="Plano de la expansión" width="420"> | **1 · Millbrook**: pueblo obrero, nuevo refugio (Lista Negra 2 #15–#11)<br>**2 · River Steelworks**: altos hornos y vías de tren (#10–#6)<br>**3 · Freight Harbor**: grúas y contenedores (#5–#2)<br>**4 · High Ridge**: puerto de montaña y presa (#1)<br><br>Unidos por la interestatal **I-99**. Coches clásicos como el Countach, el Testarossa o el 959. |
+| <img src="docs/expansion/mapa-expansion.svg" alt="Plano de la expansión" width="420"> | **1 · Millbrook**: pueblo obrero, nuevo refugio (Lista Negra 2 #15–#11)<br>**2 · Ironwood**: altos hornos y vías de tren (#10–#6)<br>**3 · Calder Bay**: grúas y contenedores (#5–#2)<br>**4 · Black Hollow**: puerto de montaña y presa (#1)<br><br>Unidos por la interestatal **I-99**. Coches clásicos como el Countach, el Testarossa o el 959. |
 
-| River Steelworks | Freight Harbor | High Ridge | Puente e I-99 |
+| Ironwood | Calder Bay | Black Hollow | Puente e I-99 |
 |---|---|---|---|
-| <img src="docs/expansion/river-steelworks.jpg" alt="River Steelworks"> | <img src="docs/expansion/freight-harbor.jpg" alt="Freight Harbor"> | <img src="docs/expansion/high-ridge.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Puente"> |
+| <img src="docs/expansion/ironwood.jpg" alt="Ironwood"> | <img src="docs/expansion/calder-bay.jpg" alt="Calder Bay"> | <img src="docs/expansion/black-hollow.jpg" alt="Black Hollow"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Puente"> |
 
 Diseño completo, historia y reglas para modelar: [docs/es/12-expansion-rust-belt.md](docs/es/12-expansion-rust-belt.md). Bocetos de ambiente hechos con IA (no son recursos del juego).
 

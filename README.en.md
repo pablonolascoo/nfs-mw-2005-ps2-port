@@ -34,7 +34,7 @@ The converted data (glTF, PNG, JSON) is open and platform-independent: anyone ca
 
 <img src="docs/expansion/valle.jpg" alt="Industrial valley of the Rust Belt expansion" width="100%">
 
-Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook**, **River Steelworks**, **Freight Harbor** and **High Ridge**. A new Blacklist of 15, classic cars (Countach, Testarossa, 959…), new pursuits and the story goes on. [Map, sketches and story →](#the-rust-belt-expansion)
+Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook**, **Ironwood**, **Calder Bay** and **Black Hollow**. A new Blacklist of 15, classic cars (Countach, Testarossa, 959…), new pursuits and the story goes on. [Map, sketches and story →](#the-rust-belt-expansion)
 
 ## In pictures
 
@@ -106,11 +106,11 @@ A fan-made expansion **as if it were 2006**. It unlocks after beating the origin
 
 | Map: real Rockport + 4 new districts | Districts |
 |---|---|
-| <img src="docs/expansion/mapa-expansion.svg" alt="Expansion map" width="420"> | **1 · Millbrook**: working-class town, new safehouse (Blacklist 2 #15–#11)<br>**2 · River Steelworks**: blast furnaces and rail yards (#10–#6)<br>**3 · Freight Harbor**: cranes and containers (#5–#2)<br>**4 · High Ridge**: mountain pass and dam (#1)<br><br>Linked by the **I-99** interstate. Classic cars such as the Countach, Testarossa or 959. |
+| <img src="docs/expansion/mapa-expansion.svg" alt="Expansion map" width="420"> | **1 · Millbrook**: working-class town, new safehouse (Blacklist 2 #15–#11)<br>**2 · Ironwood**: blast furnaces and rail yards (#10–#6)<br>**3 · Calder Bay**: cranes and containers (#5–#2)<br>**4 · Black Hollow**: mountain pass and dam (#1)<br><br>Linked by the **I-99** interstate. Classic cars such as the Countach, Testarossa or 959. |
 
-| River Steelworks | Freight Harbor | High Ridge | Bridge and I-99 |
+| Ironwood | Calder Bay | Black Hollow | Bridge and I-99 |
 |---|---|---|---|
-| <img src="docs/expansion/river-steelworks.jpg" alt="River Steelworks"> | <img src="docs/expansion/freight-harbor.jpg" alt="Freight Harbor"> | <img src="docs/expansion/high-ridge.jpg" alt="High Ridge"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
+| <img src="docs/expansion/ironwood.jpg" alt="Ironwood"> | <img src="docs/expansion/calder-bay.jpg" alt="Calder Bay"> | <img src="docs/expansion/black-hollow.jpg" alt="Black Hollow"> | <img src="docs/expansion/puente-interestatal.jpg" alt="Bridge"> |
 
 Full design, story and modelling rules: [docs/en/12-rust-belt-expansion.md](docs/en/12-rust-belt-expansion.md). AI mood sketches (not game assets).
 

@@ -27,11 +27,11 @@ for (const s of roads.segments) {
 const zones = [
   { n: 1, name: "MILLBROOK", sub: "Pueblo obrero · nuevo refugio", en: "Working-class town · new safehouse", bl: "#15–#11",
     poly: [[1300, 5500], [4600, 5300], [5400, 6400], [4700, 7900], [2200, 8100], [1100, 7000]] },
-  { n: 2, name: "RIVER STEELWORKS", sub: "Altos hornos · vías de tren", en: "Steelworks · rail yards", bl: "#10–#6",
+  { n: 2, name: "IRONWOOD", sub: "Altos hornos · vías de tren", en: "Steelworks · rail yards", bl: "#10–#6",
     poly: [[-4300, -1700], [-1700, -2100], [-1200, -400], [-1500, 1900], [-3200, 2400], [-4500, 900]] },
-  { n: 3, name: "FREIGHT HARBOR", sub: "Grúas · contenedores · muelles", en: "Cranes · containers · piers", bl: "#5–#2",
+  { n: 3, name: "CALDER BAY", sub: "Grúas · contenedores · muelles", en: "Cranes · containers · piers", bl: "#5–#2",
     poly: [[1700, -1500], [4400, -1300], [6900, -2100], [6700, -3500], [3200, -3600], [1500, -2600]] },
-  { n: 4, name: "HIGH RIDGE", sub: "Puerto de montaña · presa · túneles", en: "Mountain pass · dam · tunnels", bl: "#1",
+  { n: 4, name: "BLACK HOLLOW", sub: "Puerto de montaña · presa · túneles", en: "Mountain pass · dam · tunnels", bl: "#1",
     poly: [[-4500, 3200], [-1600, 3000], [-800, 4600], [-1300, 7300], [-3600, 8300], [-4600, 6000]] },
 ];
 // Interestatal propuesta (I-99) que une las zonas nuevas por fuera de la ciudad, y los accesos desde Rockport
