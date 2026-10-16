@@ -6,6 +6,23 @@
 
 <p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Download for Mac (v0.7.1)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Project page</a> · <a href="#user-guide">User guide</a> · <a href="#the-rust-belt-expansion">The expansion</a> · <a href="ROADMAP.en.md">Roadmap</a> · <a href="CONTRIBUTING.md">Contribute</a> · <a href="CONTEXT.md">Context</a></p>
 
+### 🛠️ Next version (v0.8): what we are working on
+
+What comes next, in order. Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+| | What is missing | Today |
+|---|---|---|
+| 🚨 | **Police radar** in the interface and the audio, as in the original | The radio plays, but the indicator does not react |
+| 📸 | **Speed-camera radar**: speed-trap warnings and meter in the HUD | No on-screen warning |
+| 🚔 | **Busted / escaped screen** faithful to the original | Some elements are pushed out of place |
+| 🎬 | **The story as in the game**: the original narrative should be the game itself, with no cuts or jumps | Scenes play, but they do not flow like the original yet |
+| 🏠 | **Garage interiors** correctly mapped and working | Misplaced textures and entrances that fail |
+| 🚫 | **Garages closed during pursuits**, plus the **original ground marker** at the entrance | They open with police behind you and the marker is missing |
+| 🧱 | **Texture bugs**: flat green hillsides, greenish sky in some areas, rear window cracked from the start, speedometer digits | Visible on some Rosewood streets |
+| 🎞️ | **Full-screen movies**: scale them up instead of small with black borders | Shown at the original PS2 size |
+
+Full, longer-term list: [ROADMAP.en.md](ROADMAP.en.md).
+
 **An open decompilation and reverse-engineering project** for the **PlayStation 2** *Need for Speed: Most Wanted* (2005). We read your own ISO, understand every format and game system (helped by the [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw) decomp) and rebuild it as a **native game**, faithful to the original: same city, same cars, same interface, same warm PS2 tone.
 
 Then **we expand it**: an expansion that continues the story as if the same studio had made it in 2006.

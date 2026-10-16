@@ -6,6 +6,23 @@
 
 <p align="center"><b><a href="https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest">⬇️ Descargar para Mac (v0.7.1)</a></b> · <a href="https://rockport-native.vercel.app">🌐 Página del proyecto</a> · <a href="#guía-de-uso">Guía de uso</a> · <a href="#la-ampliación-rust-belt">La expansión</a> · <a href="ROADMAP.md">Hoja de ruta</a> · <a href="CONTRIBUTING.md">Colaborar</a> · <a href="CONTEXT.md">Contexto</a></p>
 
+### 🛠️ Próxima versión (v0.8): en qué estamos
+
+Lo siguiente que toca, por orden. Si quieres ayudar, mira [CONTRIBUTING.md](CONTRIBUTING.md).
+
+| | Qué falta | Hoy |
+|---|---|---|
+| 🚨 | **Radar de la policía** en la interfaz y en el audio, como en el original | La radio suena, pero el indicador no reacciona |
+| 📸 | **Radar de radares**: avisos y medidor de los radares de velocidad en el HUD | Sin aviso en pantalla |
+| 🚔 | **Pantalla de arrestado / escapado** fiel al original | Algunos elementos se desplazan de su sitio |
+| 🎬 | **La historia como en el juego**: que la narrativa original sea el juego en sí, sin cortes ni saltos | Las escenas salen, pero aún no encadenan como el original |
+| 🏠 | **Interiores de los garajes** bien mapeados y funcionando | Texturas mal colocadas y entradas que fallan |
+| 🚫 | **Garajes cerrados en persecución**, y la **marca original** del suelo a la entrada | Se abren con la policía detrás y no sale la marca |
+| 🧱 | **Texturas con fallos**: laderas verdes lisas, cielo verdoso en algunas zonas, luna trasera rota desde el principio, cifras del velocímetro | Visibles en algunas calles de Rosewood |
+| 🎞️ | **Películas a pantalla completa**: agrandarlas en vez de verlas pequeñas con bordes negros | Se ven al tamaño original de PS2 |
+
+Lista completa y a más largo plazo: [ROADMAP.md](ROADMAP.md).
+
 **Proyecto abierto de decompilación e ingeniería inversa** del *Need for Speed: Most Wanted* (2005) de **PlayStation 2**. Leemos tu propia ISO, entendemos cada formato y cada sistema del juego (con ayuda de la decomp [dbalatoni13/nfsmw](https://github.com/dbalatoni13/nfsmw)) y lo volvemos a montar como **juego nativo**, fiel al original: misma ciudad, mismos coches, misma interfaz, mismo tono cálido de PS2.
 
 Y después, **lo ampliamos**: una expansión que continúa la historia como si la hubiera hecho el mismo estudio en 2006.
