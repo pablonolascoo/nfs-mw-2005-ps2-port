@@ -24,12 +24,16 @@
   - Mar abierto al este y al noreste.
   - Dos ríos que salen por el oeste: el que separa Rosewood del centro y el del suroeste.
   - Tierra al sur, con una ría que entra desde el mar.
-- **Dónde va cada distrito:**
-  - **Millbrook**, al norte, pasadas las colinas de Rosewood.
-  - **Ironwood**, río arriba hacia el oeste.
-  - **Black Hollow**, en las montañas del noroeste, donde nace el río (la presa forma un embalse).
-  - **Calder Bay**, en la orilla sur de esa ría.
-- Una **interestatal nueva (I-99)** une los cuatro por fuera de la ciudad. Tres accesos salen de carreteras reales de Rockport: la autopista del oeste, el norte de Rosewood y el sur del centro.
+- **Dónde va cada distrito.** Todos están pegados a la ciudad, a 0,5–2 km del borde de Rockport:
+  - **Millbrook**, en las colinas justo al norte de Rosewood.
+  - **Ironwood**, en el valle del río de Rosewood, aguas arriba al oeste. Tiene calles en las dos orillas.
+  - **Black Hollow**, en la cordillera del noroeste, donde nace ese río: embalse, presa, mina de carbón y un puerto de montaña.
+  - **Calder Bay**, en la orilla sur de la bahía que forma la ría. Muelles paralelos y un puente levadizo hacia el centro.
+- **Las carreteras se trazan sobre el relieve**, como las de verdad:
+  - Un buscador de rutas sigue los valles, evita las pendientes, cruza el agua por los estrechos y rodea Rockport.
+  - Los pueblos tienen manzanas irregulares de tamaño variado. Sus calles siguen recto en los cruces y curvan suavemente, como las de Rockport.
+  - La **I-99** rodea la ciudad por fuera y une los cuatro distritos.
+  - Los accesos salen de carreteras reales de Rockport: la autopista del oeste, el norte de Rosewood, el sur y el suroeste del centro.
 - Se genera con `bun src/cli/expansion-map.ts` (en `tools/`).
   - El plano del repo está **dibujado por nosotros**: la imagen de EA solo se mide, no se copia.
   - En tu equipo también sale `map-data/<ID>/expansion/mapa-expansion-original.svg`, con el mapa original del disco incrustado. No va a git.

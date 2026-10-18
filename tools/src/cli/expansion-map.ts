@@ -26,7 +26,7 @@ const mmIndex = await Bun.file(`${data}/frontend/minimaps/index.json`).json() as
 const mm = decodePng(new Uint8Array(await Bun.file(`${data}/frontend/minimaps/MINI_MAP.png`).arrayBuffer()));
 
 // ── Ventana del plano (metros del mundo, Z arriba, norte arriba) ──────────────────────────────────────────────
-const W = { x0: -7400, x1: 6600, y0: -6600, y1: 10300 };
+const W = { x0: -5000, x1: 6400, y0: -5150, y1: 8000 };
 const PX = 1600, S = PX / (W.x1 - W.x0), H = Math.round((W.y1 - W.y0) * S), M = 1 / S;
 const sx = (x: number) => (x - W.x0) * S, sy = (y: number) => (W.y1 - y) * S;
 const wxOf = (px: number) => W.x0 + (px + 0.5) * M, wyOf = (py: number) => W.y1 - (py + 0.5) * M;
@@ -139,104 +139,49 @@ const mmRGB = (x: number, y: number) => {
   });
 };
 
-// ── 2. La propuesta: geografía alrededor del mapa original ───────────────────────────────────────────────────
+// ── 2. La propuesta: geografía que continúa la del juego ─────────────────────────────────────────────────────
 // Bordes del mapa del juego medidos en MINI_MAP [V]: mar en todo el borde este y en el norte desde x 4739; al oeste salen
-// el río de Rosewood (y 841–913) y el del suroeste (y −544…−421), que también toca el borde sur (x −217…134);
-// al sur hay tierra salvo una ría (x 4778–5090). La propuesta continúa esos ríos y esa ría.
-const mainRiver: P[] = [[F.x0 - 20, 877], [-2000, 950], [-3000, 1300], [-4200, 1700], [-5100, 2500], [-5350, 3700], [-4950, 4900], [-4550, 5750], [-4350, 6150]];
-const westRiver: P[] = [[F.x0 - 20, -482], [-2200, -700], [-3400, -520], [-4600, -900], [-6200, -800], [-7800, -1000]];
-const southRiver: P[] = [[-40, F.y0 + 30], [120, -2200], [600, -2900], [1600, -3300], [2800, -3450], [3400, -3480]];
-const inlet: P[] = [[4934, F.y0 + 30], [4800, -2300], [4450, -2950]];
-const bayToSea: P[] = [[4900, -3650], [5800, -3850], [7200, -3950]];
-const bay = { c: [3950, -3500] as P, rx: 1250, ry: 720 };
-const lake = { c: [-4300, 6450] as P, rx: 850, ry: 470 };
+// el río de Rosewood (y 841–913) y el del suroeste (y −544…−421), que también toca el borde sur (x −217…134); al sur hay
+// tierra salvo una ría (x 4778–5090). La propuesta sigue esa lógica:
+//   · el río de Rosewood nace en las montañas del noroeste (embalse y presa de Black Hollow) y baja por el valle de Ironwood;
+//   · la ría del sur se abre en una bahía (Calder Bay) que sale al mar por el este; el río del suroeste desemboca en ella.
+const mainRiver: P[] = [[F.x0 - 20, 877], [-1700, 930], [-2300, 1150], [-2800, 1700], [-3050, 2500], [-2950, 3300], [-2750, 3950]];
+const westRiver: P[] = [[F.x0 - 20, -482], [-1800, -700], [-2800, -640], [-3700, -900], [-5000, -800]];
+const southRiver: P[] = [[-40, F.y0 + 30], [250, -2150], [900, -2550], [1700, -2720], [2450, -2660]];
+const inlet: P[] = [[4934, F.y0 + 30], [4850, -2000], [4550, -2350]];
+const bayToSea: P[] = [[4500, -2750], [5500, -2950], [6800, -3050]];
+const bay = { c: [3500, -2650] as P, rx: 1250, ry: 560 };
+const lake = { c: [-2650, 4380] as P, rx: 620, ry: 340 };
 const ellipseD = (x: number, y: number, e: { c: P; rx: number; ry: number }) => (1 - Math.hypot((x - e.c[0]) / e.rx, (y - e.c[1]) / e.ry)) * Math.min(e.rx, e.ry);
 /** Distancia con signo (m, positiva dentro del agua) de la geografía propuesta. */
 function proposedWater(x: number, y: number): number {
-  const wx = x + 110 * fbm(x / 650, y / 650), wy = y + 110 * fbm(x / 650 + 40, y / 650 + 40);
-  const rx = x + 35 * fbm(x / 260, y / 260, 3), ry = y + 35 * fbm(x / 260 + 7, y / 260 + 7, 3);
+  const wx = x + 90 * fbm(x / 600, y / 600), wy = y + 90 * fbm(x / 600 + 40, y / 600 + 40);
+  const rx = x + 30 * fbm(x / 240, y / 240, 3), ry = y + 30 * fbm(x / 240 + 7, y / 240 + 7, 3);
   let sea: number;
   if (y >= F.y1) sea = wx - (4739 + (y - F.y1) * 0.18);
   else if (y >= F.y0) sea = x - F.x1 + 30;
   else sea = wx - (F.x1 + (F.y0 - y) * 0.55);
+  // El río se estrecha aguas arriba (36 m en Rockport → 22 m bajo la presa)
+  const up = clamp((F.x0 - x) / 2600 + (y - 900) / 6000);
   return Math.max(sea,
-    38 - polyDist(rx, ry, mainRiver), 62 - polyDist(rx, ry, westRiver), 70 - polyDist(rx, ry, southRiver),
-    160 - polyDist(wx, wy, inlet), 280 - polyDist(wx, wy, bayToSea), ellipseD(wx, wy, bay), ellipseD(wx, wy, lake));
+    36 - 14 * up - polyDist(rx, ry, mainRiver), 58 - polyDist(rx, ry, westRiver), 62 - polyDist(rx, ry, southRiver),
+    150 - polyDist(wx, wy, inlet), 240 - polyDist(wx, wy, bayToSea), ellipseD(wx, wy, bay), ellipseD(wx, wy, lake));
 }
-/** Relieve propuesto (misma escala de gris que las bandas de MINI_MAP): montañas al noroeste, colinas al norte. */
+/** Relieve propuesto (escala de gris de las bandas de MINI_MAP): cordillera con crestas al noroeste, colinas al norte,
+ *  valles excavados por los ríos y llanura costera junto a la bahía. */
 function proposedElev(x: number, y: number): number {
   const g = (cx: number, cy: number, rx: number, ry: number) => Math.exp(-(((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2));
-  return 46 + 12 * fbm(x / 1500, y / 1500, 5) + 7 * fbm(x / 420 + 3, y / 420, 3)
-    + 62 * g(-4900, 7200, 2400, 2100) + 34 * g(-5800, 4300, 1600, 1500) + 20 * g(1700, 8100, 2200, 1200) + 14 * g(-3300, -2800, 1500, 1200);
+  const ridged = 1 - Math.abs(fbm(x / 950, y / 950, 5));
+  let e = 46 + 9 * fbm(x / 1600, y / 1600, 5) + 5 * fbm(x / 420 + 3, y / 420, 3)
+    + g(-3100, 5400, 2300, 1900) * (24 + 62 * ridged * ridged)
+    + 15 * g(1700, 6700, 2100, 800) + 8 * g(-1800, -2600, 1500, 900);
+  const dr = Math.min(polyDist(x, y, mainRiver), polyDist(x, y, westRiver), polyDist(x, y, southRiver), Math.max(0, -ellipseD(x, y, lake)));
+  e -= 16 * Math.exp(-((dr / 520) ** 2));
+  e -= 10 * Math.exp(-((Math.max(0, -ellipseD(x, y, bay)) / 700) ** 2));
+  return e;
 }
 
-// ── 3. Carreteras de los distritos nuevos (propuesta) ────────────────────────────────────────────────────────
-const nearestNode = (score: (p: number[]) => number) => { let best = roads.nodes[0].p, bs = -Infinity; for (const n of roads.nodes) { const s = score(n.p); if (s > bs) { bs = s; best = n.p; } } return [best[0], best[1]] as P; };
-// Accesos desde las carreteras reales de Rockport: la autopista que sale por el oeste, lo más al norte de Rosewood
-// y lo más al sur de la ciudad
-const westExit = nearestNode(p => -p[0]);
-const northExit = nearestNode(p => p[0] > 800 && p[0] < 3200 ? p[1] : -Infinity);
-const southExit = nearestNode(p => p[0] > 1200 && p[0] < 3000 ? -p[1] : -Infinity);
-
-const rot = (c: P, a: number, u: number, v: number): P => [c[0] + u * Math.cos(a) - v * Math.sin(a), c[1] + u * Math.sin(a) + v * Math.cos(a)];
-const ring = (c: P, rx: number, ry: number, a: number, jit = 0.13): P[] => catmull(Array.from({ length: 18 }, (_, k) => { const t = k / 18 * Math.PI * 2, r = 1 + jit * (rnd() * 2 - 1); return rot(c, a, Math.cos(t) * rx * r, Math.sin(t) * ry * r); }), true);
-const wiggle = (a: P, b: P, amp = 0.12, k = 5): P[] => {
-  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
-  return catmull([a, ...Array.from({ length: k - 1 }, (_, i) => { const t = (i + 1) / k, o = amp * L * (rnd() * 2 - 1); return [a[0] + dx * t + nx * o, a[1] + dy * t + ny * o] as P; }), b]);
-};
-const switchback = (a: P, b: P, turns: number, amp: number): P[] => {
-  const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L, ny = dx / L;
-  return catmull([a, ...Array.from({ length: turns }, (_, i) => { const t = (i + 0.5) / turns, o = (i % 2 ? 1 : -1) * amp * (0.8 + 0.4 * rnd()); return [a[0] + dx * t + nx * o, a[1] + dy * t + ny * o] as P; }), b], false, 10);
-};
-/** Cuadrícula de calles dentro de una elipse (pueblo, polígono industrial, muelles). */
-const grid = (c: P, su: number, sv: number, a: number, bu: number, bv: number): P[][] => {
-  const out: P[][] = [];
-  const line = (fixed: number, alongU: boolean) => {
-    const lim = alongU ? su * Math.sqrt(Math.max(0, 1 - (fixed / sv) ** 2)) : sv * Math.sqrt(Math.max(0, 1 - (fixed / su) ** 2));
-    if (lim < (alongU ? bu : bv)) return;
-    const pts: P[] = [];
-    for (let s = -lim; s <= lim + 1; s += (alongU ? bu : bv) * 0.5) {
-      const jit = (alongU ? bv : bu) * 0.45 * fbm(s / 260 + fixed / 97, fixed / 180);
-      pts.push(alongU ? rot(c, a, s, fixed + jit) : rot(c, a, fixed + jit, s));
-    }
-    out.push(catmull(pts, false, 3));
-  };
-  for (let v = -sv + bv * (0.5 + rnd() * 0.3); v < sv; v += bv * (0.8 + rnd() * 0.4)) line(v, true);
-  for (let u = -su + bu * (0.5 + rnd() * 0.3); u < su; u += bu * (0.8 + rnd() * 0.4)) line(u, false);
-  return out;
-};
-
-/** Deformación suave para que las calles nuevas no parezcan dibujadas con regla, como las del mapa del juego. */
-const warp = (pts: P[], amp = 70, sc = 520): P[] => pts.map(([x, y]) => [x + amp * fbm(x / sc, y / sc, 3), y + amp * fbm(x / sc + 31, y / sc - 17, 3)]);
-type District = { n: number; name: string; sub: string; en: string; bl: string; label: P; roads: { pts: P[]; w: number }[] };
-const R = (pts: P[], w = 10) => ({ pts: warp(pts), w });
-const districts: District[] = [
-  { n: 1, name: "MILLBROOK", sub: "Pueblo obrero · nuevo refugio", en: "Working-class town · new safehouse", bl: "#15–#11", label: [2050, 8350],
-    roads: [R(ring([2000, 7250], 1500, 900, 0.1), 14), ...grid([1750, 7150], 700, 450, 0.2, 150, 130).map(p => R(p, 9)), ...grid([3000, 7550], 380, 300, -0.35, 140, 120).map(p => R(p, 9)),
-      R(wiggle([600, 7300], [-500, 8300]), 10), R(wiggle([3450, 7000], [4300, 6200]), 10), R(wiggle([2600, 6400], [3700, 5600]), 9)] },
-  { n: 2, name: "IRONWOOD", sub: "Altos hornos · vías de tren · río", en: "Steel mills · rail yards · river", bl: "#10–#6", label: [-3750, 2900],
-    roads: [R(ring([-3800, 1550], 1700, 1000, 0.32), 14), ...grid([-3750, 1500], 1350, 560, 0.32, 230, 330).map(p => R(p, 11)),
-      R(wiggle([-5400, 900], [-6900, 1900]), 10), R(wiggle([-2300, 2400], [-1900, 3600]), 9), R(wiggle([-4800, 300], [-5600, -1600]), 10)] },
-  { n: 3, name: "CALDER BAY", sub: "Grúas · contenedores · muelles · puente levadizo", en: "Cranes · containers · piers · lift bridge", bl: "#5–#2", label: [1650, -4750],
-    roads: [R(ring([2200, -3650], 1450, 900, -0.08), 14), ...grid([1700, -3700], 800, 600, 0.0, 160, 140).map(p => R(p, 9)),
-      R(catmull([[2700, -2750], [2780, -3300], [2700, -3900], [2950, -4350], [3600, -4400]]), 12),
-      ...Array.from({ length: 6 }, (_, k) => R([[2750 - k * 8, -2950 - k * 230], [3250, -2950 - k * 230]] as P[], 12)),
-      R(wiggle([3600, -4400], [5400, -4700]), 10), R(wiggle([800, -4300], [-600, -5300]), 10)] },
-  { n: 4, name: "BLACK HOLLOW", sub: "Puerto de montaña · presa · túneles · mina", en: "Mountain pass · dam · tunnels · coal mine", bl: "#1", label: [-4300, 8950],
-    roads: [R(switchback([-3300, 4500], [-5300, 8400], 7, 420), 10), R(catmull([[-4950, 5550], [-4150, 6000]]), 12),
-      R(ring([-5700, 7900], 450, 300, 0.4), 9), R(wiggle([-3900, 7300], [-2300, 8600]), 9), R(switchback([-5900, 5200], [-6800, 3400], 4, 260), 9),
-      R(ring([-4300, 6450], 1150, 700, 0, 0.06), 10)] },
-];
-// Interestatal I-99 y accesos desde Rockport
-const i99: P[] = catmull([[2200, -2650], [600, -2700], [-1200, -2500], [-2600, -1300], [-3150, 200], [-3300, 1600], [-3050, 3000], [-3250, 4300], [-3650, 5400], [-2500, 7150], [-700, 7950], [650, 7650]], false, 10);
-const accesses: P[][] = [
-  catmull([westExit, [westExit[0] - 700, westExit[1] + 80], [-2600, westExit[1] + 40], [-3050, 3000]]),
-  catmull([northExit, [northExit[0] + 50, northExit[1] + 500], [2050, 6350]]),
-  catmull([southExit, [southExit[0] + 60, southExit[1] - 600], [2150, -2200], [2200, -2650]]),
-];
-const expansionRoads = [...districts.flatMap(d => d.roads), R(i99, 22), ...accesses.map(p => R(p, 14))];
-
-// ── 4. Rasterizado al estilo del mapa del juego ──────────────────────────────────────────────────────────────
+// ── 3. Campos rasterizados (agua y relieve), que también usan las carreteras nuevas ─────────────────────────
 const N = PX * H;
 const water = new Float32Array(N), elev = new Float32Array(N), frameA = new Float32Array(N);
 for (let py = 0; py < H; py++) for (let px = 0; px < PX; px++) {
@@ -247,10 +192,230 @@ for (let py = 0; py < H; py++) for (let px = 0; px < PX; px++) {
   const mw = mmSample(mmWater, x, y), soft = mmSample(mmLumSoft, x, y);
   // Dentro: bandas del disco; cerca del borde se funden con su versión suave, que es la que se prolonga hacia fuera
   if (dOut === 0) { water[i] = mw; const ml = mmSample(mmLum, x, y); elev[i] = soft + (ml - soft) * smooth(0, 380, dIn); continue; }
-  const ml = soft;
   water[i] = Math.max(clamp(0.5 + proposedWater(x, y) * S), mw * (1 - smooth(0, 400, dOut)));
-  elev[i] = ml + (proposedElev(x, y) - ml) * smooth(0, 1400, dOut);
+  elev[i] = soft + (proposedElev(x, y) - soft) * smooth(0, 1200, dOut);
 }
+const field = (arr: Float32Array, x: number, y: number) => {
+  const u = clamp(sx(x) - 0.5, 0, PX - 1.001), v = clamp(sy(y) - 0.5, 0, H - 1.001), i = Math.floor(u), j = Math.floor(v), fu = u - i, fv = v - j, o = j * PX + i;
+  return (arr[o] * (1 - fu) + arr[o + 1] * fu) * (1 - fv) + (arr[o + PX] * (1 - fu) + arr[o + PX + 1] * fu) * fv;
+};
+const wet = (p: P) => field(water, p[0], p[1]) > 0.3;
+
+// ── 4. Carreteras nuevas: trazadas sobre el relieve, como se hacen las de verdad ────────────────────────────
+// Rutas: camino de coste mínimo en una rejilla de 50 m (Dijkstra con heurística). Coste = longitud × (1 + pendiente² ·
+// k) + agua (puentes caros, así cruzan por los estrechos) + no atravesar Rockport. Luego se simplifica y se suaviza.
+const elevSoft = blur(elev, PX, H, 6, 2);
+const G = 50, gw = Math.ceil((W.x1 - W.x0) / G) + 1, gh = Math.ceil((W.y1 - W.y0) / G) + 1;
+const gE = new Float32Array(gw * gh), gWet = new Float32Array(gw * gh), gCity = new Uint8Array(gw * gh), gNoise = new Float32Array(gw * gh);
+for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+  const x = W.x0 + i * G, y = W.y1 - j * G, k = j * gw + i;
+  gE[k] = field(elevSoft, x, y); gWet[k] = field(water, x, y); gNoise[k] = 1 + 0.45 * (fbm(x / 650 + 11, y / 650 - 5, 3) + 1);
+  gCity[k] = x > F.x0 + 250 && x < F.x1 - 250 && y > F.y0 + 250 && y < F.y1 - 250 ? 1 : 0;
+}
+const used = new Float32Array(gw * gh);   // rutas ya hechas: las siguientes las reaprovechan (cruces naturales)
+type RouteOpts = { slope: number; water: number; city?: number; reuse?: number; tol?: number; noise?: boolean };
+const route = (a: P, b: P, o: RouteOpts): P[] => catmull(simplify(routeCells(a, b, o), o.tol ?? 55), false, 8);
+function routeCells(a: P, b: P, o: RouteOpts): P[] {
+  const ci = (p: P) => [clamp(Math.round((p[0] - W.x0) / G), 0, gw - 1), clamp(Math.round((W.y1 - p[1]) / G), 0, gh - 1)];
+  const [ai, aj] = ci(a), [bi, bj] = ci(b), start = aj * gw + ai, goal = bj * gw + bi;
+  const dist = new Float64Array(gw * gh).fill(Infinity), prev = new Int32Array(gw * gh).fill(-1), done = new Uint8Array(gw * gh);
+  const heap: [number, number][] = [];
+  const push = (f: number, k: number) => { heap.push([f, k]); let c = heap.length - 1; while (c) { const p = (c - 1) >> 1; if (heap[p][0] <= heap[c][0]) break; [heap[p], heap[c]] = [heap[c], heap[p]]; c = p; } };
+  const pop = () => { const top = heap[0], last = heap.pop()!; if (heap.length) { heap[0] = last; let c = 0; for (;;) { const l = 2 * c + 1, r = l + 1; let m = c; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === c) break; [heap[m], heap[c]] = [heap[c], heap[m]]; c = m; } } return top; };
+  const hx = (k: number) => Math.hypot((k % gw) - bi, Math.floor(k / gw) - bj) * G * (o.reuse ? 0.55 : 1);
+  dist[start] = 0; push(hx(start), start);
+  const nb = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1], [2, 1], [1, 2], [-2, 1], [-1, 2], [2, -1], [1, -2], [-2, -1], [-1, -2]];
+  while (heap.length) {
+    const [, k] = pop(); if (done[k]) continue; done[k] = 1; if (k === goal) break;
+    const i = k % gw, j = Math.floor(k / gw);
+    for (const [di, dj] of nb) {
+      const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= gw || nj >= gh) continue;
+      const n = nj * gw + ni, len = Math.hypot(di, dj) * G, dE = Math.abs(gE[n] - gE[k]) * G / len;
+      let c = len * (1 + o.slope * dE * dE) + o.water * len * Math.max(gWet[n], gWet[k]) + (o.city ?? 6) * len * gCity[n];
+      if (o.noise !== false) c *= gNoise[n];
+      if (o.reuse) c *= 1 - o.reuse * used[n];
+      const nd = dist[k] + c; if (nd < dist[n]) { dist[n] = nd; prev[n] = k; push(nd + hx(n), n); }
+    }
+  }
+  const cells: P[] = []; for (let k = goal; k !== -1; k = prev[k]) cells.push([W.x0 + (k % gw) * G, W.y1 - Math.floor(k / gw) * G]);
+  cells.reverse(); cells[0] = a; cells[cells.length - 1] = b;
+  for (const p of cells) { const [i, j] = ci(p); for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < gw && jj < gh) used[jj * gw + ii] = Math.max(used[jj * gw + ii], di || dj ? 0.5 : 1); } }
+  return cells;
+}
+/** Douglas-Peucker. */
+function simplify(pts: P[], tol: number): P[] {
+  if (pts.length < 3) return pts;
+  let idx = 0, md = 0; const a = pts[0], b = pts[pts.length - 1];
+  for (let i = 1; i < pts.length - 1; i++) { const d = segDist(pts[i][0], pts[i][1], a[0], a[1], b[0], b[1]); if (d > md) { md = d; idx = i; } }
+  return md > tol ? [...simplify(pts.slice(0, idx + 1), tol).slice(0, -1), ...simplify(pts.slice(idx), tol)] : [a, b];
+}
+const rot = (c: P, a: number, u: number, v: number): P => [c[0] + u * Math.cos(a) - v * Math.sin(a), c[1] + u * Math.sin(a) + v * Math.cos(a)];
+/** Calles de pueblo como las de Rockport: manzanas irregulares (bordes de Voronoi de puntos repartidos al azar con
+ *  separación mínima), cruces en T y en Y, calles algo curvas y alguna sin salida; nada en el agua. */
+function organicTown(c: P, rx: number, ry: number, a: number, sp: number, drop = 0.1): P[][] {
+  const inside = (p: P, k = 1) => { const u = (p[0] - c[0]) * Math.cos(-a) - (p[1] - c[1]) * Math.sin(-a), v = (p[0] - c[0]) * Math.sin(-a) + (p[1] - c[1]) * Math.cos(-a); return (u / rx) ** 2 + (v / ry) ** 2 <= k * (1 + 0.22 * fbm(u / 350 + c[0], v / 350)); };
+  const seeds: P[] = [];
+  for (let t = 0; t < 4000 && seeds.length < 400; t++) {
+    const p = rot(c, a, (rnd() * 2 - 1) * rx * 1.25, (rnd() * 2 - 1) * ry * 1.25);
+    const local = sp * (0.75 + 0.75 * (fbm(p[0] / 900 + 5, p[1] / 900 - 3, 3) + 1) / 2);   // manzanas de tamaño variado
+    if (!inside(p, 1.5) || seeds.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < local)) continue;
+    seeds.push(p);
+  }
+  // Delaunay (Bowyer-Watson) → Voronoi: cada arista compartida por dos triángulos une sus circuncentros
+  type T = { a: number; b: number; c: number; cx: number; cy: number; r2: number };
+  const pts: P[] = [...seeds, [c[0] - 1e5, c[1] - 1e5], [c[0] + 1e5, c[1] - 1e5], [c[0], c[1] + 1e5]];
+  const circ = (i: number, j: number, k: number): T => {
+    const [ax, ay] = pts[i], [bx, by] = pts[j], [cx, cy] = pts[k], d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+    const ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d;
+    const uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d;
+    return { a: i, b: j, c: k, cx: ux, cy: uy, r2: (ax - ux) ** 2 + (ay - uy) ** 2 };
+  };
+  let tris: T[] = [circ(seeds.length, seeds.length + 1, seeds.length + 2)];
+  for (let p = 0; p < seeds.length; p++) {
+    const [x, y] = pts[p], bad = tris.filter(t => (x - t.cx) ** 2 + (y - t.cy) ** 2 < t.r2);
+    const edgeCount = new Map<string, [number, number]>();
+    for (const t of bad) for (const [u, v] of [[t.a, t.b], [t.b, t.c], [t.c, t.a]]) { const k = u < v ? `${u},${v}` : `${v},${u}`; edgeCount.has(k) ? edgeCount.delete(k) : edgeCount.set(k, [u, v]); }
+    tris = tris.filter(t => !bad.includes(t));
+    for (const [u, v] of edgeCount.values()) tris.push(circ(u, v, p));
+  }
+  const byEdge = new Map<string, T[]>();
+  for (const t of tris) for (const [u, v] of [[t.a, t.b], [t.b, t.c], [t.c, t.a]]) { const k = u < v ? `${u},${v}` : `${v},${u}`; (byEdge.get(k) ?? byEdge.set(k, []).get(k)!).push(t); }
+  // Tramos válidos (bordes de Voronoi dentro del pueblo y en seco)
+  const key = (p: P) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`;
+  const nodes = new Map<string, P>(), adj = new Map<string, Set<string>>();
+  const link = (A: P, B: P) => { for (const [p, q] of [[A, B], [B, A]] as [P, P][]) { nodes.set(key(p), p); (adj.get(key(p)) ?? adj.set(key(p), new Set()).get(key(p))!).add(key(q)); } };
+  for (const ts of byEdge.values()) {
+    if (ts.length !== 2) continue;
+    const A: P = [ts[0].cx, ts[0].cy], B: P = [ts[1].cx, ts[1].cy], L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    const mid: P = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2];
+    if (L < sp * 0.12 || L > sp * 2.2 || !inside(mid) || !inside(A, 1.25) || !inside(B, 1.25) || rnd() < drop) continue;
+    if (wet(A) || wet(B) || wet(mid)) continue;
+    link(A, B);
+  }
+  // Poda: fuera las calles sin salida muy cortas de los bordes (Rockport casi no tiene)
+  for (const [k, ns] of [...adj]) {
+    if (ns.size !== 1) continue;
+    const [n] = ns, A = nodes.get(k)!, B = nodes.get(n)!;
+    if (Math.hypot(A[0] - B[0], A[1] - B[1]) < sp * 0.7) { adj.get(n)?.delete(k); adj.delete(k); }
+  }
+  // Cadenas: desde cada tramo libre, se alarga por los dos extremos tomando en cada cruce el giro más suave (< 55°)
+  const usedE = new Set<string>(), ek = (a: string, b: string) => a < b ? `${a}|${b}` : `${b}|${a}`;
+  const extend = (chain: string[]) => {
+    for (;;) {
+      const a = nodes.get(chain[chain.length - 2])!, b = nodes.get(chain[chain.length - 1])!;
+      let best: string | null = null, bt = Math.cos(55 * Math.PI / 180);
+      for (const n of adj.get(chain[chain.length - 1]) ?? []) {
+        if (usedE.has(ek(chain[chain.length - 1], n))) continue;
+        const c2 = nodes.get(n)!, d1 = [b[0] - a[0], b[1] - a[1]], d2 = [c2[0] - b[0], c2[1] - b[1]];
+        const cos = (d1[0] * d2[0] + d1[1] * d2[1]) / (Math.hypot(d1[0], d1[1]) * Math.hypot(d2[0], d2[1]) || 1);
+        if (cos > bt) { bt = cos; best = n; }
+      }
+      if (!best) return;
+      usedE.add(ek(chain[chain.length - 1], best)); chain.push(best);
+    }
+  };
+  const out: P[][] = [];
+  for (const [a, ns] of adj) for (const b of ns) {
+    if (usedE.has(ek(a, b))) continue;
+    usedE.add(ek(a, b));
+    const fwd = [a, b]; extend(fwd);
+    const back = [b, a]; extend(back);
+    const chain = [...back.slice(2).reverse(), ...fwd].map(k => nodes.get(k)!);
+    out.push(catmull(chain.map(([x, y]) => [x + 35 * fbm(x / 400, y / 400, 2), y + 35 * fbm(x / 400 + 9, y / 400, 2)] as P), false, 6));
+  }
+  return out;
+}
+/** Ronda que rodea el pueblo por tierra (se encoge donde toca agua). */
+function ringRoad(c: P, rx: number, ry: number, a: number): P[] {
+  const pts: P[] = [];
+  for (let k = 0; k < 20; k++) {
+    const t = k / 20 * Math.PI * 2; let r = 1.12 + 0.12 * fbm(k / 3 + c[0], c[1]);
+    while (r > 0.55 && wet(rot(c, a, Math.cos(t) * rx * r, Math.sin(t) * ry * r))) r -= 0.04;
+    pts.push(rot(c, a, Math.cos(t) * rx * r, Math.sin(t) * ry * r));
+  }
+  return catmull(pts, true, 6);
+}
+/** Paralela a una polilínea (orilla de un río), solo los tramos dentro de una elipse y en seco. */
+function bankRoad(line: P[], off: number, c: P, rx: number, ry: number, a: number): P[][] {
+  const out: P[][] = []; let cur: P[] = [];
+  for (let i = 0; i < line.length - 1; i++) for (let s = 0; s < 8; s++) {
+    const t = s / 8, A = line[i], B = line[i + 1], dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy);
+    const p: P = [A[0] + dx * t - dy / L * off, A[1] + dy * t + dx / L * off];
+    const u = (p[0] - c[0]) * Math.cos(-a) - (p[1] - c[1]) * Math.sin(-a), v = (p[0] - c[0]) * Math.sin(-a) + (p[1] - c[1]) * Math.cos(-a);
+    if ((u / rx) ** 2 + (v / ry) ** 2 <= 1 && !wet(p)) cur.push(p); else { if (cur.length > 3) out.push(cur); cur = []; }
+  }
+  if (cur.length > 3) out.push(cur);
+  return out;
+}
+/** Muelles paralelos: a lo largo de la orilla sur de la bahía, cada uno hacia el norte desde donde empieza el agua. */
+function piers(x0: number, x1: number, n: number, reach: number): P[][] {
+  const out: P[][] = [];
+  for (let k = 0; k < n; k++) {
+    const x = x0 + (x1 - x0) * k / (n - 1);
+    let shore: number | null = null;
+    for (let y = bay.c[1] - bay.ry - 900; y < bay.c[1]; y += 10) if (wet([x, y])) { shore = y; break; }
+    if (shore !== null) out.push([[x, shore - 110], [x, shore + reach]]);
+  }
+  return out;
+}
+
+const nearestNode = (score: (p: number[]) => number) => { let best = roads.nodes[0].p, bs = -Infinity; for (const n of roads.nodes) { const s = score(n.p); if (s > bs) { bs = s; best = n.p; } } return [best[0], best[1]] as P; };
+// Accesos desde carreteras reales de Rockport: la autopista que sale por el oeste, lo más al norte de Rosewood,
+// lo más al sur del centro y el extremo suroeste del centro
+const westExit = nearestNode(p => -p[0]);
+const northExit = nearestNode(p => p[0] > 800 && p[0] < 3200 ? p[1] : -Infinity);
+const southExit = nearestNode(p => p[0] > 1200 && p[0] < 3000 ? -p[1] : -Infinity);
+const swExit = nearestNode(p => p[1] < 600 && p[1] > -700 ? -p[0] : -Infinity);
+
+type Road = { pts: P[]; w: number };
+type District = { n: number; name: string; sub: string; en: string; bl: string; label: P; roads: Road[] };
+const R = (pts: P[], w = 8): Road => ({ pts, w });
+const streets = { slope: 1.2, water: 40, city: 6 };
+// Centros: pegados a la ciudad (0,5–2 km del borde de Rockport) y donde el relieve lo pide
+const C = {
+  millbrook: [1750, 6000] as P, ironwood: [-2450, 1350] as P, hollow: [-1950, 3650] as P, mine: [-3900, 5000] as P,
+  calder: [2700, -3550] as P, dam: [-2700, 4020] as P, pass: [-4650, 6650] as P,
+};
+const riverAngle = Math.atan2(1700 - 930, -2800 + 1700);
+const ST = 24, AV = 30;   // ancho de calle y de avenida (m), como los tramos de roads.json
+const districts: District[] = [
+  { n: 1, name: "MILLBROOK", sub: "Pueblo obrero en las colinas · nuevo refugio", en: "Hillside working-class town · new safehouse", bl: "#15–#11", label: [1750, 7150],
+    roads: [...organicTown(C.millbrook, 1450, 720, 0.12, 190, 0.16).map(p => R(p, ST)), ...organicTown([3450, 6150], 520, 380, -0.3, 180, 0.14).map(p => R(p, ST)),
+      R(route(northExit, C.millbrook, streets), AV), R(route([1100, 4560], [700, 5900], streets), AV), R(route(C.millbrook, [3450, 6150], streets), AV),
+      R(route([3450, 6150], [4250, 5300], streets), ST)] },
+  { n: 2, name: "IRONWOOD", sub: "Valle del río · altos hornos · vías de tren", en: "River valley · steel mills · rail yards", bl: "#10–#6", label: [-3650, 450],
+    roads: [...organicTown(C.ironwood, 1550, 820, riverAngle, 270, 0.14).map(p => R(p, AV)),
+      ...bankRoad(mainRiver, 190, C.ironwood, 1600, 850, riverAngle).map(p => R(p, AV)), ...bankRoad(mainRiver, -200, C.ironwood, 1600, 850, riverAngle).map(p => R(p, AV)),
+      R(route(westExit, C.ironwood, streets), AV), R(route(swExit, [-2200, 500], streets), AV)] },
+  { n: 3, name: "CALDER BAY", sub: "Bahía · grúas · contenedores · puente levadizo", en: "Bay · cranes · containers · lift bridge", bl: "#5–#2", label: [2700, -4380],
+    roads: [...organicTown(C.calder, 1650, 520, -0.05, 185, 0.12).map(p => R(p, ST)),
+      ...(() => { const ps = piers(2900, 4300, 9, 280); return [...ps.map(p => R(p, 34)), R(catmull([[2500, ps[0][0][1] - 60], ...ps.map(p => p[0])]), AV)]; })(),   // muelles y calle del muelle
+      R(route(southExit, C.calder, { ...streets, water: 25 }), AV)] },
+  { n: 4, name: "BLACK HOLLOW", sub: "Montañas · embalse y presa · mina · puerto de montaña", en: "Mountains · reservoir and dam · coal mine · mountain pass", bl: "#1", label: [-2750, 6250],
+    roads: [...organicTown(C.hollow, 620, 420, 0.4, 175, 0.06).map(p => R(p, ST)),
+      R(catmull([[C.dam[0] - 330, C.dam[1] + 30], [C.dam[0] + 330, C.dam[1] - 20]]), AV),
+      R(route(C.hollow, [C.dam[0] + 380, C.dam[1] - 20], streets), ST), R(route([C.dam[0] - 380, C.dam[1] + 30], C.mine, { slope: 0.6, water: 60 }), ST),
+      ...organicTown(C.mine, 360, 240, 0.6, 150, 0.1).map(p => R(p, ST)), R(route(C.mine, C.pass, { slope: 0.5, water: 60 }), ST),
+      R(route(C.hollow, westExit, streets), AV)] },
+];
+// Interestatal I-99: rodea la ciudad por fuera uniendo los cuatro distritos (pendiente muy cara, como una autopista)
+const highway = { slope: 4, water: 18, city: 12, tol: 170, noise: false };
+const i99Way: P[] = [[1600, -3450], [-1500, -2300], [-3200, 600], [-2600, 3000], [-1500, 5000], [600, 5950]];
+// Una sola ruta continua (se suaviza entera, sin quiebros en los puntos de paso)
+const i99: P[] = catmull(simplify(i99Way.slice(1).flatMap((b, k) => routeCells(i99Way[k], b, highway).slice(k ? 1 : 0)), 220), false, 10);
+const expansionRoads: Road[] = [...districts.flatMap(d => d.roads), R(i99, 36)];
+// Puntos de interés (rótulos pequeños)
+const crossing = (pts: P[]) => pts.find(p => field(water, p[0], p[1]) > 0.6) ?? pts[Math.floor(pts.length / 2)];
+const notes: { p: P; es: string; en: string }[] = [
+  { p: [C.dam[0], C.dam[1] - 120], es: "Presa", en: "Dam" },
+  { p: [lake.c[0], lake.c[1] + 40], es: "Embalse", en: "Reservoir" },
+  { p: [C.mine[0], C.mine[1] - 240], es: "Mina de carbón", en: "Coal mine" },
+  { p: [C.pass[0] + 250, C.pass[1] - 100], es: "Puerto de montaña", en: "Mountain pass" },
+  { p: [-2050, 1900], es: "Altos hornos", en: "Steel mills" },
+  { p: crossing(districts[2].roads[districts[2].roads.length - 1].pts), es: "Puente levadizo", en: "Lift bridge" },
+  { p: [bay.c[0] - 300, bay.c[1] + 30], es: "Terminal de contenedores", en: "Container terminal" },
+];
+
 // Bandas de altura como en el mapa del juego (escalones suaves de gris)
 const STEP = 8.5;
 const banded = blur(elev.map(v => Math.round(v / STEP) * STEP), PX, H, 1, 2);
@@ -324,8 +489,9 @@ const frame = `<rect x="${sx(F.x0).toFixed(1)}" y="${sy(F.y1).toFixed(1)}" width
 const overlay = (sub: string) => `
 ${frame}
 <path d="${pl(i99)}" fill="none" stroke="${amber}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
-${accesses.map(a => `<path d="${pl(a)}" fill="none" stroke="${amber}" stroke-width="2" stroke-dasharray="5 5" stroke-linecap="round"/>`).join("")}
-${outlined(`x="${sx(-3000).toFixed(0)}" y="${sy(-1650).toFixed(0)}" ${mono} font-size="14" font-weight="700" fill="${amber}"`, `I-99`, 4)}
+${outlined(`x="${(sx(i99[Math.floor(i99.length * 0.3)][0]) + 10).toFixed(0)}" y="${sy(i99[Math.floor(i99.length * 0.3)][1]).toFixed(0)}" ${mono} font-size="14" font-weight="700" fill="${amber}"`, `I-99`, 4)}
+${notes.map(n => `<circle cx="${sx(n.p[0]).toFixed(0)}" cy="${sy(n.p[1]).toFixed(0)}" r="3.5" fill="${amber}" stroke="${ink}" stroke-width="1.5"/>` +
+  outlined(`x="${(sx(n.p[0]) + 8).toFixed(0)}" y="${(sy(n.p[1]) + 4).toFixed(0)}" ${mono} font-size="12" font-style="italic" fill="${paper}"`, `${n.es} · ${n.en}`, 4)).join("")}
 ${original}
 ${z}
 <g transform="translate(28 30)">
@@ -338,7 +504,7 @@ ${z}
 <rect x="-12" y="-22" width="760" height="96" rx="4" fill="${ink}" fill-opacity=".78"/>
 <rect x="0" y="-10" width="40" height="18" fill="none" stroke="${paper}" stroke-opacity=".5" stroke-dasharray="3 5"/><text x="52" y="4">Mapa del juego: Rockport, sus barrios, costa y ríos</text>
 <line x1="0" y1="26" x2="40" y2="26" stroke="${amber}" stroke-width="3"/><text x="52" y="30">Interestatal I-99 (nueva)</text>
-<line x1="0" y1="52" x2="40" y2="52" stroke="${amber}" stroke-width="2" stroke-dasharray="5 5"/><text x="52" y="56">Accesos nuevos desde Rockport</text>
+<circle cx="20" cy="52" r="3.5" fill="${amber}" stroke="${ink}" stroke-width="1.5"/><text x="52" y="56">Lugar de la historia (presa, mina, puente…)</text>
 <rect x="380" y="-10" width="18" height="18" fill="${amber}"/><text x="408" y="4">Distrito nuevo · número = orden de desbloqueo</text>
 <text x="380" y="30">Norte arriba · 1 km ≈ ${(1000 * S).toFixed(0)} px</text>
 <text x="380" y="56">Fuera del marco: propuesta de fans</text>

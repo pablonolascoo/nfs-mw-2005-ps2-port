@@ -24,12 +24,16 @@
   - Open sea to the east and north-east.
   - Two rivers leaving to the west: the one between Rosewood and downtown, and the south-western one.
   - Land to the south, with an inlet coming in from the sea.
-- **Where each district goes:**
-  - **Millbrook**, to the north, past the Rosewood hills.
-  - **Ironwood**, upriver to the west.
-  - **Black Hollow**, in the north-west mountains where the river starts (the dam makes a reservoir).
-  - **Calder Bay**, on the south shore of that inlet.
-- A **new interstate (I-99)** links all four outside the city. Three accesses start from real Rockport roads: the western highway, northern Rosewood and the south of downtown.
+- **Where each district goes.** All of them sit right next to the city, 0.5–2 km from the edge of Rockport:
+  - **Millbrook**, in the hills just north of Rosewood.
+  - **Ironwood**, in the valley of the Rosewood river, upstream to the west, with streets on both banks.
+  - **Black Hollow**, in the north-west range where that river starts: reservoir, dam, coal mine and a mountain pass.
+  - **Calder Bay**, on the south shore of the bay formed by the inlet, with parallel piers and a lift bridge to downtown.
+- **Roads are laid over the terrain**, like real ones:
+  - A route finder follows valleys, avoids slopes, crosses water at narrow points and goes around Rockport.
+  - Towns have irregular blocks of varied sizes, with streets that run straight through junctions and curve gently, like Rockport's.
+  - The **I-99** rings the city and links the four districts.
+  - The accesses start from real Rockport roads: the western highway, northern Rosewood, and the south and south-west of downtown.
 - Generated with `bun src/cli/expansion-map.ts` (in `tools/`).
   - The map in the repo is **drawn by us**: EA's image is only measured, never copied.
   - On your machine you also get `map-data/<ID>/expansion/mapa-expansion-original.svg`, with the original disc map embedded. It does not go to git.
