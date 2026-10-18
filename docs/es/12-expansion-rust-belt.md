@@ -16,9 +16,23 @@
 
 ![Plano de la expansión](../expansion/mapa-expansion.svg)
 
-- Rockport se dibuja con su **red de carreteras real** (`roads.json`, 6538 tramos).
-- Las zonas nuevas son inventadas. Se generan con `bun src/cli/expansion-map.ts` (en `tools/`).
-- Una **interestatal nueva (I-99)** une los distritos por fuera de la ciudad. Hay accesos al oeste, al suroeste, al sur y un puente al norte.
+- **Rockport sale del disco**, con el estilo de su propio mapa:
+  - Relieve, costa y ríos: `MINI_MAP` (el mapa del radar y de la pausa, 1024×1024 px, 6,5 m/px). Se coloca con la calibración del juego: esquina en (−1225, −1591) m y 6659 m de lado. [V]
+  - Carreteras: `roads.json`, 6538 tramos con el ancho real de sus carriles. [V]
+  - Barrios: Rosewood, Camden Beach, Downtown Rockport y Gray Point, con los nombres de los textos del disco. [V]
+- **La geografía nueva continúa la del juego.** Los bordes del mapa original se midieron en la imagen [V]:
+  - Mar abierto al este y al noreste.
+  - Dos ríos que salen por el oeste: el que separa Rosewood del centro y el del suroeste.
+  - Tierra al sur, con una ría que entra desde el mar.
+- **Dónde va cada distrito:**
+  - **Millbrook**, al norte, pasadas las colinas de Rosewood.
+  - **Ironwood**, río arriba hacia el oeste.
+  - **Black Hollow**, en las montañas del noroeste, donde nace el río (la presa forma un embalse).
+  - **Calder Bay**, en la orilla sur de esa ría.
+- Una **interestatal nueva (I-99)** une los cuatro por fuera de la ciudad. Tres accesos salen de carreteras reales de Rockport: la autopista del oeste, el norte de Rosewood y el sur del centro.
+- Se genera con `bun src/cli/expansion-map.ts` (en `tools/`).
+  - El plano del repo está **dibujado por nosotros**: la imagen de EA solo se mide, no se copia.
+  - En tu equipo también sale `map-data/<ID>/expansion/mapa-expansion-original.svg`, con el mapa original del disco incrustado. No va a git.
 
 | # | Distrito | Qué es | Lista Negra 2 |
 |---|---|---|---|

@@ -16,9 +16,23 @@
 
 ![Expansion map](../expansion/mapa-expansion.svg)
 
-- Rockport is drawn with its **real road network** (`roads.json`, 6538 segments).
-- The new zones are invented. Generated with `bun src/cli/expansion-map.ts` (in `tools/`).
-- A **new interstate (I-99)** links the districts outside the city, with accesses to the west, south-west, south and a bridge to the north.
+- **Rockport comes from the disc**, in the style of the game's own map:
+  - Relief, coast and rivers: `MINI_MAP` (the radar and pause map, 1024×1024 px, 6.5 m/px). It is placed with the game's calibration: corner at (−1225, −1591) m and 6659 m per side. [V]
+  - Roads: `roads.json`, 6538 segments with their real lane widths. [V]
+  - Areas: Rosewood, Camden Beach, Downtown Rockport and Gray Point, named as in the disc's text. [V]
+- **The new geography continues the game's.** The edges of the original map were measured on the image [V]:
+  - Open sea to the east and north-east.
+  - Two rivers leaving to the west: the one between Rosewood and downtown, and the south-western one.
+  - Land to the south, with an inlet coming in from the sea.
+- **Where each district goes:**
+  - **Millbrook**, to the north, past the Rosewood hills.
+  - **Ironwood**, upriver to the west.
+  - **Black Hollow**, in the north-west mountains where the river starts (the dam makes a reservoir).
+  - **Calder Bay**, on the south shore of that inlet.
+- A **new interstate (I-99)** links all four outside the city. Three accesses start from real Rockport roads: the western highway, northern Rosewood and the south of downtown.
+- Generated with `bun src/cli/expansion-map.ts` (in `tools/`).
+  - The map in the repo is **drawn by us**: EA's image is only measured, never copied.
+  - On your machine you also get `map-data/<ID>/expansion/mapa-expansion-original.svg`, with the original disc map embedded. It does not go to git.
 
 | # | District | What it is | Blacklist 2 |
 |---|---|---|---|
