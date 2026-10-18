@@ -12,14 +12,18 @@ Lo siguiente que toca, por orden. Si quieres ayudar, mira [CONTRIBUTING.md](CONT
 
 | | Qué falta | Hoy |
 |---|---|---|
-| 🚨 | **Radar de la policía** en la interfaz y en el audio, como en el original | La radio suena, pero el indicador no reacciona |
-| 📸 | **Radar de radares**: avisos y medidor de los radares de velocidad en el HUD | Sin aviso en pantalla |
+| 🎬 | **Empezar por el prólogo guiado**, como el original: carreras con el BMW, la primera persecución, la avería por la fuga de aceite y la derrota contra Razor. La zona libre llega después | Arranca directamente en la zona libre |
+| 🚨 | **Detector de radar** (la barra de arriba del HUD): se ilumina al acercarse la policía y los radares de velocidad, cada uno con su color (naranja y verde), y con su sonido | La barra sale, pero no reacciona |
+| 🪵 | **Trampas para la policía** (*pursuit breakers*) visibles y físicas: si pasas por una y la rompes, se ve la animación y la persecución sigue como en el original | No se ven todas ni caen como en el original |
+| 🗺️ | **El mapa crece con la historia**: se ve más ciudad al desbloquear zonas, y los garajes, concesionarios y demás aparecen a medida que avanzas | Todo está visible desde el principio |
 | 🚔 | **Pantalla de arrestado / escapado** fiel al original | Algunos elementos se desplazan de su sitio |
 | 🎬 | **La historia como en el juego**: que la narrativa original sea el juego en sí, sin cortes ni saltos | Las escenas salen, pero aún no encadenan como el original |
 | 🏠 | **Interiores de los garajes** bien mapeados y funcionando | Texturas mal colocadas y entradas que fallan |
 | 🚫 | **Garajes cerrados en persecución**, y la **marca original** del suelo a la entrada | Se abren con la policía detrás y no sale la marca |
 | 🧱 | **Texturas con fallos**: laderas verdes lisas, cielo verdoso en algunas zonas, luna trasera rota desde el principio, cifras del velocímetro | Visibles en algunas calles de Rosewood |
 | 🎞️ | **Películas a pantalla completa**: agrandarlas en vez de verlas pequeñas con bordes negros | Se ven al tamaño original de PS2 |
+
+**Más adelante:** un menú inicial que deje elegir entre **Historia** y **Online**, como en GTA V. En Online sí se entraría directo al mapa; en Historia, siempre desde el prólogo.
 
 Lista completa y a más largo plazo: [ROADMAP.md](ROADMAP.md).
 

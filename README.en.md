@@ -12,14 +12,18 @@ What comes next, in order. Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | | What is missing | Today |
 |---|---|---|
-| 🚨 | **Police radar** in the interface and the audio, as in the original | The radio plays, but the indicator does not react |
-| 📸 | **Speed-camera radar**: speed-trap warnings and meter in the HUD | No on-screen warning |
+| 🎬 | **Start with the guided prologue**, as in the original: races with the BMW, the first pursuit, the breakdown from the oil leak and the loss to Razor. Free roam comes after | It starts straight in free roam |
+| 🚨 | **Radar detector** (the bar at the top of the HUD): it lights up when police or speed cameras are near, each with its own colour (orange and green), and with its sound | The bar shows, but does not react |
+| 🪵 | **Pursuit breakers** visible and physical: drive through one and break it, the animation plays and the pursuit continues as in the original | Not all of them show or fall as in the original |
+| 🗺️ | **The map grows with the story**: more of the city shows as areas unlock, and garages, car lots and the rest appear as you progress | Everything is visible from the start |
 | 🚔 | **Busted / escaped screen** faithful to the original | Some elements are pushed out of place |
 | 🎬 | **The story as in the game**: the original narrative should be the game itself, with no cuts or jumps | Scenes play, but they do not flow like the original yet |
 | 🏠 | **Garage interiors** correctly mapped and working | Misplaced textures and entrances that fail |
 | 🚫 | **Garages closed during pursuits**, plus the **original ground marker** at the entrance | They open with police behind you and the marker is missing |
 | 🧱 | **Texture bugs**: flat green hillsides, greenish sky in some areas, rear window cracked from the start, speedometer digits | Visible on some Rosewood streets |
 | 🎞️ | **Full-screen movies**: scale them up instead of small with black borders | Shown at the original PS2 size |
+
+**Later on:** a start menu to choose between **Story** and **Online**, like GTA V. Online would drop you straight onto the map; Story always starts from the prologue.
 
 Full, longer-term list: [ROADMAP.en.md](ROADMAP.en.md).
 
