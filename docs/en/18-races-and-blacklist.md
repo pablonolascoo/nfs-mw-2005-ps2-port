@@ -107,6 +107,33 @@ Razor: totalled by traffic, won 30.8 s with `--no-traffic`; 1.5.1 speed trap 2nd
 once, timed out another run; 19.8.1 pursuit-length challenge completed. CPU 0.5–0.8 ms median per frame.
 `--career-test`: all 15 rivals beaten in order, cars won, padlocks correct per bin, save round-trip OK.
 
-## 9. To do
+## 9. Story prologue: D-Day (`Career/Prologue.swift`)
+
+- **New career = bin 16**, the `M3GTRCAREERSTART` BMW and $0 [D: `CareerSettings::Default` (`CurrentBin = 0x10`) and `StartNewCareer`]. `IsDDay()` is "bin > 15" [D].
+- **Event order:** the `GRaceDatabase::sDDayRaces` table (SLUS 0x4E4A60, 5 × 8 bytes) [V]:
+
+| # | Event | Rival | Disc script (Lua, doc 26 §6) | Movie |
+|---|---|---|---|---|
+| 1 | 16.1.0 `partial_dday` | Razor | Rolling start at 60. Intro after 3 s. At `call_from_mia`, Mia's call 10. 8 s later, fade and both cars on autopilot. 3 s after that, it ends | `storyfmv_rac01` |
+| 2 | 16.2.2 | Ronnie (Supra) | Normal race ($10,000) | `storyfmv_cro06_coh06a` |
+| 3 | 16.2.3 | Toru Sato | `cop_spawn_trigger` → 2 cops. `trigger_911` → 911 call. `bail_pursuit` → the police give up ($10,000) | `storyfmv_raz08` |
+| 4 | 16.1.1 | 3 rivals, 2 laps at dusk | Normal ($10,000). Then the NIS scene `EndingNis03` (Rog and Razor) | — |
+| 5 | 16.2.1 `d_day_intro` | Razor | Mia's SMS. At `kill_engine`, `SabotageEngine(player, 5)` (15 s backup timer). When it blows, fade and end. Police and `EBailPursuit`. `done` state → `JumpToCarLot` | `storyfmv_pin11`, then `storyfmv_bus12` (busted) |
+
+- **Next event:** the first uncompleted one in the table (`GetNextDDayRace` [G]). Continuing the career resumes there (`ResumeCareer` [D]).
+- **After the arrest:**
+  - The BMW is lost.
+  - The player appears in front of the car lot with the D-Day money ($30,000).
+  - Buying a car starts bin 16's `EntryActivity`, `race_bin_16/drive_to_safe_house`, with its original scripts and those of its `drive_to_target` template: Mia's SMS 15, GPS, SMS 121 after 120 s and, on arrival, `DoSafeHouseIntro`.
+  - Then `STORYFMV_SAF25` and `BLACKLIST_15` play and the career moves to bin 15.
+- **Texts:** the SMS come from the disc (`SMS_MESSAGE_<n>` and `_FROM` [D: `FEDatabase.hpp`]). Number 10 is the oil-leak one.
+- **Test:** `Rockport --prologue-test [--screenshot base.png]` runs it all on autopilot and checks every step.
+- **To do:**
+  - NIS scene player (`EndingNis03` and `IntroNis*`).
+  - Voice for the calls (text for now).
+  - Car lot menu on the jump (`JumpToCarLot` takes the car to the door).
+  - Real orientation of plane triggers.
+
+## 10. To do
 Flipped barrier art, shortcuts, exact grid, NIS/films/photo-finish, random racer names, adaptive difficulty, exact
 `ComputeCatchUpSkill`, `cops_destroyed` (needs damage), garage/shop.

@@ -12,8 +12,8 @@ Lo siguiente que toca, por orden. Si quieres ayudar, mira [CONTRIBUTING.md](CONT
 
 | | Qué falta | Hoy |
 |---|---|---|
-| 🔬 | **Desensamblado completo del juego** con Ghidra + REA ([doc 26](docs/es/26-desensamblado-ghidra-rea.md)): ya se leen las 18 909 funciones del ejecutable. Base para portar todo lo que falta tal cual es en el original | ✅ Listo; ahora toca portar historia, misiones y condiciones |
-| 🎬 | **Empezar por el prólogo guiado**, como el original: carreras con el BMW, la primera persecución, la avería por la fuga de aceite y la derrota contra Razor. La zona libre llega después | Arranca directamente en la zona libre |
+| 🔬 | **Desensamblado completo del juego** con Ghidra + REA ([doc 26](docs/es/26-desensamblado-ghidra-rea.md)): las 18 909 funciones, con nombres y tipos. Y el hallazgo grande: **la historia y las condiciones del juego son 258 guiones Lua dentro del disco**, que el motor ya ejecuta tal cual | ✅ Hecho. Quedan ~140 funciones de juego que los guiones llaman y aún no hacen nada (avisan) |
+| 🎬 | **Prólogo guiado (D-Day)**, como el original: carreras con el BMW contra Razor, Ronnie y Toru Sato, la policía, la avería por la fuga de aceite, el arresto, el concesionario y el viaje al garaje. Lo mueven **los guiones Lua originales del disco** ([doc 18 §9](docs/es/18-carreras-y-lista-negra.md), [doc 26 §6–7](docs/es/26-desensamblado-ghidra-rea.md)) | ✅ Hecho en v0.7.2. Falta la escena NIS de Rog y Razor y la voz de las llamadas (sale el texto) |
 | 🚨 | **Detector de radar** (la barra de arriba del HUD): se ilumina al acercarse la policía y los radares de velocidad, cada uno con su color (naranja y verde), y con su sonido | La barra sale, pero no reacciona |
 | 🪵 | **Trampas para la policía** (*pursuit breakers*) visibles y físicas: si pasas por una y la rompes, se ve la animación y la persecución sigue como en el original | No se ven todas ni caen como en el original |
 | 🗺️ | **El mapa crece con la historia**: se ve más ciudad al desbloquear zonas, y los garajes, concesionarios y demás aparecen a medida que avanzas | Todo está visible desde el principio |
@@ -21,6 +21,7 @@ Lo siguiente que toca, por orden. Si quieres ayudar, mira [CONTRIBUTING.md](CONT
 | 🎬 | **La historia como en el juego**: que la narrativa original sea el juego en sí, sin cortes ni saltos | Las escenas salen, pero aún no encadenan como el original |
 | 🏠 | **Interiores de los garajes** bien mapeados y funcionando | Texturas mal colocadas y entradas que fallan |
 | 🚫 | **Garajes cerrados en persecución**, y la **marca original** del suelo a la entrada | Se abren con la policía detrás y no sale la marca |
+| 🌫️ | **Niebla y ambiente volumétricos**: las capas de niebla del escenario se ven como paneles grises planos y verticales; deben fundirse con la distancia como en el original | Se dibujan opacas y planas |
 | 🧱 | **Texturas con fallos**: laderas verdes lisas, cielo verdoso en algunas zonas, luna trasera rota desde el principio, cifras del velocímetro | Visibles en algunas calles de Rosewood |
 | 🎞️ | **Películas a pantalla completa**: agrandarlas en vez de verlas pequeñas con bordes negros | Se ven al tamaño original de PS2 |
 
@@ -39,7 +40,7 @@ Y después, **lo ampliamos**: una expansión que continúa la historia como si l
 | | Qué | Estado |
 |---|---|---|
 | 🔬 **Decompilación** | Formatos del disco, base de datos, física, IA, interfaz, audio, películas, música, escenas… todo documentado en [`docs/`](docs/es) con cada dato etiquetado ([V] verificado, [D] decomp, [I] inferido, [H] hipótesis) | ✅ **99,94 % del disco entendido** ([doc 21](docs/es/21-cobertura.md)) |
-| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.7) |
+| 🖥️ **Port nativo** | Motor propio que juega Rockport desde tu ISO, sin emulador | ✅ jugable en Mac (v0.7.2) |
 | 🗺️ **Expansión «Rust Belt»** | 4 distritos nuevos, Lista Negra 2, coches clásicos, la historia continúa | 🧭 diseñada, [ver abajo](#la-ampliación-rust-belt) |
 
 ### Plataformas
@@ -72,7 +73,7 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 
 ## Qué funciona hoy
 
-### El juego (motor nativo de macOS, v0.7)
+### El juego (motor nativo de macOS, v0.7.2)
 | | Estado |
 |---|---|
 | Rockport entero a pantalla completa, a la resolución de tu pantalla y a 60 fps, con el tono cálido de PS2 siempre puesto | ✅ |
@@ -90,6 +91,7 @@ Al vencer a Razor se abre un condado industrial del Rust Belt alrededor de Rockp
 | **Música EA Trax** y música de persecución con la lógica del juego — [doc 25](docs/es/25-musica-y-mezcla.md) | ✅ |
 | **Partículas, destellos y niebla por zona**: humo de neumáticos, nitro, chispas, semáforos, faros, luces de policía — [doc 24](docs/es/24-efectos-luces-y-mundo.md) | ✅ |
 | **Choques y daños**: coches que chocan con la colisión del juego, policía destrozada, 5952 objetos rompibles, trampas para la policía y **helicóptero** — [doc 14](docs/es/14-trafico-y-policia.md) | ✅ |
+| **Historia desde el principio**: partida nueva por el prólogo (D-Day) con los guiones Lua originales del disco, como el juego — [doc 18 §9](docs/es/18-carreras-y-lista-negra.md) | ✅ |
 | Mapa de la carrera profesional, pinchos que revientan neumáticos, menú de opciones completo | 🔜 |
 
 ### La ingeniería inversa

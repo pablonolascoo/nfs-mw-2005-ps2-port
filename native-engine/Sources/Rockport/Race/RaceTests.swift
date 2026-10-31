@@ -147,7 +147,7 @@ func runCareerTest(_ o: Options) {
     let path = RaceTestOptions.value("--save") ?? (NSTemporaryDirectory() as NSString).appendingPathComponent("rockport-career-test.json")
     career.saveURL = URL(fileURLWithPath: path)
     career.persist = true
-    career.newGame()
+    career.newGame(skipPrologue: true)   // la Lista Negra (el D-Day tiene su prueba: --prologue-test)
     var problems: [String] = []
     func check(_ c: Bool, _ m: String) { if !c { problems.append(m); print("  ✗ " + m) } }
     print("Prueba de carrera profesional · partida en \(path)")

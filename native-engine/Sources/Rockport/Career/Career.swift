@@ -33,17 +33,30 @@ final class Career {
 
     /// «Carrera profesional → Continuar»: carga la partida (o empieza una) y entra en la zona libre con el bin actual.
     func start() {
-        save = (persist ? CareerSave.load(saveURL) : nil) ?? CareerSave()
+        save = (persist ? CareerSave.load(saveURL) : nil) ?? CareerSave.newCareer()
         enter()
+        // Bin 16 = D-Day sin terminar: se retoma el prólogo (ResumeCareer [D])
+        if save.currentBin > 15 { Prologue.shared.run(); return }
         if persist { Movies.shared.careerContinue(bin: save.currentBin) }   // presentación del rival actual si no se vio (Movies/)
     }
 
-    /// «Carrera profesional → Empezar de nuevo».
-    func newGame() {
-        save = CareerSave()
+    /// «Carrera profesional → Empezar de nuevo»: empieza por el prólogo (D-Day), como el juego (StartNewCareer [D]).
+    func newGame(skipPrologue: Bool = false) {
+        save = CareerSave.newCareer()
+        if skipPrologue {
+            // SkipDDayRaces + SimulateDDayComplete [D: FEDatabase.cpp]: bin 15, D-Day dado por ganado, dinero de sus pruebas
+            save.currentBin = 15
+            if let db { for id in Prologue.order { if let e = db.event(id) { save.racesWon.append(e.id); save.cash += Int(e.cash) } } }
+        }
         if persist { save.save(saveURL) }
         enter()
-        if persist { Movies.shared.careerNewGame() }   // refugio (STORYFMV_SAF25) y primer rival (BLACKLIST_15) (Movies/)
+        if skipPrologue { if persist { Movies.shared.careerNewGame() } } else { Prologue.shared.run() }
+    }
+
+    /// Fin del prólogo (Career/Prologue.swift): ya en el bin 15, marcadores y vallas de la Lista Negra.
+    func enterAfterPrologue() {
+        if persist { save.save(saveURL) }
+        applyBin()
     }
 
     private func enter() {

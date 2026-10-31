@@ -27,9 +27,20 @@ struct CareerSave: Codable {
     var challengesDone: [String] = []
     /// Películas de la historia y tutoriales ya vistos (Movies/Movies.swift). Opcional: las partidas antiguas no lo traen.
     var moviesSeen: [String]?
+    /// Prólogo (D-Day): el BMW ya se perdió tras el arresto y falta comprar coche e ir al garaje (Career/Prologue.swift).
+    var prologueCarLost: Bool?
     var lastSaved: String = ""
 
     static var defaultURL: URL { DataLocator.appSupport.appendingPathComponent("save.json") }
+
+    /// Carrera nueva como en el juego: bin 16 (D-Day), el BMW de la historia y sin dinero [D: CareerSettings::Default,
+    /// StartNewCareer]. El dinero llega con las pruebas del D-Day (3 × 10 000 $ [V: CashValue]).
+    static func newCareer() -> CareerSave {
+        var s = CareerSave()
+        s.currentBin = 16; s.cash = 0
+        s.cars = [Prologue.startCar]; s.currentCar = Prologue.startCar
+        return s
+    }
 
     static func load(_ url: URL = defaultURL) -> CareerSave? {
         guard let d = try? Data(contentsOf: url) else { return nil }

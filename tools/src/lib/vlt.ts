@@ -364,6 +364,12 @@ export class AttribDatabase {
         const cls = r.u32(o), col = r.u32(o + 4);
         return { class: cls ? this.names.name(cls) : null, collection: col ? this.names.name(col) : null };
       }
+      case "Attrib::Blob": { // {u32 tamaño, u8* datos}: el puntero se resuelve con PtrN [V: bytecode Lua de los messagehandler]
+        const n = r.u32(o), f = v.fixup({ blob: loc.blob, off: o + 4 });
+        if (f?.kind !== "ptr" || n === 0) return { type: name, size: n, base64: null };
+        const br = v.reader(f.to.blob); br.check(f.to.off, n);
+        return { type: name, size: n, base64: Buffer.from(br.buf.subarray(f.to.off, f.to.off + n)).toString("base64") };
+      }
       case "Attrib::StringKey": { // {u64 hash64, u32 hash32, const char* str} [D] (tamaño 0x10)
         const s = v.pointedString({ blob: loc.blob, off: o + 12 });
         return s ?? this.names.name(r.u32(o + 8));

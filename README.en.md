@@ -12,8 +12,8 @@ What comes next, in order. Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | | What is missing | Today |
 |---|---|---|
-| 🔬 | **Full game disassembly** with Ghidra + REA ([doc 26](docs/en/26-disassembly-ghidra-rea.md)): all 18,909 functions of the executable are now readable. The basis for porting everything still missing exactly as in the original | ✅ Done; next is porting the story, missions and conditions |
-| 🎬 | **Start with the guided prologue**, as in the original: races with the BMW, the first pursuit, the breakdown from the oil leak and the loss to Razor. Free roam comes after | It starts straight in free roam |
+| 🔬 | **Full game disassembly** with Ghidra + REA ([doc 26](docs/en/26-disassembly-ghidra-rea.md)): all 18,909 functions, with names and types. And the big find: **the game's story and conditions are 258 Lua scripts on the disc**, which the engine now runs as they are | ✅ Done. About 140 game functions the scripts call still do nothing (they warn) |
+| 🎬 | **Guided prologue (D-Day)**, as in the original: BMW races against Razor, Ronnie and Toru Sato, the police, the oil-leak breakdown, the arrest, the car lot and the drive to the safehouse. Driven by **the disc's original Lua scripts** ([doc 18 §9](docs/en/18-races-and-blacklist.md), [doc 26 §6–7](docs/en/26-disassembly-ghidra-rea.md)) | ✅ Done in v0.7.2. Missing: the Rog and Razor NIS scene and call voices (text shows) |
 | 🚨 | **Radar detector** (the bar at the top of the HUD): it lights up when police or speed cameras are near, each with its own colour (orange and green), and with its sound | The bar shows, but does not react |
 | 🪵 | **Pursuit breakers** visible and physical: drive through one and break it, the animation plays and the pursuit continues as in the original | Not all of them show or fall as in the original |
 | 🗺️ | **The map grows with the story**: more of the city shows as areas unlock, and garages, car lots and the rest appear as you progress | Everything is visible from the start |
@@ -21,6 +21,7 @@ What comes next, in order. Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 | 🎬 | **The story as in the game**: the original narrative should be the game itself, with no cuts or jumps | Scenes play, but they do not flow like the original yet |
 | 🏠 | **Garage interiors** correctly mapped and working | Misplaced textures and entrances that fail |
 | 🚫 | **Garages closed during pursuits**, plus the **original ground marker** at the entrance | They open with police behind you and the marker is missing |
+| 🌫️ | **Volumetric fog and atmosphere**: the scene's fog layers show as flat, vertical grey panels; they should blend with distance as in the original | Drawn opaque and flat |
 | 🧱 | **Texture bugs**: flat green hillsides, greenish sky in some areas, rear window cracked from the start, speedometer digits | Visible on some Rosewood streets |
 | 🎞️ | **Full-screen movies**: scale them up instead of small with black borders | Shown at the original PS2 size |
 
@@ -39,7 +40,7 @@ Then **we expand it**: an expansion that continues the story as if the same stud
 | | What | Status |
 |---|---|---|
 | 🔬 **Decompilation** | Disc formats, database, physics, AI, interface, audio, movies, music, scenes… all documented in [`docs/`](docs/en), every fact tagged ([V] verified, [D] decomp, [I] inferred, [H] hypothesis) | ✅ **99.94 % of the disc understood** ([doc 21](docs/en/21-coverage.md)) |
-| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.7) |
+| 🖥️ **Native port** | Own engine that plays Rockport from your ISO, no emulator | ✅ playable on Mac (v0.7.2) |
 | 🗺️ **"Rust Belt" expansion** | 4 new districts, Blacklist 2, classic cars, the story continues | 🧭 designed, [see below](#the-rust-belt-expansion) |
 
 ### Platforms
@@ -72,7 +73,7 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 
 ## What works today
 
-### The game (native macOS engine, v0.7)
+### The game (native macOS engine, v0.7.2)
 | | Status |
 |---|---|
 | All of Rockport full screen at your screen's resolution and 60 fps, with the warm PS2 tone always on | ✅ |
@@ -90,6 +91,7 @@ Beating Razor opens an industrial Rust Belt county around Rockport: **Millbrook*
 | **EA Trax music** and pursuit music with the game's logic — [doc 25](docs/en/25-music-and-mixing.md) | ✅ |
 | **Particles, flares and per-zone fog**: tyre smoke, nitrous, sparks, traffic lights, headlights, police lights — [doc 24](docs/en/24-effects-lights-and-world.md) | ✅ |
 | **Crashes and damage**: cars collide with the game's collision, destroyed cops, 5,952 breakables, pursuit breakers and the **helicopter** — [doc 14](docs/en/14-traffic-and-police.md) | ✅ |
+| **Story from the start**: a new career begins with the prologue (D-Day), run by the disc's original Lua scripts, as in the game — [doc 18 §9](docs/en/18-races-and-blacklist.md) | ✅ |
 | Career map, spike strips blowing tyres, full options menu | 🔜 |
 
 ### The reverse engineering

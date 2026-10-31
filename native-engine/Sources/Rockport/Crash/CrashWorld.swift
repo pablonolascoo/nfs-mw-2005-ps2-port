@@ -218,6 +218,13 @@ final class CrashWorld {
 
     // MARK: Paso
 
+    /// ENISNukeSmack [V: guion de 16.1.0]: quita los rompibles de un radio (la salida de la carrera queda despejada).
+    func clearSmackables(near p: float3, radius r: Float) {
+        var l: [Smackable] = []
+        smackables.near(p, radius: r, into: &l)
+        for s in l { s.state = .gone }
+    }
+
     func step(dt: Float) {
         guard enabled, dt > 0 else { return }
         let t0 = CACurrentMediaTimeShim.now()

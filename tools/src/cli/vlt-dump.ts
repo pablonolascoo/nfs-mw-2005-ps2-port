@@ -10,6 +10,7 @@ import { Glob } from "bun";
 import { GameDisc } from "../lib/zdir";
 import { AttribDatabase, Vault, attribHash, hexKey, parseVpak, type CollectionInfo, type Value } from "../lib/vlt";
 import { loadAttribNames } from "../lib/attrib-names";
+import { lzDecompress } from "../lib/lz";
 import { outDir as outDirFor } from "../lib/paths";
 
 const [iso, id, file = "GLOBAL\\GAMEPLAY.BIN"] = Bun.argv.slice(2);
@@ -145,6 +146,25 @@ const gameplay = {
   collections,
 };
 await Bun.write(join(outDir, "gameplay.json"), JSON.stringify(gameplay, null, 1));
+
+// 7) Guiones de juego (doc 26 §6): cada messagehandler lleva Lua 5.0 compilado en un Attrib::Blob comprimido con HUFF [V].
+//    scripts.json: dueño (actividad o plantilla), estado y mensaje de cada manejador, y su bytecode ya descomprimido.
+{
+  const states = new Map<string, { name: string; graph: string }>();
+  for (const c of collections) if (c.parent === "state") states.set(c.name, { name: String(c.values.Name ?? ""), graph: String(c.values.templateref ?? "") });
+  const handlers = [];
+  for (const c of collections) {
+    if (c.parent !== "messagehandler") continue;
+    const v = c.values as Record<string, any>, bc = v.bytecode;
+    if (!bc?.base64) continue;
+    const st = states.get(String(v.stateref));
+    const message = c.name.replace(/^.*_handler_/, "").replace(/_\d+$/, "");
+    const lua = lzDecompress(new Uint8Array(Buffer.from(bc.base64, "base64")));
+    handlers.push({ name: c.name, owner: v.handler_owner ?? null, graph: st?.graph ?? null, state: st?.name ?? null, message, lua: Buffer.from(lua).toString("base64") });
+  }
+  await Bun.write(join(outDir, "scripts.json"), JSON.stringify({ source: gameplay.source, format: "Lua 5.0, lua_Number float de 4 B", handlers }, null, 1));
+  console.log(`→ ${join(outDir, "scripts.json")} (${handlers.length} manejadores Lua)`);
+}
 await Bun.write(join(outDir, "zones.json"), JSON.stringify({
   source: gameplay.source, axes: "Z arriba (unidades del motor ≈ metros) [H]", bounds: BOUNDS, zones,
 }, null, 2));

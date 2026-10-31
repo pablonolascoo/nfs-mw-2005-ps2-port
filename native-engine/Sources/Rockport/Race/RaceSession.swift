@@ -108,6 +108,12 @@ final class RaceSession {
     private var autoDriver: RaceDriver?
     var onEnd: ((RaceOutcome) -> Void)?
     var log: (String) -> Void = { print($0) }
+    // Guion propio de la prueba (Script/GameScript.swift, doc 26 §7): manejadores Lua del disco con dueño = colección
+    private(set) var script: ScriptActivity?
+    private var sabotageLeft: Float?          // Game.SabotageEngine: segundos hasta que el motor revienta
+    private(set) var engineBlown = false
+    private var cellCallStart: Float?         // ECellCall: la llamada empieza (notifycellcallstarted) [I: 1 s]
+    private var scriptEndRequested = false    // ChangeState("postrace") en plena carrera: la prueba acaba como completada
     // Drag
     private var dragLanes: [Float] = [0]
     var engineTemp: Float { player.engineTemp }
@@ -209,7 +215,8 @@ final class RaceSession {
             guard let car = system.opponentCar(o, index: i, event: event) else { continue }
             let (p, _) = slot(i)
             car.place(p + float3(0, 0, 1.5), yaw: yaw, collision: engine.collision, probe: 3)
-            let name = o.racerName ?? (o.boss == true ? (system.db.bins.first { $0.boss == o.name }?.bossName ?? "Rival") : RaceSystem.prettyName(o.name))
+            // RacerName es una clave de los textos del disco (BLACKLIST_RIVAL_01_LEADERBOARD → «RAZOR») [V]
+            let name = o.racerName.map { system.engine.ui?.assets.string(feHash($0)) ?? $0 } ?? (o.boss == true ? (system.db.bins.first { $0.boss == o.name }?.bossName ?? "Rival") : RaceSystem.prettyName(o.name))
             let r = RaceRacer(name: name, isPlayer: false, car: car, opponent: o)
             let skill = system.baseSkill(for: o, event: event, context: context, catchUp: options.catchUp)
             var cu = RaceCatchUpParams(event.catchUp)
@@ -299,6 +306,8 @@ final class RaceSession {
             while d < end { let q = route.sample(d); log(String(format: "  ruta %.0f m: (%.1f, %.1f, %.1f) t (%.2f, %.2f) izq %.1f dcha %.1f", d, q.p.x, q.p.y, q.p.z, q.tangent.x, q.tangent.y, q.left, q.right)); d += 8 }
         }
         for h in humans { h.timeRemaining = Double(event.timeLimit > 0 ? event.timeLimit : 90) }
+        attachScript()
+        script?.enter("prerace")
         if !event.doCountdown || event.rollingStart || event.kind == .challenge { startRacing() }
         else { phase = .countdown; phaseTime = 0 }
         log(String(format: "Carrera %@ (%@): %d corredores · ruta %.0f m (dato RaceLength %.0f m) · %d puertas · %d vallas (%d líneas) · tramos sin camino %d",
@@ -307,6 +316,7 @@ final class RaceSession {
 
     private func startRacing() {
         phase = .racing; phaseTime = 0; clock = 0
+        script?.enter("racing")
         for r in racers { r.lapStart = 0 }
         for h in humans { hud(h)?.showCountdown(-1) }
         if event.kind == .challenge || event.pursuitRace, let ai = system.engine.ai {
@@ -342,6 +352,7 @@ final class RaceSession {
             d = a
             if event.kind == .drag { autoShift(player, &d) } else { (d.shiftUp, d.shiftDown) = keepShift }
         }
+        if engineBlown && player === self.player { d.gas = 0; d.nos = false }   // motor saboteado: sin potencia
         switch phase {
         case .countdown:
             // Parados hasta «¡YA!»: se puede acelerar en vacío (freno de mano) [I]
@@ -409,9 +420,13 @@ final class RaceSession {
             r.car.update(dt: dt, input: Car.Input(driver: inp), collision: engine.collision)
             if r.active && phase == .racing && (drv.stuckTime > 4 || r.car.position.z < -40) { resetRacer(r) }
         }
+        // Jugador con piloto automático (pruebas, ForceAIControl del guion): si se atasca, se recoloca como los rivales
+        if autopilot, phase == .racing, let ad = player.autoDriver, ad.stuckTime > 4 || player.car.position.z < -40 { resetRacer(player); ad.resetState() }
         resolveCarContacts()
         // Progreso, puertas y reglas
         for r in racers { track(r, dt: dt) }
+        updateScript(dt: dt)
+        if scriptEndRequested { scriptEndRequested = false; finishByScript(); return }
         switch phase {
         case .countdown:
             let left = 3 - Int(phaseTime)
@@ -727,11 +742,69 @@ final class RaceSession {
         system.engine.extraCars = racers.filter { !$0.isHuman }.map { ($0.car.mesh, $0.car.partMatrices, $0.car.shadowMatrix) }
     }
 
+    // MARK: Guion de la prueba
+
+    /// Crea la actividad del guion si la prueba tiene manejadores propios en el disco (las de la historia, sobre todo).
+    private func attachScript() {
+        guard let lib = ScriptLibrary.load(system.engine.data), lib.hasHandlers(owner: event.id) else { return }
+        StoryText.assets = system.engine.ui?.assets
+        var a = ScriptActions()
+        a.log = { [weak self] s in self?.log(s) }
+        a.forceAIControl = { [weak self] i, on in if i == 0 { self?.autopilot = on; self?.log("  guion: control \(on ? "de la IA" : "del jugador") (\(i))") } }
+        a.sabotageEngine = { [weak self] t in self?.sabotageLeft = t; self?.log(String(format: "  guion: motor saboteado, revienta en %.0f s", t)) }
+        a.setCopsEnabled = { on in AIConfig.police = on }
+        a.spawnCop = { [weak self] p, yaw, type in
+            AIConfig.police = true
+            let ok = self?.system.engine.ai?.police.spawnScriptedCop(at: p, typeName: type) ?? false
+            self?.log("  guion: policía «\(type)» \(ok ? "en" : "no cabe en") (\(Int(p.x)), \(Int(p.y)))")
+        }
+        a.bailPursuit = { [weak self] in self?.system.engine.ai?.police.bail(); self?.log("  guion: la policía abandona la persecución") }
+        a.noNewPursuits = { [weak self] in self?.system.engine.ai?.police.blockNewPursuits() }
+        a.fade = { [weak self] on in self?.engine_fade(on) }
+        a.message = { [weak self] t in self?.hudAll(t) }
+        a.cellCall = { [weak self] id in self?.cellCallStart = 1; self?.hudAll(StoryText.cellCall(id)); self?.log("  guion: llamada \(id)") }
+        a.sms = { [weak self] id in self?.hudAll(StoryText.sms(id)); self?.log("  guion: SMS \(id)") }
+        a.call911 = { [weak self] in self?.hudAll(StoryText.call911); self?.log("  guion: llamada al 911") }
+        a.introRace = { [weak self] in guard let self else { return }; self.hudAll("\(self.event.eventId) · \(RaceSystem.kindName(self.event.kind))") }
+        a.nukeSmack = { [weak self] p, r in self?.system.engine.ai?.crash?.clearSmackables(near: p, radius: r) }
+        a.jumpToCarLot = { Prologue.shared.jumpToCarLot() }
+        a.stateChanged = { [weak self] st in
+            guard let self else { return }
+            if st == "postrace" && (self.phase == .racing || self.phase == .countdown) { self.scriptEndRequested = true }
+        }
+        script = ScriptActivity(name: event.id, lib: lib, actions: a, withTemplates: false)
+        log("  guion de la prueba: \(event.id)")
+    }
+
+    private func updateScript(dt: Float) {
+        guard let sc = script else { return }
+        if let t = sabotageLeft {
+            let left = t - dt
+            if left <= 0 { sabotageLeft = nil; engineBlown = true; log("  motor reventado"); hudAll(StoryText.engineBlown); sc.send("notifyengineblown") }
+            else { sabotageLeft = left }
+        }
+        if let t = cellCallStart { let left = t - dt; if left <= 0 { cellCallStart = nil; sc.send("notifycellcallstarted") } else { cellCallStart = left } }
+        if phase == .racing || phase == .countdown { sc.update(dt: dt, playerPos: player.car.position) }
+    }
+
+    /// El guion da la prueba por terminada (partial_dday, motor reventado): cuenta como completada, sin pantalla de resultados.
+    private func finishByScript() {
+        guard phase == .racing || phase == .countdown || phase == .finishing else { return }
+        log("Carrera \(event.eventId): terminada por el guion")
+        let o = RaceOutcome(event: event, context: context, playerWon: true, playerPosition: player.position, playerTime: nil, abandoned: false,
+                            rows: [], cash: context == .career ? Int(event.cash) : 0, bounty: 0, milestoneValue: nil)
+        end(o)
+    }
+
+    private func hudAll(_ text: String) { for h in humans { hud(h)?.showMessage(.custom(text)) } }
+    private func engine_fade(_ on: Bool) { system.engine.screenFade.target = on ? 1 : 0 }
+
     // MARK: Resultados
 
     private func showResults() {
         guard phase == .finishing || phase == .racing else { return }
         phase = .results
+        if script?.state == "racing" { script?.enter("postrace") }
         // Los que no terminaron: tiempo estimado con su velocidad media (SkipToEndOfRaceForRacer [D: idea]) [I]
         for r in racers where r.active && !r.isPlayer {
             // (también los humanos de la pantalla partida que no llegaron a tiempo)
@@ -791,6 +864,9 @@ final class RaceSession {
     private func end(_ o: RaceOutcome) {
         guard phase != .done else { return }
         phase = .done
+        if let sc = script, sc.state != "done" { sc.enter("done") }
+        engine_fade(false)
+        system.engine.ai?.police.allowPursuits()
         let engine = system.engine
         engine.driverFilter = nil
         engine.extraCars = []

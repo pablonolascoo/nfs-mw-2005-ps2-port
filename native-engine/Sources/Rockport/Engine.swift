@@ -58,6 +58,13 @@ final class Engine {
     /// Aspecto de la vista del jugador 1 (pantalla partida); nil = el de la pantalla.
     var cameraAspect: Float?
 
+    /// Fundido a negro de los guiones (Script/ScreenFade.swift): se crea al usarse y va sobre todo lo demás (HUD incluido).
+    private(set) lazy var screenFade: ScreenFade = {
+        let f = ScreenFade(device: device, format: renderer.outputFormat)
+        renderer.overlays.append(f)
+        return f
+    }()
+
     var keys = Set<UInt16>()
     var mouseDelta = float2(0, 0)
     var time: Double = 0
@@ -198,6 +205,7 @@ final class Engine {
         if Movies.shared.frame(engine: self, cb: cb, target: target, dt: dt) { return }
         ui?.update(dt: dt)
         update(dt: dt)
+        if screenFade.target > 0 || screenFade.value > 0 { screenFade.update(dt: dt) }
         let hookDt = ui?.paused == true ? 0 : dt
         for h in frameHooks { h(hookDt) }
         if let ss = splitScreen, ss.active {

@@ -184,7 +184,34 @@ Resultados (2026-10-15, Mac Apple Silicon, 1280×720, compilación release):
 `--career-test`: los 15 rivales vencidos en orden, coches BL15…BL2 y el BMW de Razor ganados, candados correctos en cada bin
 (5 → 3 → ninguno) y partida guardada y leída igual.
 
-## 9. Pendiente
+## 9. Prólogo de la historia: el D-Day (`Career/Prologue.swift`)
+
+- **Partida nueva = bin 16**, BMW `M3GTRCAREERSTART` y 0 $ [D: `CareerSettings::Default` (`CurrentBin = 0x10`) y `StartNewCareer`]. `IsDDay()` es «bin > 15» [D].
+- **Orden de las pruebas:** la tabla `GRaceDatabase::sDDayRaces` (SLUS 0x4E4A60, 5 × 8 bytes) [V]:
+
+| # | Prueba | Rival | Guion del disco (Lua, doc 26 §6) | Película |
+|---|---|---|---|---|
+| 1 | 16.1.0 `partial_dday` | Razor | Salida lanzada a 60. Intro a los 3 s. En `call_from_mia`, llamada 10 de Mia. 8 s después, fundido y los dos coches con piloto automático. A los 3 s, fin | `storyfmv_rac01` |
+| 2 | 16.2.2 | Ronnie (Supra) | Carrera normal (10 000 $) | `storyfmv_cro06_coh06a` |
+| 3 | 16.2.3 | Toru Sato | `cop_spawn_trigger` → 2 policías. `trigger_911` → llamada al 911. `bail_pursuit` → la policía lo deja (10 000 $) | `storyfmv_raz08` |
+| 4 | 16.1.1 | 3 rivales, 2 vueltas al atardecer | Normal (10 000 $). Después, escena NIS `EndingNis03` (Rog y Razor) | — |
+| 5 | 16.2.1 `d_day_intro` | Razor | SMS de Mia. En `kill_engine`, `SabotageEngine(jugador, 5)` (con temporizador de respaldo de 15 s). Al reventar, fundido y fin. Policía y `EBailPursuit`. Estado `done` → `JumpToCarLot` | `storyfmv_pin11` y, al acabar, `storyfmv_bus12` (arresto) |
+
+- **Siguiente prueba:** la primera de la tabla sin completar (`GetNextDDayRace` [G]). Al continuar la partida se retoma ahí (`ResumeCareer` [D]).
+- **Tras el arresto:**
+  - El BMW se pierde.
+  - Aparece el jugador delante del concesionario con el dinero del D-Day (30 000 $).
+  - Al comprar un coche arranca la `EntryActivity` del bin 16, `race_bin_16/drive_to_safe_house`, con sus guiones originales y los de su plantilla `drive_to_target`: SMS 15 de Mia («Al garaje»), GPS, SMS 121 si pasan 120 s y, al llegar, `DoSafeHouseIntro`.
+  - Entonces suenan `STORYFMV_SAF25` y `BLACKLIST_15` y la partida pasa al bin 15.
+- **Textos:** los SMS salen del disco (`SMS_MESSAGE_<n>` y `_FROM` [D: `FEDatabase.hpp`]). El 10 es el de la mancha de aceite.
+- **Prueba:** `Rockport --prologue-test [--screenshot base.png]` recorre todo con el piloto automático y comprueba cada paso.
+- **Pendiente:**
+  - Reproductor de escenas NIS (`EndingNis03` e `IntroNis*`).
+  - Voz de las llamadas (por ahora, el texto).
+  - Menú del concesionario al saltar (`JumpToCarLot` lleva al coche a la puerta).
+  - Orientación real de los disparadores de plano.
+
+## 10. Pendiente
 - Arte invertido de las vallas con `*` (el GLB de grupo no guarda la matriz por objeto).
 - Atajos (`Shortcuts`, probabilidad por rival) y salida en parrilla exacta del juego.
 - Escenas (NIS), películas, cámaras de foto-finish, nombres aleatorios de corredores.

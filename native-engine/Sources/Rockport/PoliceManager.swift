@@ -248,6 +248,37 @@ final class PoliceManager {
         if spawnPursuitCop(lv), let c = world.vehicles.last(where: { $0.kind == .cop }) { startPursuit(by: c) }
     }
 
+    // MARK: Guiones (Script/GameScript.swift)
+
+    /// Game.SpawnCop [V: guiones del D-Day]: un policía aparece en el marcador del guion (en la carretera más cercana)
+    /// y empieza la persecución. Tipo «copmidsize»… = modelo del juego; si no está, uno del nivel de calor.
+    @discardableResult
+    func spawnScriptedCop(at pt: float3, typeName: String) -> Bool {
+        let w = world
+        guard let lv = level else { return false }
+        let pick: (String, AIModel)? = w.models.model(typeName.uppercased()).map { (typeName, $0) } ?? pickCop(lv)
+        guard let (type, model) = pick,
+              let hit = w.net.nearest(pt, maxDist: 80, filter: { w.net.copsAllowed($0) }) else { return false }
+        let tan = w.net.tangent(hit.seg, hit.t)
+        let forward = simd_dot(tan, w.player.pos - w.net.point(hit.seg, hit.t)) >= 0 || w.net.segs[hit.seg].has(RoadSegFlags.oneWay)
+        let lanes = w.net.laneOffsets(hit.seg, forward: forward, end: forward ? 0 : 1)
+        let v = AIVehicle(id: w.newID(), kind: .cop, model: model, typeName: type)
+        v.place(net: w.net, seg: hit.seg, forward: forward, t: hit.t, lane: lanes.isEmpty ? 0 : 0, collision: w.collision)
+        guard v.groundOK else { return false }
+        v.copRole = .pursuit; v.lights = true; v.speed = AITables.mph(40)
+        w.vehicles.append(v)
+        w.stats.copsSpawned += 1
+        lockout = 0
+        if !inPursuit && state != .busted { startPursuit(by: v) } else { join(v) }
+        return true
+    }
+
+    /// EBailPursuit [V]: la policía abandona la persecución (sin recompensa de evasión del guion).
+    func bail() { if inPursuit { endPursuit(evaded: true) } }
+    /// Game.NoNewPursuitsOrCops [V]: no empiezan persecuciones nuevas hasta allowPursuits().
+    func blockNewPursuits() { lockout = .greatestFiniteMagnitude }
+    func allowPursuits() { if lockout > 1e6 { lockout = 0 } }
+
     private func join(_ c: AIVehicle) {
         c.copRole = .pursuit
         c.lights = true

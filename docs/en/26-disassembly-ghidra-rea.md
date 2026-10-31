@@ -62,3 +62,64 @@ S=experiments/decomp/nfsmw/config/SLUS-21351/symbols.txt
 2. Read its pseudocode in `experiments/ghidra/SLUS-21351/…`, or ask REA for it (MCP `rea`).
 3. Port it to Swift in `native-engine/` and tag each fact: **[D]** when it comes from the decomp's C, **[G]** when it comes from Ghidra pseudocode (read from assembly, less reliable than [D]).
 4. Test it against the original game's behaviour.
+
+## 5. Types: field names in the pseudocode
+
+- **Source:** the decomp's `symbols/PS2/PS2_types.nothpp`. It is a stdump of the **PS2 prototype's** debug info (NFS.ELF, Alpha 124): 4,328 structures with fields and offsets.
+- **Problem:** the prototype is not the final game. `GRaceStatus::mRaceBin` sits at 0x1944 in the prototype, 0x1AB0 in the final GameCube build and **0x1C44 in the final PS2 build**. [V]
+- **Rule:** a structure is applied only if it has the same size in the PS2 prototype and in the final GameCube build (the headers' `// total size:` comments). [I] That gives **939 reliable structures**: `GRaceBin`, `GRaceDatabase`, `GRaceParameters`, `GTimer`… The ones that changed (`GRaceStatus`, `GManager`, `GCharacter`) keep raw offsets, so no names are invented.
+- **Tools:**
+  - `tools/src/cli/ghidra-types.ts` → `proto-types.tsv`.
+  - `tools/ghidra/ImportProtoTypes.java` builds the structures (3,406 fields) and types `this` in **1,571 methods**. Never in static ones: the dump marks them.
+- **Result:** `GetNextDDayRace(GRaceDatabase *this)`, `this->mIndex->mChallengeGoal`… instead of `*(param_1 + 0x18)`.
+
+```bash
+bun tools/src/cli/ghidra-types.ts experiments/decomp/nfsmw experiments/ghidra/proto-types.tsv
+~/Tools/ghidra_12.1.4_PUBLIC/support/analyzeHeadless ~/Tools/ghidra-projects nfsmw-slus -process SLUS_213.51 -noanalysis \
+  -scriptPath ~/Tools/ghidra-scripts -postScript ImportProtoTypes.java "$PWD/experiments/ghidra/proto-types.tsv" \
+  -postScript ExportDecompiled.java "$PWD/experiments/decomp/nfsmw/config/SLUS-21351/symbols.txt" "$PWD/experiments/ghidra/SLUS-21351"
+```
+
+## 6. The game scripts are Lua 5.0 (on the disc)
+
+- The story, each event's conditions and the career are **not in the executable**: they are **258 message handlers** (`messagehandler`) in `GLOBAL\GAMEPLAY.BIN`. [V]
+- Each one carries `bytecode`: an `Attrib::Blob` = {u32 size, pointer} resolved through `PtrN`. [V]
+  - Inside is an EA **HUFF** block (the same decompressor as `lz.ts`) holding **Lua 5.0**: "\x1bLua" 0x50, little endian, 6/8/9/9 instruction fields and a 4-byte float `lua_Number`. [V]
+  - All **258 of 258** load.
+- **Organisation:**
+  - Each handler has an **owner** (`handler_owner`): an activity ("16_2_1_d_day_intro", "race_bin_16/drive_to_safe_house") or a template ("basicrace", "drive_to_target").
+  - It also has a **state** (`stateref` → `state.Name`: prerace, racing, postrace, done…) and a **message** (stateenter, triggerenter, notifytimer, notifyengineblown…).
+- **The game's interpreter** lives in `zLua` (353 functions). It exposes `Game.*` and `E*` events: about 150 names, listed with `bun` over `scripts.json`.
+- **Converter (`DATA_FORMAT` 12):**
+  - `vlt-dump` decodes `Attrib::Blob` (`base64`).
+  - It writes `scripts.json` with every handler already decompressed: owner, state, message and bytecode.
+- **Reading them:**
+  - `tools/src/lib/lua50.ts` disassembles (`disasmLua50`).
+  - It also gives a rough Lua reading (`pseudoLua50`), e.g. `Game.SabotageEngine(Game.GetPlayerElement(0), 5)`.
+
+## 7. The engine runs the original scripts
+
+- `Script/Lua50.swift` is a Lua 5.0 interpreter that loads the disc's bytecode. It implements the `lvm.c` 5.0 instructions the scripts use; anything else fails loudly.
+- `Script/GameScript.swift` runs the activities:
+  - States and messages with `self` (the activity, with its child collections by short name), `msg` and `state`.
+  - Timers (`Game.SetTimer` / `KillTimer`) and plane and box triggers. They fire by proximity; the real plane has an orientation. [I]
+  - Deferred state changes (`ChangeState`).
+  - Game functions with no equivalent yet warn once ("aún sin equivalente") and return `nil`.
+- **In races** (`RaceSession`):
+  - If the event has its own handlers, its activity is created: prerace on setup, racing at "GO!", postrace at the end and done when closing.
+  - If the script asks for `ChangeState("postrace")` mid-race, the event ends as completed.
+  - Game functions already wired:
+
+| Script function | What it does in the engine |
+|---|---|
+| `ForceAIControl` / `ClearAIControl` | Player autopilot |
+| `SabotageEngine` | Engine loses power and sends `notifyengineblown` |
+| `SpawnCop` | Police car at the marker, and a pursuit |
+| `EBailPursuit` / `NoNewPursuitsOrCops` | The pursuit ends and no new pursuits start |
+| `Fade` / `EFadeScreen…` | Black layer |
+| `ECellCall` / `EAddSMS` | The disc's `SMS_MESSAGE_<n>` text |
+| `E911Call` | 911 notice |
+| `ENISNukeSmack` | Clears breakables from the start |
+| `JumpToCarLot` | Jump to the car lot |
+
+- **The prologue** (`Career/Prologue.swift`, doc 18 §9) is the first full use.
