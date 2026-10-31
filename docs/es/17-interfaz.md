@@ -262,3 +262,26 @@ Capturas en `native-engine/.build/shots/hud/` (1920×1080 y 2940×1912).
 - **Proporción:** `ENDGAME` es cuadrada en el disco, pero el juego la pinta a **900×512** (tamaño del objeto en `GameWon` y `RapSheet*_ENDGAME`). [V] El recorte respeta esa proporción para que el coche no salga deformado. El logo se pinta a 4:1, su proporción natural (512×128 en `MainMenu`/`loading_boot`). [V]
 - **Dónde:** se guarda en `<datos>/icon.png`; `icon.applied` evita repetirlo en cada arranque. Se aplica con `NSWorkspace.setIcon` (deja el archivo `Icon` dentro de Rockport.app; la app abre igual).
 - **Probar sin abrir el juego:** `Rockport --make-icon <carpeta de datos> salida.png`.
+
+## Radar: lugares según el avance y policía como el original (v0.7.2)
+
+- **Policía** (`Minimap::UpdateCopElements` [D]):
+  - Solo sale en el radar con una persecución en curso, y solo la que te persigue. Fuera de persecución no hay ninguna: `MinimapShowNonPursuitCops` está apagado.
+  - Parpadea en ciclos de 8 fotogramas: 0–2 azul `0xFF0000FF`, 3 gris, 4–6 rojo `0xFFA00000` y 7 gris.
+  - El blanco queda para los corredores y los jugadores.
+- **Lugares** (`Minimap::UpdateGameplayIcons` + `GManager::GatherVisibleIcons` [D][G]): cada icono activo y visible (banderas 1 y 2), del más cercano al más lejano, en los elementos de `HUD_SingleRace` de su tipo [V]:
+
+| Tipo | Elementos | Cuándo sale (`Career/MapIcons.swift`) |
+|---|---|---|
+| Refugio | `SAFEHOUSEINDICATOR_0…3` | Desde el bin de la zona (`BinIndex` [V]: 16, 12, 8) |
+| Concesionario | `CAR_LOT_0…3` | Desde su bin (15, 12, 8); en el D-Day, tras el arresto |
+| Taller | `SHOP_0…7` | Desde su bin (15, 12, 8) |
+| Pruebas | `MMICON_SPRINT / CIRCUIT / DRAG / KNOCKOUT / TOLLBOOTH / SPEEDTRAP_0…7` | Marcadores del mundo de la carrera profesional |
+| Rival | `MINIMAP_ICON_EVENT_RIVAL` | Cuando se le puede retar |
+| Radar de velocidad | `SPEED_TRAP_CAM_0…7` | Los del bin aún sin superar |
+| Trampa para la policía | `PURSUIT_BREAKER_0…7` | En persecución, las que siguen en pie |
+| Escondite | `HIDING_SPOT_0…7` | Durante el enfriamiento [I] |
+
+- En una prueba no salen los lugares del mundo.
+- **Prueba:** `Rockport --radar-test --screenshot base.png`. Captura la zona libre en el bin 15 y una persecución con un fotograma de cada color.
+- **Pendiente:** el mapa grande de la pausa (`WorldMap`) con los mismos lugares.

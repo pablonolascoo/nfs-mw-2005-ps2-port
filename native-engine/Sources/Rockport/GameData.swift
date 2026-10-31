@@ -88,6 +88,8 @@ struct Zone: Decodable {
     let zoneType: String
     let position: [Float]
     let respawn: Respawn?
+    /// Bin de la Lista Negra desde el que el garaje está disponible (BinIndex de la zona [V]: 16, 15, 12, 8).
+    let binIndex: Int?
 }
 
 struct ZonesFile: Decodable { let zones: [Zone] }

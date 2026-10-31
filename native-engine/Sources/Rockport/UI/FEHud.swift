@@ -50,6 +50,8 @@ struct HudInput {
     var playerPos: SIMD2<Float>?
     var playerDir = SIMD2<Float>(1, 0)
     var cops: [HudBlip] = []
+    /// Lugares del radar según el avance (Career/MapIcons.swift).
+    var icons: [HudIcon] = []
     /// Detector de radares (RadarDetector): alcance 0…1 (0 = nada) y dirección en radianes respecto al coche.
     var radarRange: Float = 0, radarDirection: Float = 0
     /// Contadores de arrestos y evasiones (los cambios disparan los mensajes del juego).
@@ -171,6 +173,8 @@ final class FEHud {
     private var mmPieceUVs: [(SIMD2<Float>, SIMD2<Float>)] = []
     private var mmLayout, mmNorth, mmPlayer, mmPlayer2, mmHeli, mmHeliLOS, mmCheckpoint, mmGPS: FEObj?
     private var mmCops: [FEObj?] = [], mmRacers: [FEObj?] = []
+    /// Lugares del radar por tipo (UpdateGameplayIcons [D]).
+    private var mmIcons: [HudIconKind: [FEObj?]] = [:]
     private var mmDefaultPos = SIMD3<Float>(0, 0, 0)
     private var mmCentre = SIMD2<Float>(0, 0)
     private var mmTarget = SIMD2<Float>(0, 0)
@@ -300,11 +304,13 @@ final class FEHud {
         mm.append(H("HELICOPTER_LINE_OF_SIGHT"))
         for i in 0..<8 { mm += [H("MMICON_COPCAR_\(i)"), H("MMICON_AIRACER_\(i)")] }
         mm += [H("MMICON_CHECKPOINT"), 0xE8741681]
+        for k in HudIconKind.allCases { let e = k.element; for i in 0..<e.count { mm.append(H(e.count == 1 ? e.prefix : "\(e.prefix)\(i)")) } }
         element("minimap", 0x40010000, groups: [H("HELICOPTER_ICON_GROUP")], objects: mm)
         for i in 1...4 { let o = f("TRACK_MAP\(i)"); mmPieces.append(o); mmPieceUVs.append((o?.maskTL ?? .zero, o?.maskBR ?? .zero)) }
         mmLayout = f("TRACK_MAP"); mmNorth = f("MINIMAP_NORTH_INDICATOR"); mmPlayer = f("PLAYERCARINDICATOR"); mmPlayer2 = f("PLAYERCARINDICATOR2")
         mmHeli = f("HELICOPTER_ICON_GROUP"); mmHeliLOS = f("HELICOPTER_LINE_OF_SIGHT"); mmCheckpoint = f("MMICON_CHECKPOINT"); mmGPS = h(0xE8741681)
         for i in 0..<8 { mmCops.append(f("MMICON_COPCAR_\(i)")); mmRacers.append(f("MMICON_AIRACER_\(i)")) }
+        for k in HudIconKind.allCases { let e = k.element; mmIcons[k] = (0..<e.count).map { f(e.count == 1 ? e.prefix : "\(e.prefix)\($0)") } }
         if let l = mmLayout { mmDefaultPos = l.pos; mmCentre = SIMD2(l.pos.x, l.pos.y) }
         // Pantalla partida: el radar no gira con el coche (MinimapRotateWithPlayer = 0) [D: Minimap::Update]
         if kind.isSplit { minimapRotates = false }
@@ -920,6 +926,15 @@ final class FEHud {
             placeIcon(SIMD2(cp.x, cp.y), SIMD2(1, 0), o, calib, minimapRotates ? -mapRot : 0); o.setRotationZ(0)
         } else { pkg.setVisible(mmCheckpoint, false) }
         pkg.setVisible(mmGPS, false)
+        // Lugares (UpdateGameplayIcons): los más cercanos de cada tipo en sus elementos; el resto, ocultos [D][G]
+        for (k, objs) in mmIcons {
+            let list = i.icons.filter { $0.kind == k }.sorted { simd_distance_squared($0.pos, pp) < simd_distance_squared($1.pos, pp) }
+            for (n, o) in objs.enumerated() {
+                guard let o else { continue }
+                if n < list.count { placeIcon(list[n].pos, SIMD2(1, 0), o, calib, minimapRotates ? -mapRot : 0); o.setRotationZ(0) }
+                else { pkg.setVisible(o, false) }
+            }
+        }
     }
 
     /// UpdateElementArt: posición en el radar (recortada al borde a 0,06 del mapa), giro y alfa por distancia [D].

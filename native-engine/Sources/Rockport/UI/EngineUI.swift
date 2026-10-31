@@ -75,12 +75,17 @@ extension Engine {
         if let ai {
             h.bustedCount = ai.stats.busted
             h.evadedCount = ai.stats.evaded
-            for c in ai.vehicles where c.kind == .cop && !c.damage.destroyed {
-                h.cops.append(HudBlip(pos: SIMD2(c.pos.x, c.pos.y), dir: SIMD2(c.fwd.x, c.fwd.y), inPursuit: c.copRole == .pursuit))
+            // Policía en el radar solo con una persecución en curso, y solo los que la persiguen (UpdateCopElements:
+            // MinimapShowNonPursuitCops apagado, WasWithinEngagementRadius [D]); fuera de persecución no sale ninguno
+            if ai.police.inPursuit {
+                for c in ai.vehicles where c.kind == .cop && !c.damage.destroyed && c.copRole == .pursuit {
+                    h.cops.append(HudBlip(pos: SIMD2(c.pos.x, c.pos.y), dir: SIMD2(c.fwd.x, c.fwd.y), inPursuit: true))
+                }
+                // Helicóptero en el radar (HELICOPTER_ICON_GROUP) y en la persecución (Crash/Heli.swift)
+                if let b = ai.heli?.blip { h.cops.append(b); h.heliInvolved = true }
             }
-            // Helicóptero en el radar (HELICOPTER_ICON_GROUP) y en la persecución (Crash/Heli.swift)
-            if let b = ai.heli?.blip { h.cops.append(b); h.heliInvolved = true }
         }
+        h.icons = MapIcons.gather(self)
         if let pm = ai?.police {
             h.heat = pm.heat
             h.inPursuit = pm.inPursuit

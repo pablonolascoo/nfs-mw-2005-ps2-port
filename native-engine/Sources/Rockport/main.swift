@@ -116,7 +116,7 @@ struct Options {
             case "--crash-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }   // Crash/CrashTests.swift
             case "--heli-test": if i + 1 < args.count, !args[i + 1].hasPrefix("-") { i += 1 }
             case "--race-test", "--opponents", "--save", "--race": i += 1   // Race/RaceTests.swift, App.swift
-            case "--career-test", "--career", "--race-audit", "--prologue-test": break
+            case "--career-test", "--career", "--race-audit", "--prologue-test", "--radar-test": break
             case "--garage-test", "--garage-mode", "--garage-screen", "--garage-select": i += 1   // Garage/GarageTests.swift
             case "--garage-scene", "--fe-angle", "--scene-car", "--garage-swap-test": i += 1   // Garage/GarageScenesTests.swift
             case "--fx-test": i += 1   // Effects/EffectsTests.swift
@@ -321,6 +321,8 @@ if let i = CommandLine.arguments.firstIndex(of: "--physics-test") {
     runGarageSceneTest(options, kind: k)
 } else if let z = GarageSceneTestOptions.swapZone {
     runGarageSwapTest(options, zone: z)
+} else if RadarTestOptions.enabled {
+    runRadarTest(options)
 } else if PrologueTestOptions.enabled {
     runPrologueTest(options)
 } else if RaceTestOptions.careerTest {

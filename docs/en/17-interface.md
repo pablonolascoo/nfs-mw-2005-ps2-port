@@ -258,3 +258,26 @@ Screenshots in `native-engine/.build/shots/hud/` (1920×1080 and 2940×1912).
 - **Aspect ratio:** `ENDGAME` is square on the disc, but the game draws it at **900×512** (object size in `GameWon` and `RapSheet*_ENDGAME`). [V] The crop keeps that ratio so the car is not distorted. The logo is drawn at 4:1, its natural ratio (512×128 in `MainMenu`/`loading_boot`). [V]
 - **Where:** saved to `<data>/icon.png`; `icon.applied` avoids redoing it on every launch. Applied with `NSWorkspace.setIcon` (this leaves an `Icon` file inside Rockport.app; the app still opens).
 - **Test without opening the game:** `Rockport --make-icon <data folder> out.png`.
+
+## Radar: places by progress and police as in the original (v0.7.2)
+
+- **Police** (`Minimap::UpdateCopElements` [D]):
+  - They show on the radar only during a pursuit, and only the cars chasing you. Outside a pursuit none show: `MinimapShowNonPursuitCops` is off.
+  - They flicker in an 8-frame cycle: 0–2 blue `0xFF0000FF`, 3 grey, 4–6 red `0xFFA00000` and 7 grey.
+  - White is kept for racers and players.
+- **Places** (`Minimap::UpdateGameplayIcons` + `GManager::GatherVisibleIcons` [D][G]): every enabled and visible icon (flags 1 and 2), nearest first, in the `HUD_SingleRace` elements of its type [V]:
+
+| Type | Elements | When it shows (`Career/MapIcons.swift`) |
+|---|---|---|
+| Safehouse | `SAFEHOUSEINDICATOR_0…3` | From the zone's bin on (`BinIndex` [V]: 16, 12, 8) |
+| Car lot | `CAR_LOT_0…3` | From its bin (15, 12, 8); during D-Day, after the arrest |
+| Shop | `SHOP_0…7` | From its bin (15, 12, 8) |
+| Events | `MMICON_SPRINT / CIRCUIT / DRAG / KNOCKOUT / TOLLBOOTH / SPEEDTRAP_0…7` | The career's world markers |
+| Rival | `MINIMAP_ICON_EVENT_RIVAL` | When you can challenge them |
+| Speed camera | `SPEED_TRAP_CAM_0…7` | The bin's cameras not yet beaten |
+| Pursuit breaker | `PURSUIT_BREAKER_0…7` | During a pursuit, the ones still standing |
+| Hiding spot | `HIDING_SPOT_0…7` | During cooldown [I] |
+
+- During an event, world places are hidden.
+- **Test:** `Rockport --radar-test --screenshot base.png`. It captures free roam at bin 15 and a pursuit, with one frame of each colour.
+- **To do:** the big pause map (`WorldMap`) with the same places.

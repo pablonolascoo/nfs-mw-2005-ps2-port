@@ -117,3 +117,44 @@ func runPrologueTest(_ o: Options) {
     if let b = base { try? lines.joined(separator: "\n").write(toFile: b + ".log", atomically: true, encoding: .utf8) }
     exit(checks.allSatisfy(\.1) ? 0 : 1)
 }
+
+// Radar con los lugares según el avance y la policía como el original:
+//   Rockport --radar-test --screenshot base.png [--data …]
+// Bin 15 en la zona libre (garajes, pruebas, radares) y luego una persecución (policía azul/rojo, trampas).
+enum RadarTestOptions { static var enabled: Bool { CommandLine.arguments.contains("--radar-test") } }
+
+func runRadarTest(_ o: Options) {
+    setvbuf(stdout, nil, _IOLBF, 0)
+    guard let device = MTLCreateSystemDefaultDevice() else { exit(1) }
+    let (root, _) = DataLocator.locate(arg: o.data, disc: o.disc)
+    guard let root, let data = try? GameData(root: root), let engine = try? Engine(device: device, data: data, outputFormat: .bgra8Unorm) else { exit(1) }
+    engine.enableUI(outputFormat: .bgra8Unorm)?.startGame()
+    _ = engine.enableRaces()
+    _ = GarageSystem.attach(engine)
+    let career = Career.shared
+    career.persist = false
+    career.newGame(skipPrologue: true)
+    let (W, H) = o.size
+    engine.aspect = Float(W) / Float(H)
+    let td = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .bgra8Unorm, width: W, height: H, mipmapped: false)
+    td.usage = [.renderTarget, .shaderRead]; td.storageMode = .private
+    let target = device.makeTexture(descriptor: td)!
+    if let ai = engine.ai { let t0 = CACurrentMediaTime(); while !ai.models.allIdle && CACurrentMediaTime() - t0 < 60 { usleep(20000) } }
+    var clock = 0.0
+    func frames(_ n: Int, dt: Float = 1.0 / 60) { for _ in 0..<n { clock += 1.0 / 60; let cb = engine.queue.makeCommandBuffer()!; engine.frame(cb: cb, target: target, dt: dt, scale: 1, now: clock); cb.commit(); cb.waitUntilCompleted() } }
+    frames(240, dt: 0)
+    frames(120)
+    let base = o.screenshot.map { ($0 as NSString).deletingPathExtension } ?? "/tmp/radar"
+    let icons = MapIcons.gather(engine)
+    var count: [String: Int] = [:]; for i in icons { count["\(i.kind)", default: 0] += 1 }
+    print("Radar en el bin \(career.save.currentBin): \(icons.count) lugares · \(count.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }.joined(separator: ", "))")
+    print("Policía en el radar fuera de persecución: \(engine.ui_hudInput().cops.count) (el original: 0)")
+    writePNG(target, device: device, queue: engine.queue, path: base + "-libre.png")
+    engine.ai?.police.forcePursuit()
+    frames(240)
+    let h = engine.ui_hudInput()
+    print("En persecución: \(h.cops.count) policías en el radar · \(h.icons.filter { $0.kind == .pursuitBreaker }.count) trampas")
+    // Parpadeo de UpdateCopElements: 8 fotogramas (0–2 azul, 3 gris, 4–6 rojo, 7 gris) [D]: una captura de cada color
+    for (k, name) in ["-persecucion", "-persecucion2", "-persecucion3"].enumerated() { frames(k == 0 ? 1 : 3); writePNG(target, device: device, queue: engine.queue, path: base + name + ".png") }
+    exit(0)
+}
