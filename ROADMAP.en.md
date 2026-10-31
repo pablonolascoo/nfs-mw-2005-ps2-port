@@ -13,18 +13,23 @@ Everything that enters the project must look like **it belongs to the original g
 4. **Player's data.** The game is built from **your** ISO (PAL SLES-53559 or NTSC-U SLUS-21351). EA data is never distributed.
 5. **Everything documented.** Every format, decision and system goes into `docs/es` and `docs/en`.
 
-## Phase 1 · Playable native port (in progress)
+## Phase 1 · Playable native port (in progress, v0.7.2)
 | # | What | Status |
 |---|---|---|
-| 1.1 | Disc formats: geometry, textures, world, database, roads, collision | ✅ |
-| 1.2 | Native macOS engine (Swift + Metal): city, streaming, PS2 tone, full screen, adaptive resolution | 🚧 `native-engine/` |
-| 1.3 | Installer: the `.dmg` asks for the ISO, detects PAL or NTSC-U and converts data into `~/Library/Application Support/Rockport` | 🔜 |
-| 1.4 | Perfect cars: wheels, rims, kits, spoilers, paint, vinyls | 🚧 |
-| 1.5 | Driving with the game's physics (from the decomp) and real collision | 🔜 |
-| 1.6 | Traffic, police and pursuits with the original AI (roads and lanes already decoded) | 🔜 |
-| 1.7 | Races, Blacklist, milestones, garages without loading screens | 🔜 / ✅ garages |
-| 1.8 | Audio (engines, sirens, police radio, music) | 🔜 |
-| 1.9 | GitHub release: signed `Rockport.dmg` | 🔜 |
+| 1.1 | Disc formats: geometry, textures, world, database, roads, collision (99.94 % of the disc understood, doc 21) | ✅ |
+| 1.2 | Native macOS engine (Swift + Metal): city, streaming, PS2 tone, full screen, adaptive resolution | ✅ `native-engine/` |
+| 1.3 | Installer: the `.dmg` asks for the ISO, detects PAL or NTSC-U and converts data into `~/Library/Application Support/Rockport` | ✅ |
+| 1.4 | Cars: wheels, rims, kits, spoilers, paint, vinyls, damage | ✅ |
+| 1.5 | Driving with the game's physics (from the decomp) and real collision | ✅ |
+| 1.6 | Traffic, police, pursuits, helicopter and pursuit breakers with the original AI | ✅ |
+| 1.7 | Races, Blacklist, milestones and garages without loading screens | ✅ |
+| 1.8 | Audio (engines, sirens, police radio), dubbed movies and EA Trax music | ✅ |
+| 1.9 | Full disassembly with Ghidra + REA, and **the disc's original Lua scripts** run by the engine (doc 26) | ✅ |
+| 1.10 | Story from the start: D-Day prologue as in the original (doc 18 §9) | ✅ |
+| 1.11 | Radar with places by progress and police as in the original (doc 17) | ✅ |
+| 1.12 | The remaining game functions the scripts call (~140), the big pause map, NIS scenes, call voices | 🚧 |
+| 1.13 | Volumetric fog and atmosphere, texture bugs, full-screen movies | 🔜 |
+| 1.14 | GitHub release: `Rockport.dmg` (local signing; Developer ID signing is paid and still pending) | ✅ / 🔜 signing |
 
 ## Phase 2 · "Most Wanted: Rust Belt" expansion (proposal)
 

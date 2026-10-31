@@ -13,18 +13,23 @@ Todo lo que entre al proyecto tiene que parecer **del juego original**. Si no pa
 4. **Datos del jugador.** El juego se construye desde **su** ISO (PAL SLES-53559 o NTSC-U SLUS-21351). Nunca se distribuyen datos de EA.
 5. **Todo documentado.** Cada formato, decisión y sistema queda en `docs/es` y `docs/en`.
 
-## Fase 1 · Port nativo jugable (en curso)
+## Fase 1 · Port nativo jugable (en curso, v0.7.2)
 | # | Qué | Estado |
 |---|---|---|
-| 1.1 | Formatos del disco: geometría, texturas, mundo, base de datos, carreteras, colisión | ✅ |
-| 1.2 | Motor nativo macOS (Swift + Metal): ciudad, streaming, tono PS2, pantalla completa, resolución adaptada | 🚧 `native-engine/` |
-| 1.3 | Instalador: el `.dmg` pide la ISO, detecta PAL o NTSC-U y convierte los datos en `~/Library/Application Support/Rockport` | 🔜 |
-| 1.4 | Coches perfectos: ruedas, llantas, kits, alerones, pintura, vinilos | 🚧 |
-| 1.5 | Conducción con la física del juego (desde la decomp) y colisión real | 🔜 |
-| 1.6 | Tráfico, policía y persecuciones con la IA original (carreteras y carriles ya decodificados) | 🔜 |
-| 1.7 | Carreras, Lista Negra, hitos, garajes sin pantallas de carga | 🔜 / ✅ garajes |
-| 1.8 | Audio (motores, sirenas, radio de la policía, música) | 🔜 |
-| 1.9 | Release en GitHub: `Rockport.dmg` firmado | 🔜 |
+| 1.1 | Formatos del disco: geometría, texturas, mundo, base de datos, carreteras, colisión (99,94 % del disco entendido, doc 21) | ✅ |
+| 1.2 | Motor nativo macOS (Swift + Metal): ciudad, streaming, tono PS2, pantalla completa, resolución adaptada | ✅ `native-engine/` |
+| 1.3 | Instalador: el `.dmg` pide la ISO, detecta PAL o NTSC-U y convierte los datos en `~/Library/Application Support/Rockport` | ✅ |
+| 1.4 | Coches: ruedas, llantas, kits, alerones, pintura, vinilos, daños | ✅ |
+| 1.5 | Conducción con la física del juego (desde la decomp) y colisión real | ✅ |
+| 1.6 | Tráfico, policía, persecuciones, helicóptero y trampas con la IA original | ✅ |
+| 1.7 | Carreras, Lista Negra, hitos y garajes sin pantallas de carga | ✅ |
+| 1.8 | Audio (motores, sirenas, radio de la policía), películas con doblaje y música EA Trax | ✅ |
+| 1.9 | Desensamblado completo con Ghidra + REA y **guiones Lua originales del disco** ejecutados por el motor (doc 26) | ✅ |
+| 1.10 | Historia desde el principio: prólogo D-Day como el original (doc 18 §9) | ✅ |
+| 1.11 | Radar con los lugares según el avance y la policía como el original (doc 17) | ✅ |
+| 1.12 | Resto de funciones de juego que llaman los guiones (~140), mapa grande de la pausa, escenas NIS, voces de las llamadas | 🚧 |
+| 1.13 | Niebla y ambiente volumétricos, texturas con fallos, películas a pantalla completa | 🔜 |
+| 1.14 | Release en GitHub: `Rockport.dmg` (firma local; la de Developer ID es de pago y queda pendiente) | ✅ / 🔜 firma |
 
 ## Fase 2 · Expansión «Most Wanted: Rust Belt» (propuesta)
 
