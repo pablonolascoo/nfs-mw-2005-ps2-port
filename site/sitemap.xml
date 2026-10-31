@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://rockport-native.vercel.app/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rockport-native.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://rockport-native.vercel.app/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rockport-native.vercel.app/" />
+    <image:image><image:loc>https://rockport-native.vercel.app/img/hud.jpg</image:loc><image:title>HUD original de Most Wanted en el motor nativo de Mac</image:title></image:image>
+    <image:image><image:loc>https://rockport-native.vercel.app/img/persecucion.jpg</image:loc><image:title>Persecución policial en el motor nativo</image:title></image:image>
+    <image:image><image:loc>https://rockport-native.vercel.app/img/bmw.jpg</image:loc><image:title>BMW M3 GTR con su pintura de la historia</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://rockport-native.vercel.app/en/</loc>
+    <lastmod>2026-10-31</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://rockport-native.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://rockport-native.vercel.app/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://rockport-native.vercel.app/" />
+    <image:image><image:loc>https://rockport-native.vercel.app/img/hud.jpg</image:loc><image:title>Original Most Wanted HUD in the native Mac engine</image:title></image:image>
+    <image:image><image:loc>https://rockport-native.vercel.app/img/persecucion.jpg</image:loc><image:title>Police pursuit in the native engine</image:title></image:image>
+  </url>
+</urlset>

@@ -1,0 +1,24 @@
+# Rockport Native
+
+> Native macOS port of Need for Speed: Most Wanted (2005, PlayStation 2), built from the player's own PS2 ISO. Open source (MIT), free, no game data included. Current version: 0.7.2 (updated 2026-10-31).
+
+Rockport Native is a fan reverse-engineering project. A Swift + Metal engine reads the user's PS2 disc image (PAL SLES-53559 or NTSC-U SLUS-21351), converts the game data on the Mac in about one minute and runs the game natively at 60 fps on Apple Silicon (macOS 14+). It is not an emulator: the game is rebuilt on a native engine.
+
+## Key facts
+- Platform: macOS 14 or later, Apple Silicon. Windows and mobile are planned, not available.
+- Price: free. Licence: MIT. Download: https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases/latest (.dmg).
+- Requirement: the user's own legal copy of the game; no game data is distributed.
+- 99.94 % of the disc's bytes are understood; all 18,909 functions of the executable have been disassembled (Ghidra + REA).
+- The game's story and race conditions are 258 Lua 5.0 scripts stored in GAMEPLAY.BIN; the engine runs them as they are.
+- Working: whole Rockport city, original interface and HUD, game physics, traffic, police and pursuits, races and the Blacklist (15 → 1), story prologue (D-Day), garages, sound, movies with the disc's dub, EA Trax music, controllers (Xbox, PS5, PS4, PS3, PS2), 2–4 player split screen.
+- Next: volumetric fog, NIS cutscenes, pause map, call voices.
+- Expansion "Rust Belt" (proposal): four new districts (Millbrook, Ironwood, Calder Bay, Black Hollow), a second Blacklist and classic cars.
+- Not affiliated with Electronic Arts. Need for Speed is a trademark of Electronic Arts.
+
+## Pages
+- [Website (Spanish)](https://rockport-native.vercel.app/): overview, status, FAQ.
+- [Website (English)](https://rockport-native.vercel.app/en/): same content in English.
+- [Source code and README](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port): build instructions, user guide, screenshots.
+- [Roadmap](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/blob/main/ROADMAP.en.md): what is done and what comes next.
+- [Technical documentation](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/tree/main/docs/en): disc formats, physics, AI, interface, races, audio, scripts (docs 00–26).
+- [Releases](https://github.com/pablonolascoo/nfs-mw-2005-ps2-port/releases): downloadable .dmg builds and changelogs.
