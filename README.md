@@ -12,6 +12,7 @@ Lo siguiente que toca, por orden. Si quieres ayudar, mira [CONTRIBUTING.md](CONT
 
 | | Qué falta | Hoy |
 |---|---|---|
+| 🔬 | **Desensamblado completo del juego** con Ghidra + REA ([doc 26](docs/es/26-desensamblado-ghidra-rea.md)): ya se leen las 18 909 funciones del ejecutable. Base para portar todo lo que falta tal cual es en el original | ✅ Listo; ahora toca portar historia, misiones y condiciones |
 | 🎬 | **Empezar por el prólogo guiado**, como el original: carreras con el BMW, la primera persecución, la avería por la fuga de aceite y la derrota contra Razor. La zona libre llega después | Arranca directamente en la zona libre |
 | 🚨 | **Detector de radar** (la barra de arriba del HUD): se ilumina al acercarse la policía y los radares de velocidad, cada uno con su color (naranja y verde), y con su sonido | La barra sale, pero no reacciona |
 | 🪵 | **Trampas para la policía** (*pursuit breakers*) visibles y físicas: si pasas por una y la rompes, se ve la animación y la persecución sigue como en el original | No se ven todas ni caen como en el original |

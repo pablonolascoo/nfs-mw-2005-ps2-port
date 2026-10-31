@@ -44,3 +44,4 @@ map-data/**/garage-scenes/
 # Todo lo generado desde la ISO es local (los JSON pequeños ya versionados siguen versionados)
 map-data/**
 !map-data/.metadata_never_index
+experiments/ghidra/

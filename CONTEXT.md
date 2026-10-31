@@ -57,6 +57,7 @@
 | 23 | Escenas NIS (cámaras ICE, animaciones EAGL, eventos, revoluciones, audio) | [es](docs/es/23-escenas-nis.md) | [en](docs/en/23-nis-scenes.md) |
 | 24 | Partículas, destellos, rompibles, disparadores, helicóptero, clima, datos del mundo | [es](docs/es/24-efectos-luces-y-mundo.md) | [en](docs/en/24-effects-lights-and-world.md) |
 | 25 | Música interactiva (PathFinder), mapas de mezcla, reverbs, Csis | [es](docs/es/25-musica-y-mezcla.md) | [en](docs/en/25-music-and-mixing.md) |
+| 26 | Desensamblado completo del ejecutable (Ghidra + complemento PS2 + REA), nombres de la decomp, pseudocódigo por archivo | [es](docs/es/26-desensamblado-ghidra-rea.md) | [en](docs/en/26-disassembly-ghidra-rea.md) |
 
 ## 3b. Producto final (lo que queremos entregar)
 - Un `Rockport.dmg` en *Releases* de GitHub. Al abrirlo pide la ISO, detecta PAL (SLES-53559) o NTSC-U (SLUS-21351) por `SYSTEM.CNF` y convierte los datos en `~/Library/Application Support/Rockport/<ID>/`.

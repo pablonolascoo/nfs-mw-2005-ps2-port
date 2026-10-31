@@ -12,6 +12,7 @@ What comes next, in order. Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | | What is missing | Today |
 |---|---|---|
+| 🔬 | **Full game disassembly** with Ghidra + REA ([doc 26](docs/en/26-disassembly-ghidra-rea.md)): all 18,909 functions of the executable are now readable. The basis for porting everything still missing exactly as in the original | ✅ Done; next is porting the story, missions and conditions |
 | 🎬 | **Start with the guided prologue**, as in the original: races with the BMW, the first pursuit, the breakdown from the oil leak and the loss to Razor. Free roam comes after | It starts straight in free roam |
 | 🚨 | **Radar detector** (the bar at the top of the HUD): it lights up when police or speed cameras are near, each with its own colour (orange and green), and with its sound | The bar shows, but does not react |
 | 🪵 | **Pursuit breakers** visible and physical: drive through one and break it, the animation plays and the pursuit continues as in the original | Not all of them show or fall as in the original |
